@@ -4,11 +4,13 @@
 
 (defn main []
   (fn [response pagination]
-    [:div
-     [:div.pull-right [undo/main]]
-     [:div.pull-left [:span (str "Showing "
-                                 (inc (:start pagination)) " to "
-                                 (+ (:start pagination) (:limit pagination)) " of "
-                                 (:iTotalRecords response) " rows")]]
-     [:div.pull-right
-      [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]))
+    [:div.row
+     [:div.col-xs-6
+      [:div.pull-left [:span (str "Showing "
+                                  (inc (:start pagination)) " to "
+                                  (+ (:start pagination) (:limit pagination)) " of "
+                                  (:iTotalRecords response) " rows")]]]
+     [:div.col-xs-6
+      [:div.row
+       [:div.col-xs-2 [undo/main]]
+       [:div.col-xs-10 [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]]]))

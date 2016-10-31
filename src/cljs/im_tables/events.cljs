@@ -23,10 +23,12 @@
     {:db         db/default-db
      :async-flow (boot-flow)}))
 
-(reg-event-db
+(reg-event-fx
   :main/save-query-response
-  (fn [db [_ results]]
-    (assoc db :query-response results)))
+  (undoable)
+  (fn [{db :db} [_ results]]
+    {:db (assoc db :query-response results)
+     :undo "Changed sort order"}))
 
 ;;;;; MANIPULATE QUERY
 
@@ -37,7 +39,7 @@
     (let [view (join "." (drop 1 (split view ".")))]
       {:db       (update-in db [:query :select] (partial remove (fn [v] (= v view))))
        :dispatch [:main/run-query]
-       :undo "Removing view"})))
+       :undo "Removed column"})))
 
 (reg-event-fx
   :main/sort-by

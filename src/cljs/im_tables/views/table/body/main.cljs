@@ -29,7 +29,8 @@
                  :data-content   summary-table
                  :data-trigger   "hover"
                  :data-placement "bottom"}
-          [:div.wrapper value
+          [:div.wrapper (if value value
+                                  [:i.fa.fa-ban.mostly-transparent])
            #_[:div.tooltip summary-table]]]]))))
 
 (defn table-row [row] (into [:tr] (map (fn [c] [table-cell c])) row))

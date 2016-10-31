@@ -1,8 +1,10 @@
 (ns im-tables.views.dashboard.undo
-  (:require [re-frame.core :refer [dispatch]]))
+  (:require [re-frame.core :refer [dispatch subscribe]]))
 
 (defn main []
-  (fn []
-    [:div.btn-toolbar
-     [:button.btn.btn-default
-      {:on-click (fn [] (dispatch [:undo]))} "Undo"]]))
+  (let [undos (subscribe [:undos?])]
+    (fn []
+      [:div.btn-toolbar
+       [:button.btn.btn-default
+        {:disabled (not @undos)
+         :on-click (fn [] (dispatch [:undo]))} "Undo"]])))
