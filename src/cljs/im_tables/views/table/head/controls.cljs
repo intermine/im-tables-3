@@ -1,4 +1,4 @@
-(ns im-tables.views.table.head.summaries
+(ns im-tables.views.table.head.controls
   (:require [re-frame.core :refer [subscribe dispatch]]))
 
 (defn toolbar []
