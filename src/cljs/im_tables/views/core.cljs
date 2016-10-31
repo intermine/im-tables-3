@@ -14,7 +14,6 @@
                                  (+ (:start @pagination) (:limit @pagination)) " of "
                                  (:iTotalRecords @response) " rows")]]
        [:div.pull-right
-        [pager/main (merge @pagination {:inc-fn (fn [] (dispatch [:settings/update-page inc]))
-                                        :dec-fn (fn [] (dispatch [:settings/update-page dec]))})]]
+        [pager/main (merge @pagination {:total (get @response :iTotalRecords)})]]
 
        [table/main @response]])))

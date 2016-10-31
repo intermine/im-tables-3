@@ -3,7 +3,7 @@
             [clojure.string :refer [split]]))
 
 (defn main []
-  (fn [{:keys [start limit total inc-fn dec-fn]}]
+  (fn [{:keys [start limit total]}]
     [:span.pagination-bar
      [:div.btn-toolbar
       [:div.btn-group
@@ -19,10 +19,12 @@
        [:div (str "Page " (inc (/ start limit)))]]
       [:div.btn-group
        [:button.btn.btn-default
-        {:on-click (fn [] (dispatch ^:flush-dom [:settings/update-pagination-inc]))}
+        {:disabled (< (- total start) limit)
+         :on-click (fn [] (dispatch ^:flush-dom [:settings/update-pagination-inc]))}
         [:span.glyphicon.glyphicon-triangle-right]]
        [:button.btn.btn-default
-        {:on-click (fn [] (dispatch [:settings/update-pagination-fullinc]))}
+        {:disabled (< (- total start) limit)
+         :on-click (fn [] (dispatch [:settings/update-pagination-fullinc]))}
         [:span.glyphicon.glyphicon-step-forward]]]]]))
 
 
