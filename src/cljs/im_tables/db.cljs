@@ -13,4 +13,5 @@
               :where  [{:path  "Gene"
                         :op    "IN"
                         :value "FlyMine_AlzheimersUseCase"}]}
-   :cache {:summaries {}}})
+   :cache {:summaries {}
+           :summary {}}})

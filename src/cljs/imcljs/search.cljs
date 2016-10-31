@@ -42,6 +42,23 @@
                  (println "ERROR" error))))
     c))
 
+(defn path-values
+  "Returns IMJS row-style result"
+  [service query & [options]]
+  (let [c (chan)]
+    (-> (js/imjs.Service. (clj->js service))
+        (.query (clj->js query))
+        (.then (fn [q]
+                 (go (let [root (utils/cleanse-url (:root service))
+                           response (<! (http/post (str root "/path/values")
+                                                   {:with-credentials? false
+                                                    :form-params       (merge options {:query (.toXML q)})}))]
+                       (>! c (-> response :body))
+                       (close! c))))
+               (fn [error]
+                 (println "path values error" error))))
+    c))
+
 (defn table-rows
   "Returns IMJS row-style result"
   [service query & [options]]

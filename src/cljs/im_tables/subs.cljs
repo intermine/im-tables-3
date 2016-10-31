@@ -21,3 +21,8 @@
   :settings/pagination
   (fn [db]
     (get-in db [:settings :pagination])))
+
+(reg-sub
+  :summaries/column-summaries
+  (fn [db]
+    (get-in db [:cache :summary])))

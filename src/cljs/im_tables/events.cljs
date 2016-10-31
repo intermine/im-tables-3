@@ -27,10 +27,28 @@
   :main/save-query-response
   (undoable)
   (fn [{db :db} [_ results]]
-    {:db (assoc db :query-response results)
+    {:db   (assoc db :query-response results)
      :undo "Changed sort order"}))
 
 ;;;;; MANIPULATE QUERY
+
+(reg-event-db
+  :main/save-column-summary
+  (fn [db [_ summary-response]]
+    ; Assume we summarized just one view
+    (let [view (get-in summary-response [:views 0])]
+      (assoc-in db [:cache :summary view] summary-response))))
+
+(reg-event-fx
+  :main/summarize-column
+  (fn [{db :db} [_ view]]
+    {:db           db
+     :im-operation {:on-success [:main/save-column-summary]
+                    :op         (partial search/raw-query-rows
+                                         (get db :service)
+                                         (assoc (get db :query) :views [view])
+                                         {:summaryPath view
+                                          :format      "jsonrows"})}}))
 
 (reg-event-fx
   :main/remove-view
@@ -39,7 +57,7 @@
     (let [view (join "." (drop 1 (split view ".")))]
       {:db       (update-in db [:query :select] (partial remove (fn [v] (= v view))))
        :dispatch [:main/run-query]
-       :undo "Removed column"})))
+       :undo     "Removed column"})))
 
 (reg-event-fx
   :main/sort-by

@@ -13,4 +13,4 @@
      [:div.col-xs-6
       [:div.row
        [:div.col-xs-2 [undo/main]]
-       [:div.col-xs-10 [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]]]))
+       [:div.col-xs-10 [:div.pull-right [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]]]]))
