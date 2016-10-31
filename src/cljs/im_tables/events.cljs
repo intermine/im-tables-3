@@ -1,6 +1,7 @@
 (ns im-tables.events
   (:require [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx]]
             [day8.re-frame.async-flow-fx]
+            [day8.re-frame.undo :as undo :refer [undoable]]
             [im-tables.db :as db]
             [im-tables.effects]
             [imcljs.search :as search]
@@ -31,10 +32,12 @@
 
 (reg-event-fx
   :main/remove-view
+  (undoable)
   (fn [{db :db} [_ view]]
     (let [view (join "." (drop 1 (split view ".")))]
       {:db       (update-in db [:query :select] (partial remove (fn [v] (= v view))))
-       :dispatch [:main/run-query]})))
+       :dispatch [:main/run-query]
+       :undo "Removing view"})))
 
 (reg-event-fx
   :main/sort-by

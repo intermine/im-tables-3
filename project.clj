@@ -8,6 +8,7 @@
                  [ring "1.4.0"]
                  [cljs-http "0.1.42"]
                  [day8.re-frame/async-flow-fx "0.0.6"]
+                 [day8.re-frame/undo "0.3.2"]
                  [binaryage/oops "0.5.2"]
                  [org.clojure/core.async "0.2.395"]]
 
