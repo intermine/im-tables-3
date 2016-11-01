@@ -150,17 +150,18 @@
 
 (reg-event-fx
   :main/summarize-item
-  (fn [{db :db} [_ {:keys [class] :as item}]]
-    {:db           db
-     :im-operation {:on-success
-                    [:main/cache-item-summary]
-                    :op
-                    (partial search/raw-query-rows
-                             (get db :service)
-                             (summary-query
-                               (assoc item :summary-fields
-                                           (into [] (keys (get-in db [:assets :model (keyword class) :attributes])))))
-                             {:format "jsonobjects"})}}))
+  (fn [{db :db} [_ {:keys [class id] :as item}]]
+    (cond-> {:db db}
+            (not (get-in db [:cache :item-details id]))
+            (assoc :im-operation {:on-success
+                                  [:main/cache-item-summary]
+                                  :op
+                                  (partial search/raw-query-rows
+                                           (get db :service)
+                                           (summary-query
+                                             (assoc item :summary-fields
+                                                         (into [] (keys (get-in db [:assets :model (keyword class) :attributes])))))
+                                           {:format "jsonobjects"})}))))
 
 ;;; PAGINATION
 

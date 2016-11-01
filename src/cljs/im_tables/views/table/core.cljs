@@ -6,7 +6,7 @@
 (defn main []
   (let [pagination (subscribe [:settings/pagination])]
     (fn [{:keys [results columnHeaders views] :as response}]
-      [:table.table.table-striped.table-condensed
+      [:table.table.table-striped.table-condensed.table-bordered
        [:thead
         (into [:tr]
               (map-indexed (fn [idx h]
