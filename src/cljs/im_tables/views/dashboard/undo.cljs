@@ -7,4 +7,6 @@
       [:div.btn-toolbar
        [:button.btn.btn-default
         {:disabled (not @undos)
-         :on-click (fn [] (dispatch [:undo]))} "Undo"]])))
+         :on-click (fn []
+                     (dispatch [:undo])
+                     (dispatch [:purge-redos]))} "Undo"]])))

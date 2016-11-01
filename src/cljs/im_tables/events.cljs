@@ -25,10 +25,9 @@
 
 (reg-event-fx
   :main/save-query-response
-  (undoable)
   (fn [{db :db} [_ results]]
-    {:db   (assoc db :query-response results)
-     :undo "Changed sort order"}))
+    {:db         (assoc db :query-response results)
+     :dispatch-n (into [] (map (fn [view] [:main/summarize-column view]) (get results :views)))}))
 
 
 ;(defn toggle-into-set [haystack needle]
@@ -50,8 +49,24 @@
 (reg-event-db
   :select/toggle-selection
   (fn [db [_ view value]]
-    (update-in db [:cache :selection view] flip-presence value)
-    db))
+    (update-in db [:cache :column-summary view :selections] flip-presence value)))
+
+(reg-event-db
+  :select/clear-selection
+  (fn [db [_ view]]
+    (assoc-in db [:cache :column-summary view :selections] {})))
+
+(reg-event-db
+  :select/select-all
+  (fn [db [_ view]]
+    (assoc-in db [:cache :column-summary view :selections]
+              (into {} (map (fn [{item :item}] [item true]) (get-in db [:cache :column-summary view :response :results]))))))
+
+(reg-event-db
+  :select/set-text-filter
+  (fn [db [_ view value]]
+    (assoc-in db [:cache :column-summary view :filters :text]
+              (if (= value "") nil value))))
 
 ;;;;; MANIPULATE QUERY
 
@@ -60,7 +75,7 @@
   (fn [db [_ summary-response]]
     ; Assume we summarized just one view
     (let [view (get-in summary-response [:views 0])]
-      (assoc-in db [:cache :summary view] summary-response))))
+      (assoc-in db [:cache :column-summary view :response] summary-response))))
 
 (reg-event-fx
   :main/summarize-column
@@ -74,13 +89,26 @@
                                           :format      "jsonrows"})}}))
 
 (reg-event-fx
+  :main/apply-summary-filter
+  ;(undoable)
+  (fn [{db :db} [_ view]]
+    (let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
+      {:db       (update-in db [:query :where] conj {:path   view
+                                                     :op     "ONE OF"
+                                                     :values current-selection})
+       :dispatch [:main/run-query]
+       ;:undo     "Applying column filter"
+       })))
+
+(reg-event-fx
   :main/remove-view
-  (undoable)
+  ;(undoable)
   (fn [{db :db} [_ view]]
     (let [view (join "." (drop 1 (split view ".")))]
       {:db       (update-in db [:query :select] (partial remove (fn [v] (= v view))))
        :dispatch [:main/run-query]
-       :undo     "Removed column"})))
+       ;:undo     "Removed column"
+       })))
 
 (reg-event-fx
   :main/sort-by
@@ -184,8 +212,11 @@
 
 (reg-event-fx
   :main/run-query
+  (undoable)
   (fn [{db :db}]
-    {:db           db
+    (.debug js/console "Running query" (get db :query))
+    {:db           (assoc-in db [:cache :column-summary] {})
+     :undo "Undo ran query"
      :im-operation {:on-success [:main/save-query-response]
                     :op         (partial search/table-rows
                                          (get db :service)

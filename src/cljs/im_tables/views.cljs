@@ -7,6 +7,8 @@
     [:div
      [:div.panel.panel-default
       [:div.panel-body
-       [:h1 "IM-Tables CLJS"]]]
+
+       ;[:h1 "IM-Tables CLJS"]
+       ]]
      [:div.container
       [main-view/main]]]))

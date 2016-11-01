@@ -25,7 +25,8 @@
     (fn [{:keys [value id] :as c}]
       (let [summary-table (summary-table @summary)]
         [:td.cell {:on-click (fn [] (dispatch [:main/fetch-item-summary id]))}
-         [:span {:on-mouse-enter (fn [] (dispatch [:main/summarize-item c]))
+         [:span {
+                 ;:on-mouse-enter (fn [] (dispatch [:main/summarize-item c]))
                  :data-content   summary-table
                  :data-trigger   "hover"
                  :data-placement "bottom"}

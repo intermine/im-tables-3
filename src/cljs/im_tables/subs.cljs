@@ -25,4 +25,19 @@
 (reg-sub
   :summaries/column-summaries
   (fn [db]
-    (get-in db [:cache :summary])))
+    (get-in db [:cache :column-summary])))
+
+(reg-sub
+  :selection/selections
+  (fn [db [_ view]]
+    (get-in db [:cache :column-summary view :selections])))
+
+(reg-sub
+  :selection/response
+  (fn [db [_ view]]
+    (get-in db [:cache :column-summary view :response])))
+
+(reg-sub
+  :selection/text-filter
+  (fn [db [_ view]]
+    (get-in db [:cache :column-summary view :filters :text])))
