@@ -30,6 +30,29 @@
     {:db   (assoc db :query-response results)
      :undo "Changed sort order"}))
 
+
+;(defn toggle-into-set [haystack needle]
+;  (if (some #{needle} haystack)
+;    (filter (fn [n] (not= n needle)) haystack)
+;    (conj haystack needle)))
+
+(defn flip-presence
+  "If a key is present in a map then remove it, otherwise add the key
+  with a value of true."
+  [m k]
+  (if (contains? m k)
+    (dissoc m k)
+    (assoc m k true)))
+
+;;;; TRASIENT VALUES
+
+;TODO turn stub into working code
+(reg-event-db
+  :select/toggle-selection
+  (fn [db [_ view value]]
+    (update-in db [:cache :selection view] flip-presence value)
+    db))
+
 ;;;;; MANIPULATE QUERY
 
 (reg-event-db

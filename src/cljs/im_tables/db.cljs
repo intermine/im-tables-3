@@ -2,9 +2,7 @@
 
 (def default-db
   {:name     "im-tables"
-   :service {:root "www.flymine.org/query"}
-   :settings {:pagination {:start 0
-                           :limit 10}}
+   :service  {:root "www.flymine.org/query"}
    :query    {:from   "Gene"
               :select ["secondaryIdentifier"
                        "symbol"
@@ -13,5 +11,8 @@
               :where  [{:path  "Gene"
                         :op    "IN"
                         :value "FlyMine_AlzheimersUseCase"}]}
-   :cache {:summaries {}
-           :summary {}}})
+   :settings {:pagination {:start 0
+                           :limit 10}}
+   :cache    {:summaries {}
+              :summary   {}
+              :selection {}}})
