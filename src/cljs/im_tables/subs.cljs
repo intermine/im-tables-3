@@ -13,9 +13,9 @@
     (get db :query-response)))
 
 (reg-sub
-  :summary/item-summary
+  :summary/item-details
   (fn [db [_ id]]
-    (get-in db [:cache :summaries id])))
+    (get-in db [:cache :item-details id])))
 
 (reg-sub
   :settings/pagination

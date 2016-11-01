@@ -1,7 +1,7 @@
 (ns im-tables.views.table.body.main
   (:require [re-frame.core :refer [subscribe dispatch]]
             [clojure.string :refer [split]]
-            [im-tables.components.bootstrap :refer [popover]]))
+            [im-tables.components.bootstrap :refer [popover tooltip]]))
 
 (defn dot-split
   "Convert a view such as Gene.organism.name into [:organism :name]
@@ -21,17 +21,14 @@
            column-headers))])
 
 (defn table-cell [{id :id}]
-  (let [summary (subscribe [:summary/item-summary id])]
+  (let [summary (subscribe [:summary/item-details id])]
     (fn [{:keys [value id] :as c}]
       (let [summary-table (summary-table @summary)]
-        [:td.cell {:on-click (fn [] (dispatch [:main/fetch-item-summary id]))}
-         [:span {
-                 ;:on-mouse-enter (fn [] (dispatch [:main/summarize-item c]))
-                 :data-content   summary-table
-                 :data-trigger   "hover"
-                 :data-placement "bottom"}
-          [:div.wrapper (if value value
-                                  [:i.fa.fa-ban.mostly-transparent])
-           #_[:div.tooltip summary-table]]]]))))
+        [tooltip
+         [:td.cell
+          {:on-mouse-enter (fn [] (dispatch [:main/summarize-item c]))
+           :style        {:position "relative"}
+           :data-content summary-table}
+          [:span (if value value [:i.fa.fa-ban.mostly-transparent])]]]))))
 
 (defn table-row [row] (into [:tr] (map (fn [c] [table-cell c])) row))

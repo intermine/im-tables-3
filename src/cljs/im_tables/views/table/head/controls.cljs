@@ -101,6 +101,12 @@
       [:div.dropdown-menu
        [column-summary view]]]]))
 
+[:div.dropdown
+ [:button.dropdown-toggle {:data-toggle "dropdown"}]
+ [:ul.dropdown-menu
+  [:li [:a "Item 1"]]
+  [:li [:a "Item 2"]]]]
+
 (defn main []
   (fn [view]
     [:div

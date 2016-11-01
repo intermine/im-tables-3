@@ -140,7 +140,7 @@
 (reg-event-db
   :main/cache-item-summary
   (fn [db [_ response]]
-    (update-in db [:cache :summaries]
+    (update-in db [:cache :item-details]
                (fn [summary-map]
                  (let [{:keys [objectId] :as r} (first (:results response))]
                    (assoc summary-map objectId
@@ -152,13 +152,15 @@
   :main/summarize-item
   (fn [{db :db} [_ {:keys [class] :as item}]]
     {:db           db
-     :im-operation {:on-success [:main/cache-item-summary]
-                    :op         (partial search/raw-query-rows
-                                         (get db :service)
-                                         (summary-query
-                                           (assoc item :summary-fields
-                                                       (into [] (keys (get-in db [:assets :model (keyword class) :attributes])))))
-                                         {:format "jsonobjects"})}}))
+     :im-operation {:on-success
+                    [:main/cache-item-summary]
+                    :op
+                    (partial search/raw-query-rows
+                             (get db :service)
+                             (summary-query
+                               (assoc item :summary-fields
+                                           (into [] (keys (get-in db [:assets :model (keyword class) :attributes])))))
+                             {:format "jsonobjects"})}}))
 
 ;;; PAGINATION
 
@@ -216,7 +218,7 @@
   (fn [{db :db}]
     (.debug js/console "Running query" (get db :query))
     {:db           (assoc-in db [:cache :column-summary] {})
-     :undo "Undo ran query"
+     :undo         "Undo ran query"
      :im-operation {:on-success [:main/save-query-response]
                     :op         (partial search/table-rows
                                          (get db :service)
