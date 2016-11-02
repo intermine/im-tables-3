@@ -15,4 +15,5 @@
                            :limit 10}}
    :cache    {:summaries {}
               :summary   {}
-              :selection {}}})
+              :selection {}
+              :tree-view {:selection #{}}}})

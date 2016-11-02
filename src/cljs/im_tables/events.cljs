@@ -30,10 +30,10 @@
      :dispatch-n (into [] (map (fn [view] [:main/summarize-column view]) (get results :views)))}))
 
 
-;(defn toggle-into-set [haystack needle]
-;  (if (some #{needle} haystack)
-;    (filter (fn [n] (not= n needle)) haystack)
-;    (conj haystack needle)))
+(defn toggle-into-set [haystack needle]
+  (if (some #{needle} haystack)
+    (filter (fn [n] (not= n needle)) haystack)
+    (conj haystack needle)))
 
 (defn flip-presence
   "If a key is present in a map then remove it, otherwise add the key
@@ -67,6 +67,22 @@
   (fn [db [_ view value]]
     (assoc-in db [:cache :column-summary view :filters :text]
               (if (= value "") nil value))))
+
+;;;;; TREE VIEW
+(reg-event-db
+  :tree-view/toggle-selection
+  (fn [db [_ path-vec]]
+    (update-in db [:cache :tree-view :selection] toggle-into-set path-vec)))
+
+(reg-event-fx
+  :tree-view/merge-new-columns
+  (fn [{db :db} []]
+    ; Drop the root of each path [Gene organism name] and create a string path "organism.name"
+    (let [columns-to-add (map (comp (partial clojure.string/join ".") rest) (get-in db [:cache :tree-view :selection]))]
+      {:db       (-> db
+                     (update-in [:query :select] #(apply conj % columns-to-add))
+                     (assoc-in [:cache :tree-view :selection] #{}))
+       :dispatch [:main/run-query]})))
 
 ;;;;; MANIPULATE QUERY
 

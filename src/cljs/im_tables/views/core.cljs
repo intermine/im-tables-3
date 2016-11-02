@@ -8,6 +8,8 @@
   (let [response   (subscribe [:main/query-response])
         pagination (subscribe [:settings/pagination])]
     (fn []
-      [:div
+      [:div.relative
        [dashboard/main @response @pagination]
-       [table/main @response]])))
+       [table/main @response]
+       ;[dashboard/overlay]
+       ])))

@@ -10,6 +10,7 @@
                  [day8.re-frame/async-flow-fx "0.0.6"]
                  [day8.re-frame/undo "0.3.2"]
                  [binaryage/oops "0.5.2"]
+                 [inflections "0.12.2"]
                  [org.clojure/core.async "0.2.395"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
@@ -23,7 +24,8 @@
                                     "test/js"]
 
   :figwheel {:css-dirs ["resources/public/css"]
-             :ring-handler im-tables.handler/dev-handler}
+             :ring-handler im-tables.handler/dev-handler
+             :server-port 3448}
 
   :less {:source-paths ["less"]
          :target-path  "resources/public/css"}

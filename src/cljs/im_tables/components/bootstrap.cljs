@@ -45,11 +45,14 @@
 
 (defn inner-tooltip []
   (fn [parent-data show-atom content]
-    [:div.arrow_box
-     {:on-mouse-enter (fn [] (reset! show-atom false))
-      :style          {:position "absolute"
-                       :top      (:height parent-data)}}
-     content]))
+    (reagent/create-class
+      {:name "ARROWBOX"
+       :reagent-render
+       [:div.arrow_box
+        {:on-mouse-enter (fn [] (reset! show-atom false))
+         :style          {:position "absolute"
+                          :top      (:height parent-data)}}
+        content]})))
 
 (defn tooltip
   "Reagent wrapper for bootstrap's popover component. It accepts
@@ -62,7 +65,8 @@
   (let [mystate (reagent/atom {})
         show?   (reagent/atom false)]
     (reagent/create-class
-      {:component-did-mount
+      {:name "BANANA"
+       :component-did-mount
        (fn [this]
          (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")]
            (swap! mystate assoc
@@ -85,7 +89,16 @@
                                                (do
                                                  (if-let [f (:on-mouse-leave attributes)] (f))
                                                  (reset! show? false)))))
-          (if @show? [inner-tooltip @mystate show? (:data-content attributes)])
+          (if @show?
+            [:div.test
+             [:div.arrow_box
+              {:on-mouse-enter (fn [] (reset! show? false))
+               :style          {:position "absolute"
+                                :top      (:height @mystate)}}
+              (:data-content attributes)]]
+
+            ;[inner-tooltip @mystate show? (:data-content attributes)]
+            )
           rest])})))
 
 

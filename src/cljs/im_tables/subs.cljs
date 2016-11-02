@@ -13,6 +13,11 @@
     (get db :query-response)))
 
 (reg-sub
+  :main/query
+  (fn [db]
+    (get db :query)))
+
+(reg-sub
   :summary/item-details
   (fn [db [_ id]]
     (get-in db [:cache :item-details id])))
@@ -41,3 +46,13 @@
   :selection/text-filter
   (fn [db [_ view]]
     (get-in db [:cache :column-summary view :filters :text])))
+
+(reg-sub
+  :assets/model
+  (fn [db]
+    (get-in db [:assets :model])))
+
+(reg-sub
+  :tree-view/selection
+  (fn [db]
+    (get-in db [:cache :tree-view :selection])))
