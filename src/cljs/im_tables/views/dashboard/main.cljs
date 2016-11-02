@@ -8,9 +8,9 @@
 
 (defn main []
   (fn [response pagination]
-    [:div
-     [column-manager/main]
+    [:div.container-fluid
      [:div.row
+      [column-manager/main]
       [:div.col-xs-12
        [:button.btn.btn-primary
         {:data-toggle "modal"
@@ -27,7 +27,3 @@
         [:div.col-xs-2 [undo/main]]
         [:div.col-xs-10 [:div.pull-right [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]]]]]))
 
-(defn overlay []
-  (fn [response pagination]
-    [:div.overlay
-     [column-manager/main]]))

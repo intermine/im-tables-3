@@ -7,15 +7,17 @@
 (defn main []
   (let [pagination (subscribe [:settings/pagination])]
     (fn [{:keys [results columnHeaders views] :as response}]
-      [:table.table.table-striped.table-condensed.table-bordered
-       [:thead
-        (into [:tr]
-              (map-indexed (fn [idx h]
-                             [table-head/header {:header h
-                                                 :view   (get views idx)}])
-                           columnHeaders))]
-       (into [:tbody]
-             (map (fn [r]
-                    ;(.log js/console "r" r)
-                    [table-body/table-row r])
-                  (take (:limit @pagination) (drop (:start @pagination) results))))])))
+      [:div.relative
+       [:table.table.table-striped.table-condensed.table-bordered
+        [:thead
+         (into [:tr]
+               (->> columnHeaders
+                    (map-indexed (fn [idx h]
+                                   [table-head/header {:header h
+                                                       :idx    idx
+                                                       :view   (get views idx)}]))))]
+        (into [:tbody]
+              (->> (take (:limit @pagination) (drop (:start @pagination) results))
+                   (map (fn [r] [table-body/table-row r]))))]
+       ;[:div.overlay]
+       ])))

@@ -21,9 +21,13 @@
                 [:td v]]))
            column-headers))])
 
-(defn table-cell [{id :id}]
+(defn table-cell [idx {id :id}]
   (let [show-tooltip? (reagent/atom false)
+        dragging-item (subscribe [:style/dragging-item])
+        dragging-over (subscribe [:style/dragging-over])
         my-dimensions (reagent/atom {})]
+
+
     (reagent/create-class
       {:name                   "Table Cell"
        :component-will-unmount (fn [])
@@ -37,15 +41,20 @@
                                           :top (oget bb "top")
                                           :bottom (oget bb "bottom"))))
        :reagent-render         (let [summary (subscribe [:summary/item-details id])]
-                                 (fn [{:keys [value id] :as c}]
-                                   (let [summary-table (generate-summary-table @summary)]
+                                 (fn [idx {:keys [value id] :as c}]
+
+                                   (let [summary-table (generate-summary-table @summary)
+                                         drag-class    (cond
+                                                         (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
+                                                         (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
                                      [:td.cell
                                       {:on-mouse-enter (fn []
                                                          (dispatch [:main/summarize-item c])
                                                          (reset! show-tooltip? true))
                                        :on-mouse-leave (fn []
                                                          (reset! show-tooltip? false))
-                                       :style          {:position "relative"}}
+                                       :style          {:position "relative"}
+                                       :class          drag-class}
                                       [:span (if value value [:i.fa.fa-ban.mostly-transparent])]
                                       (if @show-tooltip?
                                         [:div.test
@@ -61,4 +70,4 @@
 (defn table-row [row]
   (into [:tr]
         (map-indexed (fn [idx c]
-                       ^{:key (str idx (:id c) (:column c))} [table-cell c])) row))
+                       ^{:key (str idx (:id c) (:column c))} [table-cell idx c])) row))

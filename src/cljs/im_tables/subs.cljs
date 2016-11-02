@@ -23,6 +23,16 @@
     (get-in db [:cache :item-details id])))
 
 (reg-sub
+  :style/dragging-item
+  (fn [db [_]]
+    (get-in db [:cache :dragging-item])))
+
+(reg-sub
+  :style/dragging-over
+  (fn [db [_]]
+    (get-in db [:cache :dragging-over])))
+
+(reg-sub
   :settings/pagination
   (fn [db]
     (get-in db [:settings :pagination])))

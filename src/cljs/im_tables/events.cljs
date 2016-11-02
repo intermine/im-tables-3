@@ -84,6 +84,31 @@
                      (assoc-in [:cache :tree-view :selection] #{}))
        :dispatch [:main/run-query]})))
 
+;;;;; STYLE
+
+(defn swap [v i1 i2]
+  (assoc v i2 (v i1) i1 (v i2)))
+
+(reg-event-db
+  :style/dragging-item
+  (fn [db [_ idx]]
+    (assoc-in db [:cache :dragging-item] idx)))
+
+(reg-event-db
+  :style/dragging-over
+  (fn [db [_ idx]]
+    (assoc-in db [:cache :dragging-over] idx)))
+
+(reg-event-fx
+  :style/dragging-finished
+  (fn [{db :db} [_]]
+    (let [dragged-item (get-in db [:cache :dragging-item])
+          dragged-over (get-in db [:cache :dragging-over])]
+      (cond-> {:db (-> db
+                       (update-in [:query :select] swap dragged-item dragged-over)
+                       (update-in [:cache] dissoc :dragging-item :dragging-over))}
+              (not= dragged-item dragged-over) (assoc :dispatch [:main/run-query])))))
+
 ;;;;; MANIPULATE QUERY
 
 (reg-event-db
