@@ -16,4 +16,5 @@
    :cache    {:summaries {}
               :summary   {}
               :selection {}
+              :overlay? false
               :tree-view {:selection #{}}}})

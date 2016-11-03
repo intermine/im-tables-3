@@ -16,9 +16,10 @@
          (map-indexed
            (fn [idx column-header]
              (if-let [v (get-in value (dot-split (get (:views summary) idx)))]
-               [:tr
-                [:td (clojure.string/join " > " (drop 1 (clojure.string/split column-header " > ")))]
-                [:td v]]))
+               (let [v (if (and (string? v) (> (count v) 200)) (str (clojure.string/join (take 200 v)) "...") v)]
+                 [:tr
+                 [:td (clojure.string/join " > " (drop 1 (clojure.string/split column-header " > ")))]
+                 [:td v]])))
            column-headers))])
 
 (defn table-cell [idx {id :id}]

@@ -4,11 +4,5 @@
 
 (defn main-panel []
   (fn []
-    [:div
-     [:div.panel.panel-default
-      [:div.panel-body
-
-       ;[:h1 "IM-Tables CLJS"]
-       ]]
-     [:div.container
-      [main-view/main]]]))
+    [:div.container
+     [main-view/main]]))

@@ -23,6 +23,7 @@
                                     original-view? "label label-default"
                                     selected? "label label-success disabled")}
                           [:i.fa.fa-tag] name]])) (vals attributes)))
+         (.log js/console "c" (vals collections))
          (into [:ul.collections.list-unstyled]
                (map (fn [{:keys [name referencedType name] :as collection}]
                       (let [referenced-class (get model (keyword referencedType))]
@@ -32,7 +33,7 @@
                           (plural (:displayName referenced-class))]
                          (if (get @expanded-map name)
                            [tree-node (keyword referencedType) referenced-class model (conj current-path name) selected])]))
-                    (vals collections)))]))))
+                    (sort-by (comp clojure.string/upper-case :referencedType) (vals collections))))]))))
 
 (defn tree-view []
   (fn [model query selected]

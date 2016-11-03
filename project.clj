@@ -1,7 +1,9 @@
 (defproject im-tables "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/clojurescript "1.9.229"]
-                 [reagent "0.6.0"]
+                 ;[reagent "0.6.0"]
+                 [reagent "0.6.0" :exclusions [cljsjs/react]]
+                 [cljsjs/react-with-addons "15.3.1-0"]
                  [re-frame "0.8.0"]
                  [compojure "1.5.0"]
                  [yogthos/config "0.8"]

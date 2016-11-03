@@ -1,6 +1,33 @@
 @import "overrides";
 @import "tooltip";
 
+.fade-enter {
+  opacity: 0.01;
+}
+
+.fade-enter.fade-enter-active {
+  opacity: 1;
+  transition: opacity 50ms ease-in;
+}
+
+.fade-leave {
+  opacity: 1;
+}
+
+.fade-leave.fade-leave-active {
+  opacity: 0.01;
+  transition: opacity 50ms ease-in;
+}
+
+.fade-appear {
+  opacity: 0.01;
+}
+
+.fade-appear.fade-appear-active {
+  opacity: 1;
+  transition: opacity 50ms ease-in;
+}
+
 .relative {
     position: relative;
 }
@@ -30,11 +57,12 @@
     z-index: 999;
     width: 100%;
     height: 100%;
-    opacity: 0.8;
+    opacity: 0.95;
     display: flex;
-    //color: white;
-    // align-items: center;
-    // justify-content: center;
+    color: black;
+    align-items: center;
+     justify-content: center;
+
 
 }
 
@@ -101,9 +129,16 @@ rect.histo {
 }
 
 div.summary-toolbar {
+    vertical-align: top;
+    display: inline-block;
+    white-space: nowrap;
     & > * {
         padding: 2px;
     }
+}
+
+.dropdown-menu {
+    white-space: normal;
 }
 
 .more-below {

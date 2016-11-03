@@ -16,7 +16,7 @@
           :draggable     true
           :on-drag-over  (fn [] (dispatch [:style/dragging-over idx]))
           :on-drag-start (fn [] (dispatch [:style/dragging-item idx]))
-          :on-drag-end   (fn [] (dispatch [:style/dragging-finished]))}
+          :on-drag-end   (fn [] (dispatch ^:flush-dom [:style/dragging-finished]))}
          [controls/main view]
          [:div
           [:div class]

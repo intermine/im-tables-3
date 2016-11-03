@@ -47,8 +47,6 @@
        (fn [view]
          (let [close-fn (partial force-close (reagent/current-component))]
            [:form.form.min-width-250
-            [:div.btn
-             {:on-click close-fn} "Close"]
             [histogram/main (:results @response)]
             [filter-input view @text-filter]
             [:div.max-height-400

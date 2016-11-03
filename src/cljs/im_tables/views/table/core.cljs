@@ -1,5 +1,6 @@
 (ns im-tables.views.table.core
   (:require [re-frame.core :refer [subscribe dispatch]]
+            [reagent.core :as reagent]
             [im-tables.views.table.head.main :as table-head]
             [im-tables.views.table.body.main :as table-body]
             [im-tables.views.dashboard.main :as dashboard]))
@@ -18,6 +19,4 @@
                                                        :view   (get views idx)}]))))]
         (into [:tbody]
               (->> (take (:limit @pagination) (drop (:start @pagination) results))
-                   (map (fn [r] [table-body/table-row r]))))]
-       ;[:div.overlay]
-       ])))
+                   (map (fn [r] [table-body/table-row r]))))]])))

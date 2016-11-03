@@ -17,6 +17,16 @@
                                 :main/save-model]
                      :dispatch [:main/run-query]}]})
 
+(reg-event-db
+  :show-overlay
+  (fn [db]
+    (assoc-in db [:cache :overlay?] true)))
+
+(reg-event-db
+  :hide-overlay
+  (fn [db]
+    (assoc-in db [:cache :overlay?] false)))
+
 (re-frame/reg-event-fx
   :initialize-db
   (fn [_ _]
@@ -27,7 +37,8 @@
   :main/save-query-response
   (fn [{db :db} [_ results]]
     {:db         (assoc db :query-response results)
-     :dispatch-n (into [] (map (fn [view] [:main/summarize-column view]) (get results :views)))}))
+     :dispatch-n (into [^:flush-dom [:hide-overlay]]
+                       (map (fn [view] [:main/summarize-column view]) (get results :views)))}))
 
 
 (defn toggle-into-set [haystack needle]
@@ -36,14 +47,11 @@
     (conj haystack needle)))
 
 (defn flip-presence
-  "If a key is present in a map then remove it, otherwise add the key
-  with a value of true."
+  "If a key is present in a map then remove it, otherwise add the key with a value of true."
   [m k]
-  (if (contains? m k)
-    (dissoc m k)
-    (assoc m k true)))
+  (if (contains? m k) (dissoc m k) (assoc m k true)))
 
-;;;; TRASIENT VALUES
+;;;; TRANSIENT VALUES
 
 ;TODO turn stub into working code
 (reg-event-db
@@ -107,7 +115,9 @@
       (cond-> {:db (-> db
                        (update-in [:query :select] swap dragged-item dragged-over)
                        (update-in [:cache] dissoc :dragging-item :dragging-over))}
-              (not= dragged-item dragged-over) (assoc :dispatch [:main/run-query])))))
+              (not= dragged-item dragged-over) (assoc :dispatch-n
+                                                      [^:flush-dom [:show-overlay]
+                                                       [:main/run-query]])))))
 
 ;;;;; MANIPULATE QUERY
 
@@ -261,6 +271,7 @@
     (.debug js/console "Running query" (get db :query))
     {:db           (assoc-in db [:cache :column-summary] {})
      :undo         "Undo ran query"
+     :dispatch ^:flush-dom [:show-overlay]
      :im-operation {:on-success [:main/save-query-response]
                     :op         (partial search/table-rows
                                          (get db :service)

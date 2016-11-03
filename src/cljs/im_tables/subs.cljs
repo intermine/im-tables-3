@@ -18,6 +18,11 @@
     (get db :query)))
 
 (reg-sub
+  :style/overlay?
+  (fn [db]
+    (get-in db [:cache :overlay?])))
+
+(reg-sub
   :summary/item-details
   (fn [db [_ id]]
     (get-in db [:cache :item-details id])))
