@@ -6,6 +6,7 @@
             [im-tables.effects]
             [imcljs.search :as search]
             [imcljs.assets :as assets]
+            [imcljs.filters :as filters]
             [oops.core :refer [oapply oget]]
             [clojure.string :refer [split join]]))
 
@@ -50,6 +51,59 @@
   "If a key is present in a map then remove it, otherwise add the key with a value of true."
   [m k]
   (if (contains? m k) (dissoc m k) (assoc m k true)))
+
+
+;;;; FILTERS
+
+(def alphabet (clojure.string/split "ABCDEFGHIJKLMNOPQRSTUVWXYZ" ""))
+
+(defn haystack-has? [haystack needle]
+  (some? (some #{needle} haystack)))
+
+(defn first-letter [letters]
+  (first (drop-while (partial haystack-has? letters) alphabet)))
+
+(reg-event-db
+  :main/set-temp-query
+  (fn [db]
+    (assoc db :temp-query (get db :query))))
+
+(reg-event-db
+  :filters/update-constraint
+  (fn [db [_ new-constraint]]
+    (.log js/console "new constraint" new-constraint)
+    (update-in db [:temp-query :where]
+               (fn [constraints]
+                 (map (fn [constraint]
+                        (if (= (:code new-constraint) (:code constraint))
+                          new-constraint
+                          constraint)) constraints)))))
+
+
+
+(reg-event-db
+  :filters/add-constraint
+  (fn [db [_ new-constraint]]
+    (update-in db [:temp-query :where]
+               (fn [constraints]
+                 (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))))
+
+
+(reg-event-db
+  :filters/remove-constraint
+  (fn [db [_ new-constraint]]
+    (update-in db [:temp-query :where]
+               (fn [constraints]
+                 (remove nil? (map (fn [constraint]
+                                     (if (= constraint new-constraint)
+                                       nil
+                                       constraint)) constraints))))))
+
+(reg-event-fx
+  :filters/save-changes
+  (fn [{db :db}]
+    {:db       (assoc db :query (get db :temp-query))
+     :dispatch [:main/run-query]}))
 
 ;;;; TRANSIENT VALUES
 
@@ -271,10 +325,18 @@
     (.debug js/console "Running query" (get db :query))
     {:db           (assoc-in db [:cache :column-summary] {})
      :undo         "Undo ran query"
-     :dispatch ^:flush-dom [:show-overlay]
+     :dispatch-n   [^:flush-dom [:show-overlay]
+                    [:main/deconstruct]]
      :im-operation {:on-success [:main/save-query-response]
                     :op         (partial search/table-rows
                                          (get db :service)
                                          (get db :query)
                                          {:format "json"})}}))
+
+(reg-event-db
+  :main/deconstruct
+  (fn [db]
+    ;(filters/p (get-in db [:assets :model]) (get db :query))
+    (.log js/console "D" (filters/p (get-in db [:assets :model]) (get-in db [:query])))
+    db))
 

@@ -4,9 +4,8 @@
 (defn main []
   (let [undos (subscribe [:undos?])]
     (fn []
-      [:div.btn-toolbar
-       [:button.btn.btn-default
-        {:disabled (not @undos)
-         :on-click (fn []
-                     (dispatch [:undo])
-                     (dispatch [:purge-redos]))} "Undo"]])))
+      [:button.btn.btn-default
+       {:disabled (not @undos)
+        :on-click (fn []
+                    (dispatch [:undo])
+                    (dispatch [:purge-redos]))} "Undo"])))

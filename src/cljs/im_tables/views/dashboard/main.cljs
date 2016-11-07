@@ -1,7 +1,8 @@
 (ns im-tables.views.dashboard.main
   (:require [im-tables.views.dashboard.pagination :as pager]
             [im-tables.views.dashboard.manager.columns.main :as column-manager]
-            [im-tables.views.dashboard.undo :as undo]))
+            [im-tables.views.dashboard.undo :as undo]
+            [im-tables.views.dashboard.save :as save]))
 
 
 
@@ -25,6 +26,8 @@
       [:div.col-xs-6
        [:div.container-fluid
         [:div.row
-         [:div.col-xs-2 [undo/main]]
+         [:div.col-xs-2 [:div.btn-toolbar
+                         [save/main]
+                         [undo/main]]]
          [:div.col-xs-10 [:div.pull-right [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]]]]]]))
 

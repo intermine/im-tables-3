@@ -18,6 +18,11 @@
     (get db :query)))
 
 (reg-sub
+  :main/temp-query
+  (fn [db]
+    (get db :temp-query)))
+
+(reg-sub
   :style/overlay?
   (fn [db]
     (get-in db [:cache :overlay?])))

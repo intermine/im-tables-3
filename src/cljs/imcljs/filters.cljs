@@ -133,6 +133,18 @@
                    (:select query)))))
 
 
+(defn p
+  "Get all of the different parts of an intermine query and group them by type"
+  [model query]
+  (.log js/console "decon query" (sterilize-query query))
+  (distinct (map (fn [path]
+                   (assoc {}
+                     :type (im-type model path)
+                     :path (trim-path-to-class model path)
+                     :query {:select [(str (trim-path-to-class model path) ".id")]
+                             :where  (:where query)}))
+                 (:select (sterilize-query query)))))
+
 
 
 (defn deconstruct-query

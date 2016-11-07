@@ -23,7 +23,6 @@
                                     original-view? "label label-default"
                                     selected? "label label-success disabled")}
                           [:i.fa.fa-tag] name]])) (vals attributes)))
-         (.log js/console "c" (vals collections))
          (into [:ul.collections.list-unstyled]
                (map (fn [{:keys [name referencedType name] :as collection}]
                       (let [referenced-class (get model (keyword referencedType))]
