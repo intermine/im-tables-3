@@ -7,16 +7,64 @@
             [imcljs.search :as search]
             [imcljs.assets :as assets]
             [imcljs.filters :as filters]
+            [imcljs.user :as user]
+            [imcljs.save :as save]
+            [imcljs.utils :refer [query->xml]]
             [oops.core :refer [oapply oget]]
             [clojure.string :refer [split join]]))
 
+(reg-event-db
+  :xmlify
+  (fn [db]
+    (println "DONE" (query->xml (get-in db [:assets :model]) (get db :query)))
+    db))
+
+
+
 (defn boot-flow
   []
-  {:first-dispatch [:main/fetch-assets]
-   :rules          [{:when     :seen-all-of?
+  {:first-dispatch [:authentication/fetch-anonymous-token {:root "www.flymine.org/query"}]
+   :rules          [{:when     :seen?
+                     :events   [:authentication/store-token]
+                     :dispatch [:main/fetch-assets]}
+                    {:when     :seen-all-of?
                      :events   [:main/save-summary-fields
                                 :main/save-model]
                      :dispatch [:main/run-query]}]})
+
+; Store an authentication token for a given mine
+(reg-event-db
+  :authentication/store-token
+  (fn [db [_ token]]
+    (assoc-in db [:user :token] token)))
+
+(reg-event-db
+  :success-save
+  (fn [db [_ response]]
+    (.debug js/console "List Saved" response)
+    db))
+
+
+
+(reg-event-fx
+  :save
+  (fn [{db :db} [_ query options]]
+    {:db db
+     :im-operation {:on-success [:success-save]
+                    :op         (partial save/query-to-list (get db :service) query options)}}))
+
+(reg-event-fx
+  :prep-modal
+  (fn [{db :db} [_ contents]]
+    {:db (assoc-in db [:cache :modal] contents)}))
+
+; Fetch an anonymous token for a give
+(reg-event-fx
+  :authentication/fetch-anonymous-token
+  (fn [{db :db} [_ service]]
+    {:db           db
+     :im-operation {:on-success [:authentication/store-token]
+                    :op         (partial user/session service)}}))
 
 (reg-event-db
   :show-overlay
@@ -71,7 +119,6 @@
 (reg-event-db
   :filters/update-constraint
   (fn [db [_ new-constraint]]
-    (.log js/console "new constraint" new-constraint)
     (update-in db [:temp-query :where]
                (fn [constraints]
                  (map (fn [constraint]
@@ -265,7 +312,7 @@
                                            (get db :service)
                                            (summary-query
                                              (assoc item :summary-fields
-                                                         (into [] (keys (get-in db [:assets :model (keyword class) :attributes])))))
+                                                         (into [] (keys (get-in db [:assets :model :classes (keyword class) :attributes])))))
                                            {:format "jsonobjects"})}))))
 
 ;;; PAGINATION
@@ -330,6 +377,8 @@
      :im-operation {:on-success [:main/save-query-response]
                     :op         (partial search/table-rows
                                          (get db :service)
+                                         (get-in db [:assets :model])
+                                         (get db :query)
                                          (get db :query)
                                          {:format "json"})}}))
 
@@ -337,7 +386,6 @@
 (reg-event-db
   :main/save-decon-count
   (fn [db [_ path count]]
-    (.log js/console "HUMAN" (filters/humanify (get-in db [:assets :model]) path))
     (assoc-in db [:query-parts path :count] count)))
 
 (reg-event-fx

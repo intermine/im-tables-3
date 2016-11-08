@@ -101,7 +101,7 @@
 
 
 (defn referenced-type [model class-kw field-kw]
-  (keyword (:referencedType (field-kw (apply merge (map (class-kw model) [:references :collections]))))))
+  (keyword (:referencedType (field-kw (apply merge (map (get-in model [:classes class-kw]) [:references :collections]))))))
 
 
 (defn im-type

@@ -1,11 +1,11 @@
 (ns im-tables.subs
-    (:require-macros [reagent.ratom :refer [reaction]])
-    (:require [re-frame.core :as re-frame :refer [reg-sub]]))
+  (:require-macros [reagent.ratom :refer [reaction]])
+  (:require [re-frame.core :as re-frame :refer [reg-sub]]))
 
 (re-frame/reg-sub
- :name
- (fn [db]
-   (:name db)))
+  :name
+  (fn [db]
+    (:name db)))
 
 (reg-sub
   :main/query-response
@@ -75,9 +75,14 @@
 (reg-sub
   :assets/model
   (fn [db]
-    (get-in db [:assets :model])))
+    (get-in db [:assets :model :classes])))
 
 (reg-sub
   :tree-view/selection
   (fn [db]
     (get-in db [:cache :tree-view :selection])))
+
+(reg-sub
+  :modal
+  (fn [db]
+    (get-in db [:cache :modal])))

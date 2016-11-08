@@ -23,9 +23,9 @@
 (defn model
   "Returns the InterMine data model for the given mine"
   [{root :root token :token}]
-  (go (:classes (:model (:body (<! (http/get (str (cleanse-url root) "/model")
-                                    {:query-params      {:format "json"}
-                                     :with-credentials? false})))))))
+  (go (:model (:body (<! (http/get (str (cleanse-url root) "/model")
+                                   {:query-params      {:format "json"}
+                                    :with-credentials? false}))))))
 
 (defn summary-fields
   "Returns the summary fields associated with the model"

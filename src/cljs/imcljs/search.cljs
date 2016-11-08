@@ -1,7 +1,7 @@
 (ns imcljs.search
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs-http.client :as http]
-            [imcljs.utils :as utils :refer [cleanse-url]]
+            [imcljs.utils :as utils :refer [cleanse-url query->xml]]
             [cljs.core.async :refer [put! chan <! >! timeout close!]]))
 
 
@@ -61,19 +61,14 @@
 
 (defn table-rows
   "Returns IMJS row-style result"
-  [service query & [options]]
+  [service model query & [options]]
   (let [c (chan)]
-    (-> (js/imjs.Service. (clj->js service))
-        (.query (clj->js query))
-        (.then (fn [q]
-                 (go (let [root (utils/cleanse-url (:root service))
-                           response (<! (http/post (str root "/query/results/tablerows")
-                                                   {:with-credentials? false
-                                                    :form-params       (merge {:format "json"} options {:query (.toXML q)})}))]
-                       (>! c (-> response :body))
-                       (close! c))))
-               (fn [error]
-                 (println "ERROR" error))))
+    (go (let [root (utils/cleanse-url (:root service))
+              response (<! (http/post (str root "/query/results/tablerows")
+                                      {:with-credentials? false
+                                       :form-params       (merge {:format "json"} options {:query (query->xml model query)})}))]
+          (>! c (-> response :body))
+          (close! c)))
     c))
 
 

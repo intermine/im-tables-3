@@ -1,4 +1,4 @@
-(defproject im-tables "0.1.0-SNAPSHOT"
+(defproject intermine/im-tables "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/clojurescript "1.9.229"]
                  ;[reagent "0.6.0"]
@@ -25,9 +25,9 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
                                     "test/js"]
 
-  :figwheel {:css-dirs ["resources/public/css"]
+  :figwheel {:css-dirs     ["resources/public/css"]
              :ring-handler im-tables.handler/dev-handler
-             :server-port 3448}
+             :server-port  3448}
 
   :less {:source-paths ["less"]
          :target-path  "resources/public/css"}
@@ -56,7 +56,7 @@
 
     {:id           "min"
      :source-paths ["src/cljs"]
-     :jar true
+     :jar          true
      :compiler     {:main            im-tables.core
                     :output-to       "resources/public/js/compiled/app.js"
                     :optimizations   :advanced
@@ -77,5 +77,5 @@
 
   :uberjar-name "im-tables.jar"
 
-  :prep-tasks [["cljsbuild" "once" "min"]["less" "once"] "compile"]
+  :prep-tasks [["cljsbuild" "once" "min"] ["less" "once"] "compile"]
   )

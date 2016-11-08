@@ -48,11 +48,11 @@
     (reagent/create-class
       {:name "ARROWBOX"
        :reagent-render
-       [:div.arrow_box
-        {:on-mouse-enter (fn [] (reset! show-atom false))
-         :style          {:position "absolute"
-                          :top      (:height parent-data)}}
-        content]})))
+             [:div.arrow_box
+              {:on-mouse-enter (fn [] (reset! show-atom false))
+               :style          {:position "absolute"
+                                :top      (:height parent-data)}}
+              content]})))
 
 (defn tooltip
   "Reagent wrapper for bootstrap's popover component. It accepts
@@ -67,39 +67,49 @@
     (reagent/create-class
       {:name "BANANA"
        :component-did-mount
-       (fn [this]
-         (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")]
-           (swap! mystate assoc
-                  :width (oget bb "width")
-                  :height (oget bb "height")
-                  :left (oget bb "left")
-                  :right (oget bb "right")
-                  :top (oget bb "top")
-                  :bottom (oget bb "bottom"))))
+             (fn [this]
+               (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")]
+                 (swap! mystate assoc
+                        :width (oget bb "width")
+                        :height (oget bb "height")
+                        :left (oget bb "left")
+                        :right (oget bb "right")
+                        :top (oget bb "top")
+                        :bottom (oget bb "bottom"))))
        :component-did-update
-       (fn [this])
+             (fn [this])
        :reagent-render
-       (fn [[element attributes & rest]]
-         [element (-> attributes
-                      (assoc :on-mouse-enter (fn []
-                                               (do
-                                                 (if-let [f (:on-mouse-enter attributes)] (f))
-                                                 (reset! show? true))))
-                      (assoc :on-mouse-leave (fn [x]
-                                               (do
-                                                 (if-let [f (:on-mouse-leave attributes)] (f))
-                                                 (reset! show? false)))))
-          (if @show?
-            [:div.test
-             [:div.arrow_box
-              {:on-mouse-enter (fn [] (reset! show? false))
-               :style          {:position "absolute"
-                                :top      (:height @mystate)}}
-              (:data-content attributes)]]
+             (fn [[element attributes & rest]]
+               [element (-> attributes
+                            (assoc :on-mouse-enter (fn []
+                                                     (do
+                                                       (if-let [f (:on-mouse-enter attributes)] (f))
+                                                       (reset! show? true))))
+                            (assoc :on-mouse-leave (fn [x]
+                                                     (do
+                                                       (if-let [f (:on-mouse-leave attributes)] (f))
+                                                       (reset! show? false)))))
+                (if @show?
+                  [:div.test
+                   [:div.arrow_box
+                    {:on-mouse-enter (fn [] (reset! show? false))
+                     :style          {:position "absolute"
+                                      :top      (:height @mystate)}}
+                    (:data-content attributes)]]
 
-            ;[inner-tooltip @mystate show? (:data-content attributes)]
-            )
-          rest])})))
+                  ;[inner-tooltip @mystate show? (:data-content attributes)]
+                  )
+                rest])})))
 
 
+
+(defn modal []
+  (fn [{:keys [header body footer]}]
+    [:div#testModal.modal.fade {:role "dialog"}
+     [:div.modal-dialog
+      [:div.modal-content
+       [:div.modal-header header]
+       body
+       [:div.modal-footer
+        footer]]]]))
 

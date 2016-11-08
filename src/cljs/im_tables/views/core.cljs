@@ -3,23 +3,33 @@
             [reagent.core :as reagent]
             [im-tables.views.dashboard.main :as dashboard]
             [im-tables.views.table.core :as table]
-            ))
+            [im-tables.components.bootstrap :refer [modal]]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/React.addons.CSSTransitionGroup))
 
+(defn table-thinking []
+  (fn [show?]
+    [css-transition-group
+     {:transition-name          "fade"
+      :transition-enter-timeout 50
+      :transition-leave-timeout 50}
+     (if show?
+       [:div.overlay
+        [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
+
 (defn main []
-  (let [response   (subscribe [:main/query-response])
-        pagination (subscribe [:settings/pagination])
-        overlay? (subscribe [:style/overlay?])]
+  (let [response     (subscribe [:main/query-response])
+        pagination   (subscribe [:settings/pagination])
+        overlay?     (subscribe [:style/overlay?])
+        modal-markup (subscribe [:modal])]
     (fn []
       [:div.relative
-       [css-transition-group
-        {:transition-name          "fade"
-         :transition-enter-timeout 50
-         :transition-leave-timeout 50}
-        (if @overlay?
-          [:div.overlay
-           [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]
+       ; Cover the app whenever it's thinking
+       [table-thinking @overlay?]
+       ; The dashboard above the table (controls
        [dashboard/main @response @pagination]
-       [table/main @response]])))
+       ; The actual table
+       [table/main @response]
+       ; Use just one modal and change its contents dynamically
+       [modal @modal-markup]])))
