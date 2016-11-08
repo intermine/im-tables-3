@@ -27,7 +27,7 @@
        [:div.container-fluid
         [:div.row
          [:div.col-xs-2 [:div.btn-toolbar
-                         [save/main]
+                         [save/main response]
                          [undo/main]]]
          [:div.col-xs-10 [:div.pull-right [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]]]]]]))
 

@@ -136,14 +136,24 @@
 (defn p
   "Get all of the different parts of an intermine query and group them by type"
   [model query]
-  (.log js/console "decon query" (sterilize-query query))
-  (distinct (map (fn [path]
-                   (assoc {}
-                     :type (im-type model path)
-                     :path (trim-path-to-class model path)
-                     :query {:select [(str (trim-path-to-class model path) ".id")]
-                             :where  (:where query)}))
-                 (:select (sterilize-query query)))))
+  (reduce (fn [total path]
+            (assoc total (trim-path-to-class model path)
+                         {:type  (im-type model path)
+                          :path  (trim-path-to-class model path)
+                          :query {:select [(str (trim-path-to-class model path) ".id")]
+                                  :where  (:where query)}}))
+          {} (:select (sterilize-query query))))
+
+;(defn display-name [model class-kw]
+;  (get-in model [class-kw :displayName]))
+
+(defn humanify [model path]
+  (let [parts (map keyword (clojure.string/split path "."))]
+    (->>
+      (reduce (fn [total next]
+               (let [referenced-type (referenced-type model (last total) next)]
+                 (conj total referenced-type))) [(first parts)] (rest parts))
+      (map (partial display-name model)))))
 
 
 

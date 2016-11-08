@@ -333,10 +333,27 @@
                                          (get db :query)
                                          {:format "json"})}}))
 
+
 (reg-event-db
+  :main/save-decon-count
+  (fn [db [_ path count]]
+    (.log js/console "HUMAN" (filters/humanify (get-in db [:assets :model]) path))
+    (assoc-in db [:query-parts path :count] count)))
+
+(reg-event-fx
+  :main/count-deconstruction
+  (fn [{db :db} [_ path details]]
+    {:db           db
+     :im-operation {:on-success [:main/save-decon-count path]
+                    :op         (partial search/raw-query-rows
+                                         (get db :service)
+                                         (get details :query)
+                                         {:format "count"})}}))
+
+(reg-event-fx
   :main/deconstruct
-  (fn [db]
-    ;(filters/p (get-in db [:assets :model]) (get db :query))
-    (.log js/console "D" (filters/p (get-in db [:assets :model]) (get-in db [:query])))
-    db))
+  (fn [{db :db}]
+    (let [deconstructed-query (filters/p (get-in db [:assets :model]) (get-in db [:query]))]
+      {:db         (assoc db :query-parts deconstructed-query)
+       :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction part details]) deconstructed-query))})))
 

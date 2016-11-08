@@ -6,7 +6,7 @@
 (defn header []
   (let [dragging-item (subscribe [:style/dragging-item])
         dragging-over (subscribe [:style/dragging-over])]
-    (fn [{:keys [idx header view]}]
+    (fn [{:keys [idx header view] :as header}]
       (let [drag-class (cond
                          (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
                          (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")
