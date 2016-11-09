@@ -1,7 +1,7 @@
-(ns imcljs.search
+(ns imcljsold.search
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs-http.client :as http]
-            [imcljs.utils :as utils :refer [cleanse-url query->xml]]
+            [imcljsold.utils :as utils :refer [cleanse-url query->xml]]
             [cljs.core.async :refer [put! chan <! >! timeout close!]]))
 
 

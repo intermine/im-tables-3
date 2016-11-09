@@ -1,9 +1,9 @@
-(ns imcljs.operations
+(ns imcljsold.operations
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs-http.client :as http]
-            [imcljs.utils :as utils :refer [cleanse-url]]
+            [imcljsold.utils :as utils :refer [cleanse-url]]
             [clojure.set :as set :refer [union intersection difference]]
-            [imcljs.search :as search]
+            [imcljsold.search :as search]
             [cljs.core.async :refer [put! chan <! >! timeout close!]]))
 
 (defn quicksearch

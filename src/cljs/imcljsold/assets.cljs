@@ -1,9 +1,9 @@
-(ns imcljs.assets
+(ns imcljsold.assets
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require
             [re-frame.core :as re-frame :refer [subscribe dispatch]]
             [cljs-http.client :as http]
-            [imcljs.utils :as utils :refer [cleanse-url]]
+            [imcljsold.utils :as utils :refer [cleanse-url]]
             [cljs.core.async :refer [put! chan <! >! timeout close!]]))
 
 (defn templates

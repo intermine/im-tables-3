@@ -1,8 +1,8 @@
 (ns im-tables.views.dashboard.save
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
-            [imcljs.filters :as filters]
-            [imcljs.save :as save]
+            [imcljsold.filters :as filters]
+            [imcljsold.save :as save]
             [oops.core :refer [oget ocall ocall!]]
             [inflections.core :refer [plural]]
             [im-tables.components.bootstrap :refer [modal]]))

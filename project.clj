@@ -1,7 +1,6 @@
-(defproject intermine/im-tables "0.1.0-SNAPSHOT"
+(defproject intermine/im-tables "0.1.1-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/clojurescript "1.9.229"]
-                 ;[reagent "0.6.0"]
                  [reagent "0.6.0" :exclusions [cljsjs/react]]
                  [cljsjs/react-with-addons "15.3.1-0"]
                  [re-frame "0.8.0"]
@@ -13,7 +12,8 @@
                  [day8.re-frame/undo "0.3.2"]
                  [binaryage/oops "0.5.2"]
                  [inflections "0.12.2"]
-                 [org.clojure/core.async "0.2.395"]]
+                 [org.clojure/core.async "0.2.395"]
+                 [intermine/imcljs "0.1.1-SNAPSHOT"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-less "1.7.5"]]
