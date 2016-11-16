@@ -70,11 +70,5 @@
                     :optimizations :none}}
     ]}
 
-  :main im-tables.server
-
-  :aot [im-tables.server]
-
-  :uberjar-name "im-tables.jar"
-
   :prep-tasks [["cljsbuild" "once" "min"] ["less" "once"] "compile"]
   )
