@@ -23,13 +23,19 @@
         pagination   (subscribe [:settings/pagination])
         overlay?     (subscribe [:style/overlay?])
         modal-markup (subscribe [:modal])]
-    (fn []
-      [:div.relative
-       ; Cover the app whenever it's thinking
-       [table-thinking @overlay?]
-       ; The dashboard above the table (controls
-       [dashboard/main @response @pagination]
-       ; The actual table
-       [table/main @response]
-       ; Use just one modal and change its contents dynamically
-       [modal @modal-markup]])))
+    (reagent/create-class
+      {:component-will-mount
+       (fn [e]
+         (let [{:keys [path state]} (reagent/props e)]
+           (dispatch [:replace-all-state path state])))
+       :reagent-render
+       (fn []
+         [:div.relative
+          ; Cover the app whenever it's thinking
+          [table-thinking @overlay?]
+          ; The dashboard above the table (controls
+          [dashboard/main @response @pagination]
+          ; The actual table
+          [table/main @response]
+          ; Use just one modal and change its contents dynamically
+          [modal @modal-markup]])})))

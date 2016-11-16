@@ -4,6 +4,6 @@
             [cljs.core.async :refer [<! timeout close!]]))
 
 (reg-fx
-  :im-operation
+  :im-tables/im-operation
   (fn [{:keys [on-success on-failure response-format op params]}]
     (go (dispatch (conj on-success (<! (op)))))))

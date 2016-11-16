@@ -1,8 +1,7 @@
 (ns im-tables.db)
 
 (def default-db
-  {:name     "im-tables"
-   :service  {:root "www.flymine.org/query"}
+  {:service  {:root "www.flymine.org/query"}
    :query    {:from   "Gene"
               :size 10
               :select ["secondaryIdentifier"
