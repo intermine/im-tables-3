@@ -1,4 +1,4 @@
-(defproject intermine/im-tables "0.1.1-SNAPSHOT"
+(defproject intermine/im-tables "0.1.3-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/clojurescript "1.9.229"]
                  [reagent "0.6.0" :exclusions [cljsjs/react]]
@@ -20,13 +20,12 @@
 
   :min-lein-version "2.5.3"
 
-  :source-paths ["src/clj"]
+  :source-paths ["src"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
                                     "test/js"]
 
   :figwheel {:css-dirs     ["resources/public/css"]
-             :ring-handler im-tables.handler/dev-handler
              :server-port  3448}
 
   :less {:source-paths ["less"]
@@ -43,7 +42,7 @@
   :cljsbuild
   {:builds
    [{:id           "dev"
-     :source-paths ["src/cljs"]
+     :source-paths ["src"]
      :figwheel     {:on-jsload "im-tables.core/mount-root"}
      :compiler     {:main                 im-tables.core
                     :output-to            "resources/public/js/compiled/app.js"
@@ -55,7 +54,7 @@
                     }}
 
     {:id           "min"
-     :source-paths ["src/cljs"]
+     :source-paths ["src"]
      :jar          true
      :compiler     {:main            im-tables.core
                     :output-to       "resources/public/js/compiled/app.js"
@@ -64,7 +63,7 @@
                     :pretty-print    false}}
 
     {:id           "test"
-     :source-paths ["src/cljs" "test/cljs"]
+     :source-paths ["src" "test/cljs"]
      :compiler     {:main          im-tables.runner
                     :output-to     "resources/public/js/compiled/test.js"
                     :output-dir    "resources/public/js/compiled/test/out"
