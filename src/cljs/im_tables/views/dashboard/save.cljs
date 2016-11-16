@@ -51,7 +51,6 @@
 (defn main []
   (let [query-parts (subscribe [:main/query-parts])]
     (fn []
-      (.log js/console "qp" @query-parts)
       [:div
        [:button.btn.btn-primary.btn-raised
         {:on-click (fn [] (dispatch [:xmlify]))} "XML"]

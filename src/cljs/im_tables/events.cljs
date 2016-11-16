@@ -300,11 +300,6 @@
 (reg-event-fx
   :main/summarize-item
   (fn [{db :db} [_ {:keys [class id] :as item}]]
-
-    (.log js/console "summary query" (summary-query
-                                       (assoc item :summary-fields
-                                                   (into [] (keys (get-in db [:service :model :classes (keyword class) :attributes]))))))
-
     (cond-> {:db db}
             (not (get-in db [:cache :item-details id]))
             (assoc :im-operation {:on-success
