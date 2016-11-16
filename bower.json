@@ -1,0 +1,21 @@
+{
+  "name": "im-tables-3",
+  "homepage": "https://github.com/joshkh/im-tables-3",
+  "authors": [
+    "Joshua Heimbach <joshkh@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "resources/public/vendor",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "bootstrap": "^3.3.7"
+  }
+}
