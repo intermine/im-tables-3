@@ -1,8 +1,6 @@
 (ns im-tables.views.dashboard.save
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
-            [imcljsold.filters :as filters]
-            [imcljsold.save :as save]
             [oops.core :refer [oget ocall ocall!]]
             [inflections.core :refer [plural]]
             [im-tables.components.bootstrap :refer [modal]]))
@@ -45,11 +43,15 @@
        {:data-toggle "modal"
         :data-target "#testModal"
         :on-click    (fn [] (dispatch [:prep-modal (generate-dialog details)]))}
-       [:a (str (join-with-arrows (filters/humanify @model path)) " (" (:count details) ")")]])))
+       [:a (str
+             ;(join-with-arrows (filters/humanify @model path))
+             path
+             " (" (:count details) ")")]])))
 
 (defn main []
   (let [query-parts (subscribe [:main/query-parts])]
     (fn []
+      (.log js/console "qp" @query-parts)
       [:div
        [:button.btn.btn-primary.btn-raised
         {:on-click (fn [] (dispatch [:xmlify]))} "XML"]

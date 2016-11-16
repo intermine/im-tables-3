@@ -4,20 +4,16 @@
             [day8.re-frame.undo :as undo :refer [undoable]]
             [im-tables.db :as db]
             [im-tables.effects]
-            [imcljsold.search :as search]
-            [imcljsold.assets :as assets]
-            [imcljsold.filters :as filters]
-            [imcljsold.user :as user]
-            [imcljsold.save :as save]
-            [imcljsold.utils :refer [query->xml]]
+            [imcljs.save :as save]
             [imcljs.fetch :as fetch]
+            [imcljs.query :as query]
             [oops.core :refer [oapply oget]]
             [clojure.string :refer [split join]]))
 
 (reg-event-db
   :xmlify
   (fn [db]
-    (println "DONE" (query->xml (get-in db [:assets :model]) (get db :query)))
+    (println "DONE" (query/->xml (get-in db [:assets :model]) (get db :query)))
     db))
 
 
@@ -50,9 +46,9 @@
 (reg-event-fx
   :save
   (fn [{db :db} [_ query options]]
-    {:db db
+    {:db           db
      :im-operation {:on-success [:success-save]
-                    :op         (partial save/query-to-list (get db :service) query options)}}))
+                    :op         (partial save/im-list (get db :service) query options)}}))
 
 (reg-event-fx
   :prep-modal
@@ -65,7 +61,7 @@
   (fn [{db :db} [_ service]]
     {:db           db
      :im-operation {:on-success [:authentication/store-token]
-                    :op         (partial user/session service)}}))
+                    :op         (partial fetch/session service)}}))
 
 (reg-event-db
   :show-overlay
@@ -235,9 +231,9 @@
   (fn [{db :db} [_ view]]
     {:db           db
      :im-operation {:on-success [:main/save-column-summary]
-                    :op         (partial search/raw-query-rows
+                    :op         (partial fetch/rows
                                          (get db :service)
-                                         (assoc (get db :query) :views [view])
+                                         (get db :query)
                                          {:summaryPath view
                                           :format      "jsonrows"})}}))
 
@@ -304,17 +300,21 @@
 (reg-event-fx
   :main/summarize-item
   (fn [{db :db} [_ {:keys [class id] :as item}]]
+
+    (.log js/console "summary query" (summary-query
+                                       (assoc item :summary-fields
+                                                   (into [] (keys (get-in db [:service :model :classes (keyword class) :attributes]))))))
+
     (cond-> {:db db}
             (not (get-in db [:cache :item-details id]))
             (assoc :im-operation {:on-success
                                   [:main/cache-item-summary]
                                   :op
-                                  (partial search/raw-query-rows
+                                  (partial fetch/records
                                            (get db :service)
                                            (summary-query
                                              (assoc item :summary-fields
-                                                         (into [] (keys (get-in db [:assets :model :classes (keyword class) :attributes])))))
-                                           {:format "jsonobjects"})}))))
+                                                         (into [] (keys (get-in db [:service :model :classes (keyword class) :attributes]))))))}))))
 
 ;;; PAGINATION
 
@@ -349,7 +349,7 @@
 (reg-event-db
   :main/save-model
   (fn [db [_ model]]
-    (assoc-in db [:assets :model] model)))
+    (assoc-in db [:service :model] model)))
 
 (reg-event-fx
   :fetch-asset
@@ -362,9 +362,9 @@
   (fn [{db :db}]
     {:db         db
      :dispatch-n [[:fetch-asset {:on-success [:main/save-summary-fields]
-                                 :op         (partial assets/summary-fields (get db :service))}]
+                                 :op         (partial fetch/summary-fields (get db :service))}]
                   [:fetch-asset {:on-success [:main/save-model]
-                                 :op         (partial assets/model (get db :service))}]]}))
+                                 :op         (partial fetch/model (get db :service))}]]}))
 
 (reg-event-fx
   :main/run-query
@@ -376,12 +376,10 @@
      :dispatch-n   [^:flush-dom [:show-overlay]
                     [:main/deconstruct]]
      :im-operation {:on-success [:main/save-query-response]
-                    :op         (partial search/table-rows
+                    :op         (partial fetch/table-rows
                                          (get db :service)
-                                         (get-in db [:assets :model])
-                                         (get db :query)
-                                         (get db :query)
-                                         {:format "json"})}}))
+                                         (get db :query))}}))
+
 
 
 (reg-event-db
@@ -394,15 +392,15 @@
   (fn [{db :db} [_ path details]]
     {:db           db
      :im-operation {:on-success [:main/save-decon-count path]
-                    :op         (partial search/raw-query-rows
+                    :op         (partial fetch/row-count
                                          (get db :service)
-                                         (get details :query)
-                                         {:format "count"})}}))
+                                         (get details :query))}}))
 
 (reg-event-fx
   :main/deconstruct
   (fn [{db :db}]
-    (let [deconstructed-query (filters/p (get-in db [:assets :model]) (get-in db [:query]))]
+    (let [deconstructed-query (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query]))]
+
       {:db         (assoc db :query-parts deconstructed-query)
        :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction part details]) deconstructed-query))})))
 
