@@ -5,4 +5,4 @@
 (defn main-panel []
   (fn []
     [:div.container
-     [main-view/main {:path [:nest]}]]))
+     [main-view/main [:store :here]]]))

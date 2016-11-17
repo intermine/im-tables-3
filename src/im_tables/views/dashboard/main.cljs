@@ -8,7 +8,8 @@
 
 
 (defn main []
-  (fn [response pagination]
+  (fn [loc response pagination]
+    (.log js/console "Pager loc" response)
     [:div.container-fluid
      [:div.row
       [column-manager/main]
@@ -29,5 +30,7 @@
          [:div.col-xs-2 [:div.btn-toolbar
                          [save/main response]
                          [undo/main]]]
-         [:div.col-xs-10 [:div.pull-right [pager/main (merge pagination {:total (get response :iTotalRecords)})]]]]]]]]))
+         [:div.col-xs-10 [:div.pull-right
+                          [pager/main loc (merge pagination
+                                             {:total (get response :iTotalRecords)})]]]]]]]]))
 

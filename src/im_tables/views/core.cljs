@@ -18,24 +18,29 @@
        [:div.overlay
         [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
 
-(defn main []
-  (let [response     (subscribe [:main/query-response])
-        pagination   (subscribe [:settings/pagination])
-        overlay?     (subscribe [:style/overlay?])
-        modal-markup (subscribe [:modal])]
+(defn main [loc state]
+  (let [response     (subscribe [:main/query-response loc])
+        pagination   (subscribe [:settings/pagination loc])
+        overlay?     (subscribe [:style/overlay? loc])
+        modal-markup (subscribe [:modal loc])]
     (reagent/create-class
       {:component-will-mount
        (fn [e]
-         (let [{:keys [path state]} (reagent/props e)]
-           (dispatch [:replace-all-state state path])))
+         (if loc
+           (do
+             ;(println "FOUND PATH" loc)
+             (dispatch [:im-tables.main/replace-all-state loc state]))))
        :reagent-render
        (fn []
-         [:div.relative
+         (.log js/console "pagination" @pagination)
+         [:div.im-table.relative
           ; Cover the app whenever it's thinking
           [table-thinking @overlay?]
+          ; Debug
+          [:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
           ; The dashboard above the table (controls
-          [dashboard/main @response @pagination]
+          [dashboard/main loc @response @pagination]
           ; The actual table
-          [table/main @response]
+          [table/main loc @response @pagination]
           ; Use just one modal and change its contents dynamically
           [modal @modal-markup]])})))

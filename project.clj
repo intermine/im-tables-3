@@ -70,5 +70,5 @@
                     :optimizations :none}}
     ]}
 
-  :prep-tasks [["cljsbuild" "once" "min"] ["less" "once"] "compile"]
+  ;:prep-tasks [["cljsbuild" "once" "min"] ["less" "once"] "compile"]
   )
