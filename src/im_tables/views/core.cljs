@@ -27,7 +27,7 @@
       {:component-will-mount
        (fn [e]
          (let [{:keys [path state]} (reagent/props e)]
-           (dispatch [:replace-all-state path state])))
+           (dispatch [:replace-all-state state path])))
        :reagent-render
        (fn []
          [:div.relative
