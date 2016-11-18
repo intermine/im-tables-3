@@ -47,7 +47,8 @@
        :reagent-render
              (let [summary (subscribe [:summary/item-details loc id])]
                (fn [loc idx {:keys [value id] :as c}]
-                 (let [summary-table (generate-summary-table @summary)
+                 (let [{:keys [on-click url vocab]} (get-in @settings [:links])
+                       summary-table (generate-summary-table @summary)
                        drag-class    (cond
                                        (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
                                        (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
@@ -61,8 +62,9 @@
                      :style {:position "relative"}
                      :class drag-class}
                     [:span
-                     [:a {:href ((get-in @settings [:links :url])
-                                  (merge (:value @summary) (get-in @settings [:links :vocab])))}
+                     {:on-click (if on-click (partial on-click ((get-in @settings [:links :url])
+                                                                 (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
+                     [:a
                       (if value value [:i.fa.fa-ban.mostly-transparent])]]
                     (if @show-tooltip?
                       [:div.test

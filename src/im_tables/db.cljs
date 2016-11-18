@@ -10,7 +10,7 @@
                        "organism.name"]
               :where  [{:path  "Gene"
                         :op    "IN"
-                        :value "PL FlyTF_trusted_TFs"
+                        :value "esyN demo list"
                         :code  "A"}
                        {:path  "Gene.symbol"
                         :op    "="
@@ -19,10 +19,11 @@
    :settings {:pagination {:start 0
                            :limit 10}
               :links {:vocab {:mine "flymine"}
-                      :url (fn [vocab] (str "/#/reportpage/"
+                      :on-click nil
+                      :url (fn [vocab] (str "#/reportpage/"
                                             (:mine vocab) "/"
                                             (:class vocab) "/"
-                                            (:objectId vocab) ))}}
+                                            (:objectId vocab)))}}
    :cache    {:summaries {}
               :summary   {}
               :selection {}

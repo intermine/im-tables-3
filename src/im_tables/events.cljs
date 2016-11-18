@@ -45,7 +45,7 @@
 (reg-event-fx
   :im-tables.main/replace-all-state
   (sandbox)
-  (fn [{x :db} [_ loc state]]
+  (fn [_ [_ loc state]]
     {:db       (deep-merge db/default-db state)
      :dispatch [:im-tables.main/run-query loc]}))
 
@@ -92,7 +92,6 @@
     {:db         (assoc db :query-response results)
      :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
                        (map (fn [view] [:main/summarize-column loc view]) (get results :views)))}))
-
 
 (defn toggle-into-set [haystack needle]
   (if (some #{needle} haystack)
@@ -197,9 +196,9 @@
   (fn [{db :db} [_ loc]]
     ; Drop the root of each path [Gene organism name] and create a string path "organism.name"
     (let [columns-to-add (map (comp (partial clojure.string/join ".") rest) (get-in db [:cache :tree-view :selection]))]
-      {:db (-> db
-               (update-in [:query :select] #(apply conj % columns-to-add))
-               (assoc-in [:cache :tree-view :selection] #{}))
+      {:db       (-> db
+                     (update-in [:query :select] #(apply conj % columns-to-add))
+                     (assoc-in [:cache :tree-view :selection] #{}))
        :dispatch [:im-tables.main/run-query loc]
        })))
 
