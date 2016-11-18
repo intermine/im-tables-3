@@ -9,28 +9,39 @@
 
 (defn main []
   (fn [loc response pagination]
-    (.log js/console "Pager loc" response)
     [:div.container-fluid
      [:div.row
-      [column-manager/main]
-      [:div.col-xs-12
+      [column-manager/main loc]
+      ]
+     [:div.row
+      [:div.col-xs-6
        [:button.btn.btn-primary
         {:data-toggle "modal"
          :data-target "#myModal"}
-        "Add Columns"]]]
-     [:div.row
-      [:div.col-xs-6
-       [:span (str "Showing "
-                   (inc (:start pagination)) " to "
-                   (+ (:start pagination) (:limit pagination)) " of "
-                   (:iTotalRecords response) " rows")]]
+        "Add Columns"]
+       #_[:span (str "Showing "
+                     (inc (:start pagination)) " to "
+                     (+ (:start pagination) (:limit pagination)) " of "
+                     (:iTotalRecords response) " rows")]]
       [:div.col-xs-6
        [:div.container-fluid
         [:div.row
-         [:div.col-xs-2 [:div.btn-toolbar
-                         [save/main response]
-                         [undo/main]]]
+         [:div.col-xs-2 #_[:div.btn-toolbar
+                           [save/main response]
+                           [undo/main]]
+
+          [:div.col-xs-12
+           ]]
          [:div.col-xs-10 [:div.pull-right
-                          [pager/main loc (merge pagination
-                                             {:total (get response :iTotalRecords)})]]]]]]]]))
+
+
+
+                          [:div.pull-right [pager/main loc (merge pagination
+                                                                  {:total (get response :iTotalRecords)})]]
+                          [:span.pull-right
+                           {:style {:padding-right "20px"}}
+                           (str "Showing "
+                                (inc (:start pagination)) " to "
+                                (+ (:start pagination) (:limit pagination)) " of "
+                                (:iTotalRecords response) " rows")]]]]]]]]))
 

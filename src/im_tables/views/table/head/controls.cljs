@@ -114,17 +114,17 @@
            :data-toggle "dropdown"
            :on-click    (fn [] (dispatch [:filters/save-changes]))} "Apply"]]]])))
 
-(defn column-summary [view]
-  (let [response    (subscribe [:selection/response view])
-        selections  (subscribe [:selection/selections view])
-        text-filter (subscribe [:selection/text-filter view])]
+(defn column-summary [loc view]
+  (let [response    (subscribe [:selection/response loc view])
+        selections  (subscribe [:selection/selections loc view])
+        text-filter (subscribe [:selection/text-filter loc view])]
     (reagent/create-class
       {:component-will-mount
        (fn [])
        :component-will-update
        (fn [])
        :reagent-render
-       (fn [view]
+       (fn [loc view]
          (let [close-fn (partial force-close (reagent/current-component))]
            [:form.form.min-width-275
             [histogram/main (:results @response)]
@@ -166,8 +166,9 @@
                  :on-click (fn [] (dispatch [:select/clear-selection view]))}
                 [:span [:i.fa.fa-square-o] " Clear"]])]]))})))
 
+
 (defn toolbar []
-  (fn [view]
+  (fn [loc view]
     [:div.summary-toolbar
      [:i.fa.fa-sort
       {:on-click (fn [] (dispatch [:main/sort-by view]))}]
@@ -179,14 +180,14 @@
         :data-toggle "dropdown"}]
       [:div.dropdown-menu
        {:style {:min-width "400px"}}
-       [filter-view view]]]
+       [filter-view loc view]]]
      [:span.dropdown
       [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
       [:div.dropdown-menu
        {:style {:min-width "400px"}}
-       [column-summary view]]]]))
+       [column-summary loc view]]]]))
 
 (defn main []
-  (fn [view]
+  (fn [loc view]
     [:div
-     [toolbar view]]))
+     [toolbar loc view]]))

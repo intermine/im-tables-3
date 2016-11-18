@@ -28,10 +28,17 @@
     (.log js/console "DB" db)
     db))
 
+;(reg-event-fx
+;  :im-tables.main/replace-all-state
+;  (sandbox)
+;  (fn [{db :db} [_ loc state]]
+;    {:db       (merge db/default-db state)
+;     :dispatch [:im-tables.main/run-query loc]}))
+
 (reg-event-fx
   :im-tables.main/replace-all-state
   (sandbox)
-  (fn [{db :db} [_ loc state]]
+  (fn [{x :db} [_ loc state]]
     {:db       (merge db/default-db state)
      :dispatch [:im-tables.main/run-query loc]}))
 
@@ -42,7 +49,6 @@
   (fn [db [_ response]]
     (.debug js/console "List Saved" response)
     db))
-
 
 
 (reg-event-fx
@@ -61,12 +67,14 @@
 
 (reg-event-db
   :show-overlay
-  (fn [db]
+  (sandbox)
+  (fn [db [_ loc]]
     (assoc-in db [:cache :overlay?] true)))
 
 (reg-event-db
   :hide-overlay
-  (fn [db]
+  (sandbox)
+  (fn [db [_ loc]]
     (assoc-in db [:cache :overlay?] false)))
 
 
@@ -75,8 +83,8 @@
   (sandbox)
   (fn [{db :db} [_ loc results]]
     {:db         (assoc db :query-response results)
-     :dispatch-n (into [^:flush-dom [:hide-overlay]]
-                       (map (fn [view] [:main/summarize-column view]) (get results :views)))}))
+     :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
+                       (map (fn [view] [:main/summarize-column loc view]) (get results :views)))}))
 
 
 (defn toggle-into-set [haystack needle]
@@ -147,7 +155,9 @@
 ;TODO turn stub into working code
 (reg-event-db
   :select/toggle-selection
-  (fn [db [_ view value]]
+  (sandbox)
+  (fn [db [_ loc view value]]
+    (println "TOGGLING" loc)
     (update-in db [:cache :column-summary view :selections] flip-presence value)))
 
 (reg-event-db
@@ -170,18 +180,20 @@
 ;;;;; TREE VIEW
 (reg-event-db
   :tree-view/toggle-selection
-  (fn [db [_ path-vec]]
+  (sandbox)
+  (fn [db [_ loc path-vec]]
     (update-in db [:cache :tree-view :selection] toggle-into-set path-vec)))
 
 (reg-event-fx
   :tree-view/merge-new-columns
-  (fn [{db :db} []]
+  (sandbox)
+  (fn [{db :db} [_ loc]]
     ; Drop the root of each path [Gene organism name] and create a string path "organism.name"
     (let [columns-to-add (map (comp (partial clojure.string/join ".") rest) (get-in db [:cache :tree-view :selection]))]
       {:db (-> db
                (update-in [:query :select] #(apply conj % columns-to-add))
                (assoc-in [:cache :tree-view :selection] #{}))
-       ;:dispatch [:im-tables.main/run-query]
+       :dispatch [:im-tables.main/run-query loc]
        })))
 
 ;;;;; STYLE
@@ -203,30 +215,31 @@
 
 (reg-event-fx
   :style/dragging-finished
-  (fn [{db :db} [_]]
+  (sandbox)
+  (fn [{db :db} [_ loc]]
     (let [dragged-item (get-in db [:cache :dragging-item])
           dragged-over (get-in db [:cache :dragging-over])]
       (cond-> {:db (-> db
                        (update-in [:query :select] swap dragged-item dragged-over)
                        (update-in [:cache] dissoc :dragging-item :dragging-over))}
               (not= dragged-item dragged-over) (assoc :dispatch-n
-                                                      [^:flush-dom [:show-overlay]
-                                                       [:im-tables.main/run-query]])))))
+                                                      [^:flush-dom [:show-overlay loc]
+                                                       [:im-tables.main/run-query loc]])))))
 
 ;;;;; MANIPULATE QUERY
 
 (reg-event-db
   :main/save-column-summary
-  (fn [db [_ summary-response]]
-    ; Assume we summarized just one view
-    (let [view (get-in summary-response [:views 0])]
-      (assoc-in db [:cache :column-summary view :response] summary-response))))
+  (sandbox)
+  (fn [db [_ loc view summary-response]]
+    (assoc-in db [:cache :column-summary view :response] summary-response)))
 
 (reg-event-fx
   :main/summarize-column
-  (fn [{db :db} [_ view]]
+  (sandbox)
+  (fn [{db :db} [_ loc view]]
     {:db                     db
-     :im-tables/im-operation {:on-success [:main/save-column-summary]
+     :im-tables/im-operation {:on-success [:main/save-column-summary loc view]
                               :op         (partial fetch/rows
                                                    (get db :service)
                                                    (get db :query)
@@ -285,7 +298,8 @@
 
 (reg-event-db
   :main/cache-item-summary
-  (fn [db [_ response]]
+  (sandbox)
+  (fn [db [_ loc response]]
     (update-in db [:cache :item-details]
                (fn [summary-map]
                  (let [{:keys [objectId] :as r} (first (:results response))]
@@ -296,11 +310,12 @@
 
 (reg-event-fx
   :main/summarize-item
-  (fn [{db :db} [_ {:keys [class id] :as item}]]
+  (sandbox)
+  (fn [{db :db} [_ loc {:keys [class id] :as item}]]
     (cond-> {:db db}
             (not (get-in db [:cache :item-details id]))
             (assoc :im-tables/im-operation {:on-success
-                                            [:main/cache-item-summary]
+                                            [:main/cache-item-summary loc]
                                             :op
                                             (partial fetch/records
                                                      (get db :service)
@@ -312,17 +327,15 @@
 
 ;;;;;;;;;;;;;;
 
-
-
 (reg-event-fx
   :im-tables.main/run-query
   (sandbox)
   (fn [{db :db} [_ loc]]
-    (.debug js/console "Running query" (get db :query))
     {:db                     (assoc-in db [:cache :column-summary] {})
      ;:undo                   "Undo ran query"
-     :dispatch-n             [^:flush-dom [:show-overlay]
-                              [:main/deconstruct]]
+     :dispatch-n             [^:flush-dom [:show-overlay loc]
+                              ;[:main/deconstruct loc]
+                              ]
      :im-tables/im-operation {:on-success [:main/save-query-response loc]
                               :op         (partial fetch/table-rows
                                                    (get db :service)
@@ -332,23 +345,26 @@
 
 (reg-event-db
   :main/save-decon-count
-  (fn [db [_ path count]]
+  (sandbox)
+  (fn [db [_ loc path count]]
     (assoc-in db [:query-parts path :count] count)))
 
 (reg-event-fx
   :main/count-deconstruction
-  (fn [{db :db} [_ path details]]
+  (sandbox)
+  (fn [{db :db} [_ loc path details]]
     {:db                     db
-     :im-tables/im-operation {:on-success [:main/save-decon-count path]
+     :im-tables/im-operation {:on-success [:main/save-decon-count loc path]
                               :op         (partial fetch/row-count
                                                    (get db :service)
                                                    (get details :query))}}))
 
 (reg-event-fx
   :main/deconstruct
-  (fn [{db :db}]
+  (sandbox)
+  (fn [{db :db} [_ loc]]
     (let [deconstructed-query (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query]))]
 
       {:db         (assoc db :query-parts deconstructed-query)
-       :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction part details]) deconstructed-query))})))
+       :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction loc part details]) deconstructed-query))})))
 

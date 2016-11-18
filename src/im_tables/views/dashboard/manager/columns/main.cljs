@@ -5,7 +5,7 @@
 
 (defn tree-node []
   (let [expanded-map (reagent/atom {})]
-    (fn [class details model current-path selected views]
+    (fn [loc class details model current-path selected views]
       (let [attributes  (get details :attributes)
             collections (get details :collections)]
         [:ul.tree-view.list-unstyled.no-select
@@ -16,7 +16,7 @@
                         [:li
                          {:on-click (fn [e]
                                       (if-not original-view?
-                                        (dispatch [:tree-view/toggle-selection (conj current-path name)]))
+                                        (dispatch [:tree-view/toggle-selection loc (conj current-path name)]))
                                       (.stopPropagation e))}
                          [:span
                           {:class (cond
@@ -31,26 +31,26 @@
                          [:span [:i.fa.fa-plus-square]
                           (plural (:displayName referenced-class))]
                          (if (get @expanded-map name)
-                           [tree-node (keyword referencedType) referenced-class model (conj current-path name) selected])]))
+                           [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected])]))
                     (sort-by (comp clojure.string/upper-case :referencedType) (vals collections))))]))))
 
 (defn tree-view []
-  (fn [model query selected]
+  (fn [loc model query selected]
     (let [views (into #{} (map (fn [v] (apply conj ["Gene"] (clojure.string/split v "."))) (:select query)))]
       [:div
-       [tree-node :Gene (get model :Gene) model ["Gene"] selected views]])))
+       [tree-node loc :Gene (get model :Gene) model ["Gene"] selected views]])))
 
-(defn my-modal []
-  (let [model    (subscribe [:assets/model])
-        selected (subscribe [:tree-view/selection])
-        query    (subscribe [:main/query])]
-    (fn []
+(defn my-modal [loc]
+  (let [model    (subscribe [:assets/model loc])
+        selected (subscribe [:tree-view/selection loc])
+        query    (subscribe [:main/query loc])]
+    (fn [loc]
      [:div#myModal.modal.fade {:role "dialog"}
       [:div.modal-dialog
        [:div.modal-content
         [:div.modal-header [:h3 "Add Columns"]]
         [:div.modal-body.max-height-500
-         [tree-view @model @query @selected]]
+         [tree-view loc @model @query @selected]]
         [:div.modal-footer
          [:div.btn-toolbar.pull-right
           [:button.btn.btn-default
@@ -59,22 +59,13 @@
           [:button.btn.btn-success
            {:data-dismiss "modal"
             :disabled (< (count @selected) 1)
-            :on-click (fn [] (dispatch [:tree-view/merge-new-columns]))}
+            :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
            (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]])))
 
 
 (defn main []
-  (fn []
-    [my-modal]))
-
-
-
-
-
-
-
-
-
+  (fn [loc]
+    [my-modal loc]))
 
 ;;;;;;;;;;;;;;;;;
 

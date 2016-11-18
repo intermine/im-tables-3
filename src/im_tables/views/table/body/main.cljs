@@ -22,10 +22,10 @@
                  [:td v]])))
            column-headers))])
 
-(defn table-cell [idx {id :id}]
+(defn table-cell [loc idx {id :id}]
   (let [show-tooltip? (reagent/atom false)
-        dragging-item (subscribe [:style/dragging-item])
-        dragging-over (subscribe [:style/dragging-over])
+        dragging-item (subscribe [:style/dragging-item loc])
+        dragging-over (subscribe [:style/dragging-over loc])
         my-dimensions (reagent/atom {})]
 
 
@@ -41,8 +41,8 @@
                                           :right (oget bb "right")
                                           :top (oget bb "top")
                                           :bottom (oget bb "bottom"))))
-       :reagent-render         (let [summary (subscribe [:summary/item-details id])]
-                                 (fn [idx {:keys [value id] :as c}]
+       :reagent-render         (let [summary (subscribe [:summary/item-details loc id])]
+                                 (fn [loc idx {:keys [value id] :as c}]
 
                                    (let [summary-table (generate-summary-table @summary)
                                          drag-class    (cond
@@ -50,7 +50,7 @@
                                                          (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
                                      [:td.cell
                                       {:on-mouse-enter (fn []
-                                                         (dispatch [:main/summarize-item c])
+                                                         (dispatch [:main/summarize-item loc c])
                                                          (reset! show-tooltip? true))
                                        :on-mouse-leave (fn []
                                                          (reset! show-tooltip? false))
@@ -68,7 +68,7 @@
                                         ;[inner-tooltip @mystate show? (:data-content attributes)]
                                         )])))})))
 
-(defn table-row [row]
+(defn table-row [loc row]
   (into [:tr]
         (map-indexed (fn [idx c]
-                       ^{:key (str idx (:id c) (:column c))} [table-cell idx c])) row))
+                       ^{:key (str idx (:id c) (:column c))} [table-cell loc idx c])) row))

@@ -15,7 +15,7 @@
         :on-drag-over  (fn [] (dispatch [:style/dragging-over loc idx]))
         :on-drag-start (fn [] (dispatch [:style/dragging-item loc idx]))
         :on-drag-end   (fn [] (dispatch ^:flush-dom [:style/dragging-finished loc]))}
-       [controls/main view]
+       [controls/main loc view]
        [:div
         [:div class]
         [:div (join " . " path)]]])))

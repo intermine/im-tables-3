@@ -13,17 +13,17 @@
 (reg-sub
   :main/query
   (fn [db [_ prefix]]
-    (get db :query)))
+    (get-in db (glue prefix [:query]))))
 
 (reg-sub
   :main/temp-query
   (fn [db [_ prefix]]
-    (get db :temp-query)))
+    (get-in db (glue prefix [:temp-query]))))
 
 (reg-sub
   :main/query-parts
   (fn [db [_ prefix]]
-    (get db :query-parts)))
+    (get-in db (glue prefix [:query-parts]))))
 
 (reg-sub
   :style/overlay?
@@ -34,8 +34,8 @@
 
 (reg-sub
   :summary/item-details
-  (fn [db [_ prefix id]]
-    (get-in db [:cache :item-details id])))
+  (fn [db [_ loc id]]
+    (get-in db (glue loc [:cache :item-details id]))))
 
 (reg-sub
   :style/dragging-item
@@ -60,29 +60,29 @@
 (reg-sub
   :selection/selections
   (fn [db [_ prefix view]]
-    (get-in db [:cache :column-summary view :selections])))
+    (get-in db (glue prefix [:cache :column-summary view :selections]))))
 
 (reg-sub
   :selection/response
   (fn [db [_ prefix view]]
-    (get-in db [:cache :column-summary view :response])))
+    (get-in db (glue prefix [:cache :column-summary view :response]))))
 
 (reg-sub
   :selection/text-filter
   (fn [db [_ prefix view]]
-    (get-in db [:cache :column-summary view :filters :text])))
+    (get-in db (glue prefix [:cache :column-summary view :filters :text]))))
 
 (reg-sub
   :assets/model
   (fn [db [_ prefix]]
-    (get-in db [:assets :model :classes])))
+    (get-in db (glue prefix [:service :model :classes]))))
 
 (reg-sub
   :tree-view/selection
   (fn [db [_ prefix]]
-    (get-in db [:cache :tree-view :selection])))
+    (get-in db (glue prefix [:cache :tree-view :selection]))))
 
 (reg-sub
   :modal
   (fn [db [_ prefix]]
-    (get-in db [:cache :modal])))
+    (get-in db (glue prefix [:cache :modal]))))

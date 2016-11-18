@@ -24,23 +24,35 @@
         overlay?     (subscribe [:style/overlay? loc])
         modal-markup (subscribe [:modal loc])]
     (reagent/create-class
-      {:component-will-mount
-       (fn [e]
-         (if loc
-           (do
-             ;(println "FOUND PATH" loc)
-             (dispatch [:im-tables.main/replace-all-state loc state]))))
+      {
+       ;:component-will-mount
+       ;(fn [e]
+       ;  (if (and loc state)
+       ;    (dispatch [:im-tables.main/replace-all-state loc state])))
+       ;:component-will-update
+       ;(fn [this new-arg-v]
+       ;  (let [[_ l old-state] (reagent/argv this)
+       ;        [_ l new-state] new-arg-v]
+       ;    ;(.log js/console "O" (reagent/argv this))
+       ;    ;(.log js/console "N" new-arg-v)
+       ;    ;(.log js/console "old-state" old-state)
+       ;    ;(.log js/console "new-state" new-state)
+       ;    (if (not= old-state new-state)
+       ;      (do
+       ;        (.log js/console "UPDATING THIS" new-state)
+       ;        (dispatch [:im-tables.main/replace-all-state loc new-state])))))
        :reagent-render
-       (fn []
-         (.log js/console "pagination" @pagination)
+       (fn [loc]
          [:div.im-table.relative
           ; Cover the app whenever it's thinking
           [table-thinking @overlay?]
-          ; Debug
-          [:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
+
+          ;[:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
           ; The dashboard above the table (controls
           [dashboard/main loc @response @pagination]
           ; The actual table
+
+          ;[:div.ontop "t"]
           [table/main loc @response @pagination]
           ; Use just one modal and change its contents dynamically
           [modal @modal-markup]])})))

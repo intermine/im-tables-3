@@ -26,4 +26,4 @@
                                       :view   (get views idx)}]))))]
          (into [:tbody]
                (->> (take (:limit pagination) (drop (:start pagination) results))
-                    (map (fn [r] [table-body/table-row r]))))]]))))
+                    (map (fn [r] [table-body/table-row loc r]))))]]))))
