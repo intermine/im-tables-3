@@ -35,11 +35,18 @@
 ;    {:db       (merge db/default-db state)
 ;     :dispatch [:im-tables.main/run-query loc]}))
 
+(defn deep-merge
+  "Recursively merges maps. If keys are not maps, the last value wins."
+  [& vals]
+  (if (every? map? vals)
+    (apply merge-with deep-merge vals)
+    (last vals)))
+
 (reg-event-fx
   :im-tables.main/replace-all-state
   (sandbox)
   (fn [{x :db} [_ loc state]]
-    {:db       (merge db/default-db state)
+    {:db       (deep-merge db/default-db state)
      :dispatch [:im-tables.main/run-query loc]}))
 
 

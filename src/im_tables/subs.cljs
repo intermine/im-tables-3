@@ -53,6 +53,11 @@
     (get-in db (glue prefix [:settings :pagination]))))
 
 (reg-sub
+  :settings/settings
+  (fn [db [_ prefix]]
+    (get-in db (glue prefix [:settings]))))
+
+(reg-sub
   :summaries/column-summaries
   (fn [db [_ prefix]]
     (get-in db [:cache :column-summary])))
