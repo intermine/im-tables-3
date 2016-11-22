@@ -15,14 +15,10 @@
       ]
      [:div.row
       [:div.col-xs-6
-       [:button.btn.btn-primary
-        {:data-toggle "modal"
-         :data-target "#myModal"}
-        "Add Columns"]
-       #_[:span (str "Showing "
-                     (inc (:start pagination)) " to "
-                     (+ (:start pagination) (:limit pagination)) " of "
-                     (:iTotalRecords response) " rows")]]
+       [:div.btn-toolbar
+        [:button.btn.btn-primary {:data-toggle "modal"
+                                  :data-target "#myModal"} "Add Columns"]
+        [save/main loc response]]]
       [:div.col-xs-6
        [:div.container-fluid
         [:div.row

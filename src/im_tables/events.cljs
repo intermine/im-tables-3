@@ -13,15 +13,6 @@
             [oops.core :refer [oapply oget]]
             [clojure.string :refer [split join]]))
 
-
-
-
-(reg-event-db
-  :xmlify
-  (fn [db]
-    (println "DONE" (query/->xml (get-in db [:assets :model]) (get db :query)))
-    db))
-
 (reg-event-db
   :printdb
   (fn [db]
@@ -52,24 +43,25 @@
 
 
 (reg-event-db
-  :success-save
+  :imt.io/save-list-success
   (fn [db [_ response]]
     (.debug js/console "List Saved" response)
     db))
 
 
 (reg-event-fx
-  :save
-  (fn [{db :db} [_ query options]]
-    {:db                     db
-     :im-tables/im-operation {:on-success [:success-save]
+  :imt.io/save-list
+  (sandbox)
+  (fn [{db :db} [_ loc query options]]
+    {:db db
+     :im-tables/im-operation {:on-success [:imt.io/save-list-success]
                               :op         (partial save/im-list (get db :service) query options)}}))
 
 (reg-event-fx
   :prep-modal
-  (fn [{db :db} [_ contents]]
+  (sandbox)
+  (fn [{db :db} [_ loc contents]]
     {:db (assoc-in db [:cache :modal] contents)}))
-
 
 
 (reg-event-db
@@ -340,7 +332,7 @@
     {:db                     (assoc-in db [:cache :column-summary] {})
      ;:undo                   "Undo ran query"
      :dispatch-n             [^:flush-dom [:show-overlay loc]
-                              ;[:main/deconstruct loc]
+                              [:main/deconstruct loc]
                               ]
      :im-tables/im-operation {:on-success [:main/save-query-response loc]
                               :op         (partial fetch/table-rows
@@ -353,7 +345,8 @@
   :main/save-decon-count
   (sandbox)
   (fn [db [_ loc path count]]
-    (assoc-in db [:query-parts path :count] count)))
+    ;(assoc-in db [:query-parts path :count] count)
+    db))
 
 (reg-event-fx
   :main/count-deconstruction

@@ -7,7 +7,8 @@
               :select ["secondaryIdentifier"
                        "symbol"
                        "primaryIdentifier"
-                       "organism.name"]
+                       "organism.name"
+                       "homologues.homologue.symbol"]
               :where  [{:path  "Gene"
                         :op    "IN"
                         :value "esyN demo list"
