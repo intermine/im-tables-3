@@ -1,10 +1,176 @@
+@import "overrides";
+@import "tooltip";
+
+.fade-enter {
+  opacity: 0.01;
+}
+
+.fade-enter.fade-enter-active {
+  opacity: 1;
+  transition: opacity 50ms ease-in;
+}
+
+.fade-leave {
+  opacity: 1;
+}
+
+.fade-leave.fade-leave-active {
+  opacity: 0.01;
+  transition: opacity 50ms ease-in;
+}
+
+.fade-appear {
+  opacity: 0.01;
+}
+
+.fade-appear.fade-appear-active {
+  opacity: 1;
+  transition: opacity 50ms ease-in;
+}
+
+.relative {
+    position: relative;
+}
+
+.table-bordered>tbody>tr>td, .table-bordered>tbody>tr>th, .table-bordered>tfoot>tr>td, .table-bordered>tfoot>tr>th, .table-bordered>thead>tr>td, .table-bordered>thead>tr>th {
+    &.drag-left {
+        border-left: 5px solid #337ab7;
+    }
+
+    &.drag-right {
+        border-right: 5px solid #337ab7;
+    }
+}
+
+
+
+
+.drag-right {
+    border-right: 3px solid red;
+}
+
+.overlay {
+    background-color: white;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    opacity: 0.95;
+    display: flex;
+    color: black;
+    align-items: center;
+     justify-content: center;
+
+
+}
+
+.max-height-500 {
+    max-height: 500px;
+    overflow-y: scroll;
+}
+
+.square-view {
+    .collection {
+        background-color: aliceblue;
+        border-radius: 5px;
+        margin: 10px;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        border: 1px solid transparent;
+        // min-width: 75px;
+        &:hover {
+            border: 1px solid blue;
+        }
+    }
+}
+
+
+.no-select {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Chrome/Safari/Opera */
+     -khtml-user-select: none; /* Konqueror */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  not supported by any browser */
+}
+
+.tree-view {
+    cursor: pointer;
+    .selected {
+        background-color: green;
+    }
+    .padme {
+        padding: 2px;
+        border-radius: 3px;
+    }
+}
+ul.tree-view {
+    margin-left: 35px;
+}
+
+ul.tree-view i {
+    padding-right: 5px;
+
+}
+
+svg.graph {
+    background-color: aliceblue;
+}
+
+rect.histo {
+    fill: #0058a6;
+    stroke-width: 0;
+}
+
 div.summary-toolbar {
+    vertical-align: top;
+    display: inline-block;
+    white-space: nowrap;
     & > * {
         padding: 2px;
     }
 }
 
+.dropdown-menu {
+    white-space: normal;
+}
+
+.more-below {
+    /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#000000+0,000000+100&0+0,0.65+100 */
+    background: -moz-linear-gradient(top,  rgba(0,0,0,0) 0%, rgba(0,0,0,0.65) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top,  rgba(0,0,0,0) 0%,rgba(0,0,0,0.65) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom,  rgba(0,0,0,0) 0%,rgba(0,0,0,0.65) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#a6000000',GradientType=0 ); /* IE6-9 */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+}
+
+.mostly-transparent {
+    opacity: 0.2;
+}
+
+.max-height-400 {
+    max-height: 350px;
+    overflow-y: scroll;
+}
+
+.min-width-250 {
+    min-width: 250px;
+}
+
 .cell:hover {
+    background-color: #e8e8f0;
+    transition: background-color 200ms;
+}
+
+.hoverable:hover {
     background-color: #e8e8f0;
     transition: background-color 200ms;
 }
@@ -84,4 +250,8 @@ div.summary-toolbar {
 
 .lte8 .wrapper:hover .tooltip {
   display: block;
+}
+
+.ontop {
+    background-color: deepskyblue;
 }
