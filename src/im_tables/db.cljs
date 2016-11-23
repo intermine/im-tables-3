@@ -25,21 +25,24 @@
    :model           {:name "genomic"}})
 
 (def default-db
-  {:service  {:root "www.flymine.org/query"}
-   :query    {:from   "Gene"
-              :size   10
-              :select ["secondaryIdentifier"
-                       "symbol"
-                       "primaryIdentifier"
-                       "organism.name"
-                       "homologues.homologue.symbol"]
-              :where  [{:path  "Gene"
-                        :op    "IN"
-                        :value "esyN demo list"}
-                       {:path  "Gene.symbol"
-                        :op    "="
-                        :value "*a*"
-                        :code  "B"}]}
+  {
+
+   :service  {:root "www.flymine.org/query"}
+   ;:query    {:from   "Gene"
+   ;           :size   10
+   ;           :select ["secondaryIdentifier"
+   ;                    "symbol"
+   ;                    "primaryIdentifier"
+   ;                    "organism.name"
+   ;                    "homologues.homologue.symbol"]
+   ;           :where  [{:path  "Gene"
+   ;                     :op    "IN"
+   ;                     :value "esyN demo list"}
+   ;                    {:path  "Gene.symbol"
+   ;                     :op    "="
+   ;                     :value "*a*"
+   ;                     :code  "B"}]}
+
    :settings {:pagination {:start 0
                            :limit 10}
               :links {:vocab {:mine "flymine"}
