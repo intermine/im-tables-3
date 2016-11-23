@@ -26,7 +26,7 @@
                           [:i.fa.fa-tag] name]])) (vals attributes)))
          (into [:ul.collections.list-unstyled]
                (map (fn [{:keys [name referencedType name] :as collection}]
-                      (let [referenced-class (get model (keyword referencedType))]
+                      (let [referenced-class (get-in model [:classes (keyword referencedType)])]
                         [:li
                          {:on-click (fn [e] (.stopPropagation e) (swap! expanded-map update name not))}
                          [:span [:i.fa.fa-plus-square]
@@ -39,7 +39,7 @@
   (fn [loc model query selected]
     (let [views (into #{} (map (fn [v] (apply conj ["Gene"] (clojure.string/split v "."))) (:select query)))]
       [:div
-       [tree-node loc :Gene (get model :Gene) model ["Gene"] selected views]])))
+       [tree-node loc (keyword (:from query)) (get-in model [:classes (keyword (:from query))]) model [(:from query)] selected views]])))
 
 (defn my-modal [loc]
   (let [model    (subscribe [:assets/model loc])

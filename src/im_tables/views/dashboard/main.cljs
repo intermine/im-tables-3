@@ -15,10 +15,13 @@
      [:div.row
       [:div.col-xs-6
        [:div.btn-toolbar
-        [:button.btn.btn-primary
-         {:data-toggle "modal"
-          :data-target "#myModal"} "Add Columns"]
-        [save/main loc]]]
+        [:div.btn-group
+         [:button.btn.btn-default
+          {:data-toggle "modal"
+           :data-target "#myModal"}
+          [:span [:i.fa.fa-columns] " Add Columns"]]]
+        [:div.btn-group
+         [save/main loc]]]]
       [:div.col-xs-6
        [:div.container-fluid
         [:div.row

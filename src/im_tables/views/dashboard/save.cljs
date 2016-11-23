@@ -77,12 +77,11 @@
   (let [model       (subscribe [:assets/model loc])
         query-parts (subscribe [:main/query-parts loc])]
     (fn [loc]
-      [:div
-       [:div.dropdown
-        [:button.btn.btn-default.dropdown-toggle
-         {:data-toggle "dropdown"} "Save List"]
-        (into [:ul.dropdown-menu]
-              (->> @query-parts
-                   (map-indexed (fn [idx [path details]]
-                                  [save-menu loc @model path details]))))]])))
+      [:div.dropdown
+       [:button.btn.btn-default.dropdown-toggle
+        {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
+       (into [:ul.dropdown-menu]
+             (->> @query-parts
+                  (map-indexed (fn [idx [path details]]
+                                 [save-menu loc @model path details]))))])))
 

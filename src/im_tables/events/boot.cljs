@@ -26,7 +26,6 @@
   :imt.auth/fetch-anonymous-token
   (sandbox)
   (fn [{db :db} [_ loc service]]
-    (.log js/console "fetching token for" service)
     {:db                     db
      :im-tables/im-operation {:on-success [:imt.auth/store-token loc]
                               :op         (partial fetch/session service)}}))
