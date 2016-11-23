@@ -80,7 +80,7 @@
 (reg-sub
   :assets/model
   (fn [db [_ prefix]]
-    (get-in db (glue prefix [:service :model :classes]))))
+    (get-in db (glue prefix [:service :model]))))
 
 (reg-sub
   :tree-view/selection

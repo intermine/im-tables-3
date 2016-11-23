@@ -99,7 +99,7 @@
       [:form.form.min-width-275
        [:div.alert.alert-success
         [:div.container-fluid
-         [:form.form
+         [:div
           [:h4 "Filters"]
           (into [:div] (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))]]]
        [:div.alert.alert-default

@@ -270,7 +270,7 @@
   ;(undoable)
   (fn [{db :db} [_ loc view]]
     (let [view view]
-      {:db (update-in db [:query :select] (partial remove (fn [v] (= v view))))
+      {:db       (update-in db [:query :select] (partial remove (fn [v] (= v view))))
        :dispatch [:im-tables.main/run-query loc]
        ;:undo     "Removed column"
        })))
@@ -283,14 +283,14 @@
           [current-sort-by] (get-in db [:query :orderBy])
           update?           (= view (:path current-sort-by))
           current-direction (get-in db [:query :orderBy 0 :direction])]
-      {:db (if update?
-             (update-in db [:query :orderBy 0]
-                        assoc :direction (case current-direction
-                                           "ASC" "DESC"
-                                           "DESC" "ASC"))
-             (assoc-in db [:query :orderBy]
-                       [{:path      view
-                         :direction "ASC"}]))
+      {:db       (if update?
+                   (update-in db [:query :orderBy 0]
+                              assoc :direction (case current-direction
+                                                 "ASC" "DESC"
+                                                 "DESC" "ASC"))
+                   (assoc-in db [:query :orderBy]
+                             [{:path      view
+                               :direction "ASC"}]))
        :dispatch [:im-tables.main/run-query loc]
        })))
 
@@ -356,8 +356,7 @@
   :main/save-decon-count
   (sandbox)
   (fn [db [_ loc path count]]
-    ;(assoc-in db [:query-parts path :count] count)
-    db))
+    (assoc-in db [:query-parts path :count] count)))
 
 (reg-event-fx
   :main/count-deconstruction
@@ -373,7 +372,13 @@
   :main/deconstruct
   (sandbox)
   (fn [{db :db} [_ loc]]
-    (let [deconstructed-query (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query]))]
+
+    (let [deconstructed-query (into {} (map vec (sort-by
+                                          (fn [[p _]] (count (clojure.string/split p ".")))
+                                          (partition 2
+                                                     (flatten
+                                                       (map seq (vals (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query])))))))))]
+
 
       {:db         (assoc db :query-parts deconstructed-query)
        :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction loc part details]) deconstructed-query))})))
