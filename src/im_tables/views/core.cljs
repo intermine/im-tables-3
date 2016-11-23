@@ -47,7 +47,7 @@
           ; Cover the app whenever it's thinking
           [table-thinking @overlay?]
 
-          ;[:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
+          [:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
           ; The dashboard above the table (controls
           [dashboard/main loc @response @pagination]
           ; The actual table

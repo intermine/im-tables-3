@@ -53,7 +53,7 @@
   :imt.io/save-list
   (sandbox)
   (fn [{db :db} [_ loc query options]]
-    {:db db
+    {:db                     db
      :im-tables/im-operation {:on-success [:imt.io/save-list-success]
                               :op         (partial save/im-list (get db :service) query options)}}))
 
@@ -108,12 +108,14 @@
 
 (reg-event-db
   :main/set-temp-query
-  (fn [db]
+  (sandbox)
+  (fn [db [_ loc]]
     (assoc db :temp-query (get db :query))))
 
 (reg-event-db
   :filters/update-constraint
-  (fn [db [_ new-constraint]]
+  (sandbox)
+  (fn [db [_ loc new-constraint]]
     (update-in db [:temp-query :where]
                (fn [constraints]
                  (map (fn [constraint]
@@ -125,7 +127,9 @@
 
 (reg-event-db
   :filters/add-constraint
-  (fn [db [_ new-constraint]]
+  (sandbox)
+  (fn [db [_ loc new-constraint]]
+    (.log js/console "ADDING CONSTRAINT" new-constraint)
     (update-in db [:temp-query :where]
                (fn [constraints]
                  (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))))
@@ -133,7 +137,9 @@
 
 (reg-event-db
   :filters/remove-constraint
-  (fn [db [_ new-constraint]]
+  (sandbox)
+  (fn [db [_ loc new-constraint]]
+    (.log js/console "removing constraint" loc new-constraint)
     (update-in db [:temp-query :where]
                (fn [constraints]
                  (remove nil? (map (fn [constraint]
@@ -143,10 +149,10 @@
 
 (reg-event-fx
   :filters/save-changes
-  (fn [{db :db}]
-    {:db (assoc db :query (get db :temp-query))
-     ;:dispatch [:im-tables.main/run-query]
-     }))
+  (sandbox)
+  (fn [{db :db} [_ loc]]
+    {:db       (assoc db :query (get db :temp-query))
+     :dispatch [:im-tables.main/run-query loc]}))
 
 ;;;; TRANSIENT VALUES
 
@@ -165,7 +171,8 @@
 
 (reg-event-db
   :select/select-all
-  (fn [db [_ view]]
+  (sandbox)
+  (fn [db [_ loc view]]
     (assoc-in db [:cache :column-summary view :selections]
               (into {} (map (fn [{item :item}] [item true]) (get-in db [:cache :column-summary view :response :results]))))))
 
@@ -247,28 +254,31 @@
 (reg-event-fx
   :main/apply-summary-filter
   ;(undoable)
-  (fn [{db :db} [_ view]]
+  (sandbox)
+  (fn [{db :db} [_ loc view]]
     (let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
-      {:db (update-in db [:query :where] conj {:path   view
-                                               :op     "ONE OF"
-                                               :values current-selection})
-       ;:dispatch [:im-tables.main/run-query]
+      {:db       (update-in db [:query :where] conj {:path   view
+                                                     :op     "ONE OF"
+                                                     :values current-selection})
+       :dispatch [:im-tables.main/run-query loc]
        ;:undo     "Applying column filter"
        })))
 
 (reg-event-fx
   :main/remove-view
+  (sandbox)
   ;(undoable)
-  (fn [{db :db} [_ view]]
-    (let [view (join "." (drop 1 (split view ".")))]
+  (fn [{db :db} [_ loc view]]
+    (let [view view]
       {:db (update-in db [:query :select] (partial remove (fn [v] (= v view))))
-       ;:dispatch [:im-tables.main/run-query]
+       :dispatch [:im-tables.main/run-query loc]
        ;:undo     "Removed column"
        })))
 
 (reg-event-fx
   :main/sort-by
-  (fn [{db :db} [_ view]]
+  (sandbox)
+  (fn [{db :db} [_ loc view]]
     (let [view              (join "." (drop 1 (split view ".")))
           [current-sort-by] (get-in db [:query :orderBy])
           update?           (= view (:path current-sort-by))
@@ -281,7 +291,7 @@
              (assoc-in db [:query :orderBy]
                        [{:path      view
                          :direction "ASC"}]))
-       ;:dispatch [:im-tables.main/run-query]
+       :dispatch [:im-tables.main/run-query loc]
        })))
 
 
@@ -329,6 +339,7 @@
   :im-tables.main/run-query
   (sandbox)
   (fn [{db :db} [_ loc]]
+    (.debug js/console "Running query" (get db :query))
     {:db                     (assoc-in db [:cache :column-summary] {})
      ;:undo                   "Undo ran query"
      :dispatch-n             [^:flush-dom [:show-overlay loc]

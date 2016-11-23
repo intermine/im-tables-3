@@ -2,7 +2,7 @@
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
-            [oops.core :refer [oget ocall!]]))
+            [oops.core :refer [oget ocall! oapply]]))
 
 
 (defn filter-input []
@@ -45,6 +45,7 @@
      [:option {:value ">"} "greater than"]
      [:option {:value "<"} "less than"]
      [:option {:value "="} "equal to"]
+     [:option {:value "CONTAINS"} "contains"]
      [:option {:value "ONE OF"} "one of"]]))
 
 (defn constraint-text []
@@ -53,9 +54,9 @@
                           :on-change (fn [e] (on-change {:value (.. e -target -value)}))
                           :value     value}]))
 
-(defn blank-constraint [path]
+(defn blank-constraint [loc path]
   (let [state (reagent/atom {:path path :op "=" :value nil})]
-    (fn []
+    (fn [loc path]
       [:div.container-fluid
        [:div.row
         [:div.col-xs-4
@@ -63,47 +64,48 @@
           {:value     (:op @state)
            :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
         [:div.col-xs-6
-         [:input.form-control {:type "text"
-                               :value (:value @state)
+         [:input.form-control {:type      "text"
+                               :value     (:value @state)
                                :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))}]]
         [:div.col-xs-2
          [:button.btn.btn-success
           {:on-click (fn [] (dispatch
-                              [:filters/add-constraint @state]
+                              [:filters/add-constraint loc @state]
                               (reset! state {:path path :op "=" :value nil})))
            :type     "button"} [:i.fa.fa-plus]]]]])))
 
 (defn constraint []
-  (fn [{:keys [path op value code] :as const}]
-    (letfn [(on-change [new-value] (dispatch [:filters/update-constraint (merge const new-value)]))]
+  (fn [loc {:keys [path op value values code] :as const}]
+    (letfn [(on-change [new-value] (dispatch [:filters/update-constraint loc (merge const new-value)]))]
       [:div.container-fluid
        [:div.row
         [:div.col-xs-4
          [constraint-dropdown {:value     op
                                :on-change on-change}]]
         [:div.col-xs-6
-         [constraint-text {:value     value
+         [constraint-text {:value     (or value values)
                            :on-change on-change}]]
         [:div.col-xs-2
          [:button.btn.btn-danger
-          {:on-click (fn [] (dispatch [:filters/remove-constraint const]))
+          {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
            :type     "button"} [:i.fa.fa-times]]]]])))
 
-(defn filter-view [view]
-  (let [response   (subscribe [:selection/response view])
-        selections (subscribe [:selection/selections view])
-        query      (subscribe [:main/temp-query view])]
-    (fn [view]
-      [:div
+
+(defn filter-view [loc view]
+  (let [response   (subscribe [:selection/response loc view])
+        selections (subscribe [:selection/selections loc view])
+        query      (subscribe [:main/temp-query loc view])]
+    (fn [loc view]
+      [:form.form.min-width-275
        [:div.alert.alert-success
         [:div.container-fluid
          [:form.form
           [:h4 "Filters"]
-          (into [:div] (map (fn [c] [constraint c]) (filter (partial constraint-has-path? view) (:where @query))))]]]
+          (into [:div] (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))]]]
        [:div.alert.alert-default
         [:div.container-fluid
          [:h4 "Add..."]
-         [blank-constraint view]]]
+         [blank-constraint loc view]]]
        [:div.container-fluid
         [:div.btn-toolbar.pull-right
          [:button.btn.btn-default
@@ -112,7 +114,7 @@
          [:button.btn.btn-primary
           {:type        "button"
            :data-toggle "dropdown"
-           :on-click    (fn [] (dispatch [:filters/save-changes]))} "Apply"]]]])))
+           :on-click    (fn [] (dispatch [:filters/save-changes loc]))} "Apply"]]]])))
 
 (defn column-summary [loc view]
   (let [response    (subscribe [:selection/response loc view])
@@ -136,7 +138,7 @@
                     (->> (filter (partial has-text? @text-filter) (:results @response))
                          (map (fn [{:keys [count item]}]
                                 [:tr.hoverable
-                                 {:on-click (fn [e] (dispatch [:select/toggle-selection view item]))}
+                                 {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
                                  [:td [:div
                                        [:label
                                         [:input
@@ -150,7 +152,7 @@
              [:button.btn.btn-primary
               {:type     "button"
                :on-click (fn []
-                           (dispatch [:main/apply-summary-filter view])
+                           (dispatch [:main/apply-summary-filter loc view])
                            (close-fn))}
               [:span
                [:i.fa.fa-filter]
@@ -158,7 +160,7 @@
              (if (empty? @selections)
                [:button.btn.btn-default
                 {:type     "button"
-                 :on-click (fn [] (dispatch [:select/select-all view]))}
+                 :on-click (fn [] (dispatch [:select/select-all loc view]))}
                 [:span [:i.fa.fa-check-square-o] " All"]]
                [:button.btn.btn-default
                 {:type     "button"
@@ -171,12 +173,12 @@
   (fn [loc view]
     [:div.summary-toolbar
      [:i.fa.fa-sort
-      {:on-click (fn [] (dispatch [:main/sort-by view]))}]
+      {:on-click (fn [] (dispatch [:main/sort-by loc view]))}]
      [:i.fa.fa-times
-      {:on-click (fn [] (dispatch [:main/remove-view view]))}]
+      {:on-click (fn [] (dispatch [:main/remove-view loc view]))}]
      [:span.dropdown
       [:i.fa.fa-filter.dropdown-toggle
-       {:on-click    (fn [] (dispatch [:main/set-temp-query]))
+       {:on-click    (fn [] (dispatch [:main/set-temp-query loc]))
         :data-toggle "dropdown"}]
       [:div.dropdown-menu
        {:style {:min-width "400px"}}
