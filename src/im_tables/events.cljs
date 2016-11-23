@@ -161,12 +161,12 @@
   :select/toggle-selection
   (sandbox)
   (fn [db [_ loc view value]]
-    (println "TOGGLING" loc)
     (update-in db [:cache :column-summary view :selections] flip-presence value)))
 
 (reg-event-db
   :select/clear-selection
-  (fn [db [_ view]]
+  (sandbox)
+  (fn [db [_ loc view]]
     (assoc-in db [:cache :column-summary view :selections] {})))
 
 (reg-event-db
@@ -178,7 +178,8 @@
 
 (reg-event-db
   :select/set-text-filter
-  (fn [db [_ view value]]
+  (sandbox)
+  (fn [db [_ loc view value]]
     (assoc-in db [:cache :column-summary view :filters :text]
               (if (= value "") nil value))))
 
@@ -256,13 +257,14 @@
   ;(undoable)
   (sandbox)
   (fn [{db :db} [_ loc view]]
-    (let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
+    (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
       {:db       (update-in db [:query :where] conj {:path   view
                                                      :op     "ONE OF"
                                                      :values current-selection})
        :dispatch [:im-tables.main/run-query loc]
        ;:undo     "Applying column filter"
-       })))
+       }
+      {:db db})))
 
 (reg-event-fx
   :main/remove-view

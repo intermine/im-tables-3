@@ -6,12 +6,13 @@
 
 
 (defn filter-input []
-  (fn [view val]
+  (fn [loc view val]
     [:input.form-control
      {:type      "text"
       :value     val
       :on-change (fn [e]
                    (dispatch [:select/set-text-filter
+                              loc
                               view
                               (oget e :target :value)]))}]))
 
@@ -130,7 +131,7 @@
          (let [close-fn (partial force-close (reagent/current-component))]
            [:form.form.min-width-275
             [histogram/main (:results @response)]
-            [filter-input view @text-filter]
+            [filter-input loc view @text-filter]
             [:div.max-height-400
              [:table.table.table-striped.table-condensed
               [:thead [:tr [:th] [:th "Item"] [:th "Count"]]]
@@ -165,7 +166,7 @@
                [:button.btn.btn-default
                 {:type     "button"
                  :disabled (empty? @selections)
-                 :on-click (fn [] (dispatch [:select/clear-selection view]))}
+                 :on-click (fn [] (dispatch [:select/clear-selection loc view]))}
                 [:span [:i.fa.fa-square-o] " Clear"]])]]))})))
 
 
