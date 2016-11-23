@@ -35,8 +35,7 @@
                        "homologues.homologue.symbol"]
               :where  [{:path  "Gene"
                         :op    "IN"
-                        :value "esyN demo list"
-                        :code  "A"}
+                        :value "esyN demo list"}
                        {:path  "Gene.symbol"
                         :op    "="
                         :value "*a*"
