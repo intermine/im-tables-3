@@ -1,5 +1,29 @@
 (ns im-tables.db)
 
+(def subclassquery
+  {:description     "Returns MP terms whose names match the specified search terms.",
+   :tags            ["im:aspect:Phenotype" "im:frontpage" "im:public"],
+   :where           [{:path       "MPTerm.obsolete",
+                      :op         "=",
+                      :code       "B",
+                      :editable   "false",
+                      :switchable "false",
+                      :switched   "LOCKED",
+                      :value      "false"}
+                     {:path       "MPTerm.name",
+                      :op         "CONTAINS",
+                      :code       "A",
+                      :editable   "true",
+                      :switchable "false",
+                      :switched   "LOCKED",
+                      :value      "hemoglobin"}],
+   :name            "Lookup_MPhenotype",
+   :title           "Lookup --> Mammalian phenotypes (MP terms)",
+   :constraintLogic "A and B",
+   :select          ["MPTerm.name" "MPTerm.identifier" "MPTerm.description"],
+   :orderBy         [{:MPTerm.name "ASC"}],
+   :model           {:name "genomic"}})
+
 (def default-db
   {:service  {:root "www.flymine.org/query"}
    :query    {:from   "Gene"
@@ -31,3 +55,6 @@
               :overlay?  false
               :filters   {}
               :tree-view {:selection #{}}}})
+
+
+

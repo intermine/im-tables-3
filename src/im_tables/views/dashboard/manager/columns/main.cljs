@@ -16,7 +16,8 @@
                         [:li
                          {:on-click (fn [e]
                                       (if-not original-view?
-                                        (dispatch [:tree-view/toggle-selection loc (conj current-path name)]))
+                                        (do
+                                          (dispatch [:tree-view/toggle-selection loc (conj current-path name)])))
                                       (.stopPropagation e))}
                          [:span
                           {:class (cond

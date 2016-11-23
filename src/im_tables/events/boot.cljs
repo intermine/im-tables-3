@@ -5,8 +5,8 @@
             [imcljs.fetch :as fetch]))
 
 (defn boot-flow
-  [loc]
-  {:first-dispatch [:imt.auth/fetch-anonymous-token loc {:root "www.flymine.org/query"}]
+  [loc service]
+  {:first-dispatch [:imt.auth/fetch-anonymous-token loc service]
    :rules          [{:when     :seen?
                      :events   [:imt.auth/store-token]
                      :dispatch [:imt.main/fetch-assets loc]}
@@ -19,13 +19,14 @@
   :initialize-db
   (fn [_ [_ loc]]
     {:db         (assoc-in {} loc db/default-db)
-     :async-flow (boot-flow loc)}))
+     :async-flow (boot-flow loc (get db/default-db :service))}))
 
 ; Fetch an anonymous token for a give
 (reg-event-fx
   :imt.auth/fetch-anonymous-token
   (sandbox)
   (fn [{db :db} [_ loc service]]
+    (.log js/console "fetching token for" service)
     {:db                     db
      :im-tables/im-operation {:on-success [:imt.auth/store-token loc]
                               :op         (partial fetch/session service)}}))
