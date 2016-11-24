@@ -27,7 +27,7 @@
 (def default-db
   {
 
-   :service  {:root "www.flymine.org/query"}
+   ;:service  {:root "www.flymine.org/query"}
    ;:query    {:from   "Gene"
    ;           :size   10
    ;           :select ["secondaryIdentifier"

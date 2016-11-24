@@ -4,6 +4,13 @@
             [im-tables.interceptors :refer [sandbox]]
             [imcljs.fetch :as fetch]))
 
+(defn deep-merge
+  "Recursively merges maps. If keys are not maps, the last value wins."
+  [& vals]
+  (if (every? map? vals)
+    (apply merge-with deep-merge vals)
+    (last vals)))
+
 (defn boot-flow
   [loc service]
   {:first-dispatch [:imt.auth/fetch-anonymous-token loc service]
@@ -17,9 +24,10 @@
 
 (reg-event-fx
   :initialize-db
-  (fn [_ [_ loc]]
-    {:db         (assoc-in {} loc db/default-db)
-     :async-flow (boot-flow loc (get db/default-db :service))}))
+  (fn [_ [_ loc initial-state]]
+    (let [new-db (deep-merge db/default-db initial-state)]
+      {:db         (if loc (assoc-in {} loc new-db) new-db)
+       :async-flow (boot-flow loc (get new-db :service))})))
 
 ; Fetch an anonymous token for a give
 (reg-event-fx

@@ -37,6 +37,7 @@
   :im-tables.main/replace-all-state
   (sandbox)
   (fn [_ [_ loc state]]
+    (.log js/console "replacing all state" loc state)
     {:db       (deep-merge db/default-db state)
      :dispatch [:im-tables.main/run-query loc]}))
 
@@ -77,13 +78,6 @@
     (assoc-in db [:cache :overlay?] false)))
 
 
-(reg-event-fx
-  :main/save-query-response
-  (sandbox)
-  (fn [{db :db} [_ loc results]]
-    {:db         (assoc db :query-response results)
-     :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
-                       (map (fn [view] [:main/summarize-column loc view]) (get results :views)))}))
 
 (defn toggle-into-set [haystack needle]
   (if (some #{needle} haystack)
@@ -337,20 +331,35 @@
 
 ;;;;;;;;;;;;;;
 
+
+
+(reg-event-fx
+  :main/save-query-response
+  (sandbox)
+  (fn [{db :db} [_ loc {:keys [start size]} results]]
+    (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
+          updated-results (assoc results :results (merge (get-in db [:query-response :results]) new-results-map))]
+      {:db         (assoc db :query-response updated-results)
+       ;:db         (assoc db :query-response results)
+       :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
+                         (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
+
 (reg-event-fx
   :im-tables.main/run-query
   (sandbox)
   (fn [{db :db} [_ loc]]
     (.debug js/console "Running query" (get db :query))
-    {:db                     (assoc-in db [:cache :column-summary] {})
-     ;:undo                   "Undo ran query"
-     :dispatch-n             [^:flush-dom [:show-overlay loc]
-                              [:main/deconstruct loc]
-                              ]
-     :im-tables/im-operation {:on-success [:main/save-query-response loc]
-                              :op         (partial fetch/table-rows
-                                                   (get db :service)
-                                                   (get db :query))}}))
+    (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
+      {:db                     (assoc-in db [:cache :column-summary] {})
+       ;:undo                   "Undo ran query"
+       :dispatch-n             [^:flush-dom [:show-overlay loc]
+                                [:main/deconstruct loc]]
+       :im-tables/im-operation {:on-success [:main/save-query-response loc pagination]
+                                :op         (partial fetch/table-rows
+                                                     (get db :service)
+                                                     (get db :query)
+                                                     {:start start
+                                                      :size  limit})}})))
 
 
 
@@ -376,10 +385,10 @@
   (fn [{db :db} [_ loc]]
 
     (let [deconstructed-query (into {} (map vec (sort-by
-                                          (fn [[p _]] (count (clojure.string/split p ".")))
-                                          (partition 2
-                                                     (flatten
-                                                       (map seq (vals (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query])))))))))]
+                                                  (fn [[p _]] (count (clojure.string/split p ".")))
+                                                  (partition 2
+                                                             (flatten
+                                                               (map seq (vals (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query])))))))))]
 
 
       {:db         (assoc db :query-parts deconstructed-query)

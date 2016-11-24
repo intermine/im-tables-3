@@ -13,7 +13,7 @@
                  [binaryage/oops "0.5.2"]
                  [inflections "0.12.2"]
                  [org.clojure/core.async "0.2.395"]
-                 [intermine/imcljs "0.1.12-SNAPSHOT"]]
+                 [intermine/imcljs "0.1.13-SNAPSHOT"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-less "1.7.5"]]

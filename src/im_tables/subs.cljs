@@ -28,8 +28,6 @@
 (reg-sub
   :style/overlay?
   (fn [db [_ prefix]]
-    ;(println "GOT LOC" loc )
-    ;(println "GLUED" (get-in db (glue loc [:cache :overlay?])))
     (get-in db (glue prefix [:cache :overlay?]))))
 
 (reg-sub
