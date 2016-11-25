@@ -13,6 +13,7 @@
                  [binaryage/oops "0.5.2"]
                  [inflections "0.12.2"]
                  [org.clojure/core.async "0.2.395"]
+                 [day8.re-frame/forward-events-fx "0.0.5"]
                  [intermine/imcljs "0.1.13-SNAPSHOT"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]

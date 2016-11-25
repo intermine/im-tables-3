@@ -37,7 +37,6 @@
   :im-tables.main/replace-all-state
   (sandbox)
   (fn [_ [_ loc state]]
-    (.log js/console "replacing all state" loc state)
     {:db       (deep-merge db/default-db state)
      :dispatch [:im-tables.main/run-query loc]}))
 
@@ -349,6 +348,7 @@
   (sandbox)
   (fn [{db :db} [_ loc]]
     (.debug js/console "Running query" (get db :query))
+
     (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
       {:db                     (assoc-in db [:cache :column-summary] {})
        ;:undo                   "Undo ran query"
@@ -359,7 +359,7 @@
                                                      (get db :service)
                                                      (get db :query)
                                                      {:start start
-                                                      :size  limit})}})))
+                                                      :size  (* limit (get-in db [:settings :buffer]))})}})))
 
 
 

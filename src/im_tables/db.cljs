@@ -43,8 +43,9 @@
    ;                     :value "*a*"
    ;                     :code  "B"}]}
 
-   :settings {:pagination {:start 0
-                           :limit 10}
+   :settings {:buffer 2
+              :pagination {:start 0
+                           :limit 20}
               :links {:vocab {:mine "flymine"}
                       :on-click nil
                       :url (fn [vocab] (str "#/reportpage/"
