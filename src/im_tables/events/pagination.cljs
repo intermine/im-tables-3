@@ -8,9 +8,8 @@
   (fn [{db :db} [_ loc]]
     (let [{:keys [start limit] :as p} (get-in db [:settings :pagination])
           fetch-more? (not-every? (fn [n] (contains? (get-in db [:query-response :results]) n)) (range start (+ start limit)))]
-      (println "TEST" (map (fn [n] (contains? (get-in db [:query-response :results]) n)) (range start (+ start limit))))
       (cond-> {:db db}
-              fetch-more? (assoc :dispatch [:im-tables.main/run-query loc])))))
+              fetch-more? (assoc :dispatch [:im-tables.main/run-query loc true])))))
 
 (reg-event-fx
   :imt.settings/update-pagination-inc
