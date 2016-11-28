@@ -52,10 +52,10 @@
 (reg-event-fx
   :imt.io/save-list
   (sandbox)
-  (fn [{db :db} [_ loc query options]]
+  (fn [{db :db} [_ loc name query options]]
     {:db                     db
      :im-tables/im-operation {:on-success [:imt.io/save-list-success]
-                              :op         (partial save/im-list (get db :service) query options)}}))
+                              :op         (partial save/im-list (get db :service) name query options)}}))
 
 (reg-event-fx
   :prep-modal

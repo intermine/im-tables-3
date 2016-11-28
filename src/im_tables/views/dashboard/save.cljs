@@ -28,7 +28,7 @@
       "Cancel"]
      [:button.btn.btn-success
       {:data-dismiss "modal"
-       :on-click     (fn [] (dispatch [:imt.io/save-list loc (:query details) @state]))}
+       :on-click     (fn [] (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state]))}
       "Save"]]))
 
 (defn generate-dialog [loc {:keys [type count query] :as details}]
