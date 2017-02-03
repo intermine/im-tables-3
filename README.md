@@ -9,6 +9,13 @@ Development goals
 
 ## Development Mode
 
+### Initial setup
+Once you've checked this project, you'll need to download the css dependencies using [bower](https://bower.io/). Assuming you have bower installed already, it's just
+
+```
+bower install
+```
+
 ### Compile css:
 
 Compile css file once.
