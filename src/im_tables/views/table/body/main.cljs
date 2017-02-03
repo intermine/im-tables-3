@@ -22,6 +22,15 @@
                   [:td v]])))
            column-headers))])
 
+(defn tooltip
+  "UI component for a table cell tooltip"
+  [my-dimensions show-tooltip? summary-table]
+    [:div.im-tooltip
+      {:on-mouse-enter (fn [] (reset! show-tooltip? false))
+       :style          {:top      (:height @my-dimensions)}}
+      summary-table]
+)
+
 (defn table-cell [loc idx {id :id}]
   (let [show-tooltip? (reagent/atom false)
         dragging-item (subscribe [:style/dragging-item loc])
@@ -62,18 +71,13 @@
 
                      :class drag-class}
                     [:span
-                     {:on-click (if on-click (partial on-click ((get-in @settings [:links :url])
-                                                                 (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
+                     {:on-click
+                      (if on-click
+                        (partial on-click ((get-in @settings [:links :url])
+                             (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
                      [:a
                       (if value value [:i.fa.fa-ban.mostly-transparent])]]
-                    (if @show-tooltip?
-                      [:div.im-tooltip.test
-                       [:div.arrow_box
-                        {:on-mouse-enter (fn [] (reset! show-tooltip? false))
-                         :style          {:top      (:height @my-dimensions)}}
-                        summary-table]]
-
-                      ;[inner-tooltip @mystate show? (:data-content attributes)]
+                    (if @show-tooltip? [tooltip my-dimensions show-tooltip? summary-table]
                       )])))})))
 
 (defn table-row [loc row]
