@@ -11,8 +11,8 @@
   (into [] (drop 1 (map keyword (split string ".")))))
 
 (defn generate-summary-table [{:keys [value column-headers] :as summary}]
-  [:table.table.table-striped.table-condensed.table-bordered
-   (into [:tbody {:style {:font-size "0.9em"}}]
+  [:table.table.table-striped.table-condensed.table-bordered.summary-table
+   (into [:tbody]
          (map-indexed
            (fn [idx column-header]
              (if-let [v (get-in value (dot-split (get (:views summary) idx)))]
@@ -59,7 +59,7 @@
                               (reset! show-tooltip? true))
                      :on-mouse-leave
                             (fn [] (reset! show-tooltip? false))
-                     :style {:position "relative"}
+
                      :class drag-class}
                     [:span
                      {:on-click (if on-click (partial on-click ((get-in @settings [:links :url])
@@ -67,11 +67,10 @@
                      [:a
                       (if value value [:i.fa.fa-ban.mostly-transparent])]]
                     (if @show-tooltip?
-                      [:div.test
+                      [:div.im-tooltip.test
                        [:div.arrow_box
                         {:on-mouse-enter (fn [] (reset! show-tooltip? false))
-                         :style          {:position "absolute"
-                                          :top      (:height @my-dimensions)}}
+                         :style          {:top      (:height @my-dimensions)}}
                         summary-table]]
 
                       ;[inner-tooltip @mystate show? (:data-content attributes)]
