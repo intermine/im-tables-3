@@ -1,38 +1,62 @@
+@arrow-size: 10px;
+
 .im-tooltip {
-		position: absolute;
-		background: #ffffff;
-		border: 1px solid #c2e1f5;
-		min-width: 150px;
-		-webkit-box-shadow: 2px 2px 12px 1px rgba(0,0,0,0.35);
-		-moz-box-shadow: 2px 2px 12px 1px rgba(0,0,0,0.35);
-		box-shadow: 2px 2px 12px 1px rgba(0,0,0,0.35);
-		padding: 5px;
-		margin-top: 10px;
-		z-index: 999;
+	position: absolute;
+	background: #ffffff;
+	border: 1px solid #c2e1f5;
+	min-width: 150px;
+	min-height: 50px;
+	-webkit-box-shadow: 2px 2px 12px 1px rgba(0,0,0,0.35);
+	-moz-box-shadow: 2px 2px 12px 1px rgba(0,0,0,0.35);
+	box-shadow: 2px 2px 12px 1px rgba(0,0,0,0.35);
+	padding: 5px;
+	margin-top: 10px;
+	z-index: 999;
+	transition: all 0.4s;
 
 	&:after,
 	&:before {
-		bottom: 100%;
-		left: 50%;
-		border: solid transparent;
+		bottom: 50%;
 		content: " ";
+		border-color: rgba(255, 255, 255, 0);
 		height: 0;
-		width: 0;
 		position: absolute;
 		pointer-events: none;
+		border-style: solid;
 	}
 
-	&:after {
-		border-color: rgba(255, 255, 255, 0);
-		border-bottom-color: #ffffff;
-		border-width: 10px;
-		margin-left: -10px;
+	&.tooltip-right {
+		&:before {
+			border-right-color: #c2e1f5;
+		}
+
+		&:after {
+			border-right-color: #fff;
+			margin-right: -1px; //offset by 1 to allow the &:before to peek out, creating a faux 1px border.
+		}
+
+		&:after,
+		&:before {
+			right: 100%;
+			border-width: @arrow-size @arrow-size @arrow-size 0;
+		}
 	}
 
-	&:before {
-		border-color: rgba(194, 225, 245, 0);
-		border-bottom-color: #c2e1f5;
-		border-width: 11px;
-		margin-left: -11px;
+	&.tooltip-left {
+		&:after,
+		&:before {
+			left: 100%;
+			border-width: @arrow-size 0 @arrow-size @arrow-size;
+		}
+
+		&:before {
+			border-left-color: #c2e1f5;
+		}
+
+		&:after {
+			margin-left: -1px;
+			border-left-color: #fff;
+		}
 	}
+	.table {margin-bottom:0;}
 }

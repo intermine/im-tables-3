@@ -22,37 +22,65 @@
                   [:td v]])))
            column-headers))])
 
+
+(defn tooltip-position
+  "automatically positin the tooltip within the imtables div as much as possible. "
+  [table-dimensions cell-dimensions]
+  (let [middle (/ (- (:right table-dimensions) (:left table-dimensions)) 2)
+        is-cell-left-of-middle? (< (:left cell-dimensions) middle)]
+    (if is-cell-left-of-middle?
+      "tooltip-right"
+      "tooltip-left")
+))
+
 (defn tooltip
   "UI component for a table cell tooltip"
-  [my-dimensions show-tooltip? summary-table]
-    [:div.im-tooltip
-      {:on-mouse-enter (fn [] (reset! show-tooltip? false))
-       :style          {:top      (:height @my-dimensions)}}
-      summary-table]
-)
+  [table-dimensions cell-dimensions show-tooltip? summary-table]
+    (let [tooltip-position (tooltip-position @table-dimensions @cell-dimensions)
+          tooltip-height (reagent/atom 120)]
+    (reagent/create-class
+      {:name "Table Cell"
+       :component-did-mount
+       (fn [this] (reset! tooltip-height (oget (reagent/dom-node this) "clientHeight")))
+       :reagent-render
+         (fn [this]
+              [:div.im-tooltip
+                {:on-mouse-enter (fn [e] (reset! show-tooltip? false) )
+                 :style
+                (cond-> {:bottom (- (/ @tooltip-height 2))}
+                 (= tooltip-position "tooltip-right")
+                   (assoc :left (:width @cell-dimensions))
+                 (= tooltip-position "tooltip-left")
+                   (assoc :right (:width @cell-dimensions)))
+                 :class tooltip-position}
+                summary-table])})))
+
+(defn bbox->map [bb]
+    {:width (oget bb "width")
+    :height (oget bb "height")
+    :left (oget bb "left")
+    :right (oget bb "right")
+    :top (oget bb "top")
+    :bottom (oget bb "bottom")})
 
 (defn table-cell [loc idx {id :id}]
   (let [show-tooltip? (reagent/atom false)
         dragging-item (subscribe [:style/dragging-item loc])
         dragging-over (subscribe [:style/dragging-over loc])
         my-dimensions (reagent/atom {})
+        table-dimensions (reagent/atom {})
         settings (subscribe [:settings/settings loc])]
-
-
     (reagent/create-class
       {:name "Table Cell"
        :component-will-unmount
              (fn [])
        :component-did-mount
              (fn [this]
-               (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")]
-                 (swap! my-dimensions assoc
-                        :width (oget bb "width")
-                        :height (oget bb "height")
-                        :left (oget bb "left")
-                        :right (oget bb "right")
-                        :top (oget bb "top")
-                        :bottom (oget bb "bottom"))))
+               (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")
+                     bb-parent-tr (ocall (oget (reagent/dom-node this) "parentElement") "getBoundingClientRect")]
+                (reset! my-dimensions (bbox->map bb))
+                (reset! table-dimensions (bbox->map bb-parent-tr))
+                 ))
        :reagent-render
              (let [summary (subscribe [:summary/item-details loc id])]
                (fn [loc idx {:keys [value id] :as c}]
@@ -77,7 +105,7 @@
                              (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
                      [:a
                       (if value value [:i.fa.fa-ban.mostly-transparent])]]
-                    (if @show-tooltip? [tooltip my-dimensions show-tooltip? summary-table]
+                    (if @show-tooltip? [tooltip table-dimensions my-dimensions show-tooltip? summary-table]
                       )])))})))
 
 (defn table-row [loc row]
