@@ -35,11 +35,11 @@
 
 (defn tooltip
   "UI component for a table cell tooltip"
-  [table-dimensions cell-dimensions show-tooltip? summary-table]
+  [table-dimensions cell-dimensions show-tooltip? summary]
     (let [tooltip-position (tooltip-position @table-dimensions @cell-dimensions)
-          tooltip-height (reagent/atom 120)]
+          tooltip-height (reagent/atom 0)]
     (reagent/create-class
-      {:name "Table Cell"
+      {:name "Tooltip"
        :component-did-mount
        (fn [this] (reset! tooltip-height (oget (reagent/dom-node this) "clientHeight")))
        :reagent-render
@@ -47,13 +47,14 @@
               [:div.im-tooltip
                 {:on-mouse-enter (fn [e] (reset! show-tooltip? false) )
                  :style
-                (cond-> {:bottom (- (/ @tooltip-height 2))}
+                (cond-> {:bottom (- (int (/ @tooltip-height 2)))
+                         :max-width (int (/ (:width @table-dimensions) 2))}
                  (= tooltip-position "tooltip-right")
                    (assoc :left (:width @cell-dimensions))
                  (= tooltip-position "tooltip-left")
                    (assoc :right (:width @cell-dimensions)))
                  :class tooltip-position}
-                summary-table])})))
+                (generate-summary-table @summary)])})))
 
 (defn bbox->map [bb]
     {:width (oget bb "width")
@@ -85,7 +86,6 @@
              (let [summary (subscribe [:summary/item-details loc id])]
                (fn [loc idx {:keys [value id] :as c}]
                  (let [{:keys [on-click url vocab]} (get-in @settings [:links])
-                       summary-table (generate-summary-table @summary)
                        drag-class    (cond
                                        (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
                                        (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
@@ -105,7 +105,7 @@
                              (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
                      [:a
                       (if value value [:i.fa.fa-ban.mostly-transparent])]]
-                    (if @show-tooltip? [tooltip table-dimensions my-dimensions show-tooltip? summary-table]
+                    (if @show-tooltip? [tooltip table-dimensions my-dimensions show-tooltip? summary]
                       )])))})))
 
 (defn table-row [loc row]
