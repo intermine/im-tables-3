@@ -95,17 +95,18 @@
 (defn filter-view [loc view]
   (let [response   (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
-        query      (subscribe [:main/temp-query loc view])]
+        query      (subscribe [:main/temp-query loc view])
+        active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))]
     (fn [loc view]
       [:form.form.min-width-275
+       (.log js/console "%cactive-filters" "color:hotpink;font-weight:bold;" (clj->js active-filters))
        [:div.alert.alert-success
-        [:div.container-fluid
-         [:div
-          [:h4 "Filters"]
-          (into [:div] (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))]]]
+          (if (seq active-filters)
+            (into [:div [:h4 "Active filters:"] ] active-filters)
+            [:h4 "No active filters"])]
        [:div.alert.alert-default
-        [:div.container-fluid
-         [:h4 "Add..."]
+        [:div
+         [:h4 "Add a new filter:"]
          [blank-constraint loc view]]]
        [:div.container-fluid
         [:div.btn-toolbar.pull-right
