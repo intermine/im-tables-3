@@ -140,12 +140,10 @@
                          (map (fn [{:keys [count item]}]
                                 [:tr.hoverable
                                  {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                                 [:td [:div
-                                       [:label
-                                        [:input
+                                 [:td                                         [:input
                                          {:on-change (fn [])
                                           :checked   (contains? @selections item)
-                                          :type      "checkbox"}]]]]
+                                          :type      "checkbox"}]]
                                  [:td (if item item [:i.fa.fa-ban.mostly-transparent])]
                                  [:td
                                   [:div count]]]))))]]
