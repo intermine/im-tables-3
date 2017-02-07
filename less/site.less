@@ -3,6 +3,7 @@
 
 .im-table {
     @spacer: 1em;
+    @highlightcolor: cornflowerblue;
     min-height: 200px;
     padding-bottom: 40px;
 
@@ -148,6 +149,11 @@
         vertical-align: top;
         display: inline-block;
         white-space: nowrap;
+
+        .filter-icon.active-filter {
+            color: @highlightcolor;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+        }
 
         & > * {
             padding: 2px;
@@ -301,6 +307,6 @@
     }
 
     .ontop {
-        background-color: deepskyblue;
+        background-color: @highlightcolor;
     }
 }
