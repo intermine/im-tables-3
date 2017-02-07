@@ -108,11 +108,11 @@
          [:h4 "Add a new filter:"]
          [blank-constraint loc view]]]
        [:div.container-fluid
-        [:div.btn-toolbar.pull-right
+        [:div.btn-toolbar
          [:button.btn.btn-default
           {:type        "button"
            :data-toggle "dropdown"} "Cancel"]
-         [:button.btn.btn-primary
+         [:button.btn.btn-primary.pull-right
           {:type        "button"
            :data-toggle "dropdown"
            :on-click    (fn [] (dispatch [:filters/save-changes loc]))} "Apply"]]]]))))
