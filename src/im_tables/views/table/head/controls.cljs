@@ -99,7 +99,6 @@
         active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))]
     (fn [loc view]
       [:form.form.min-width-275
-       (.log js/console "%cactive-filters" "color:hotpink;font-weight:bold;" (clj->js active-filters))
        [:div.alert.alert-success
           (if (seq active-filters)
             (into [:div [:h4 "Active filters:"] ] active-filters)
