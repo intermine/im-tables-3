@@ -95,9 +95,9 @@
 (defn filter-view [loc view]
   (let [response   (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
-        query      (subscribe [:main/temp-query loc view])
-        active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))]
+        query      (subscribe [:main/temp-query loc view])]
     (fn [loc view]
+      (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))]
       [:form.form.min-width-275
        [:div.alert.alert-success
           (if (seq active-filters)
@@ -115,7 +115,7 @@
          [:button.btn.btn-primary
           {:type        "button"
            :data-toggle "dropdown"
-           :on-click    (fn [] (dispatch [:filters/save-changes loc]))} "Apply"]]]])))
+           :on-click    (fn [] (dispatch [:filters/save-changes loc]))} "Apply"]]]]))))
 
 (defn column-summary [loc view]
   (let [response    (subscribe [:selection/response loc view])
@@ -170,15 +170,18 @@
 
 (defn toolbar []
   (fn [loc view]
+    (let [query (subscribe [:main/temp-query loc view])
+          active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))]
     [:div.summary-toolbar
      [:i.fa.fa-sort
       {:on-click (fn [] (dispatch [:main/sort-by loc view]))}]
      [:i.fa.fa-times
       {:on-click (fn [] (dispatch [:main/remove-view loc view]))}]
      [:span.dropdown
-      [:i.fa.fa-filter.dropdown-toggle
+      [:i.fa.fa-filter.dropdown-toggle.filter-icon
        {:on-click    (fn [] (dispatch [:main/set-temp-query loc]))
-        :data-toggle "dropdown"}]
+        :data-toggle "dropdown"
+        :class (cond active-filters? "active-filter")}]
       [:div.dropdown-menu
        {:style {:min-width "400px"}}
        [filter-view loc view]]]
@@ -186,7 +189,7 @@
       [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
       [:div.dropdown-menu
        {:style {:min-width "400px"}}
-       [column-summary loc view]]]]))
+       [column-summary loc view]]]])))
 
 (defn main []
   (fn [loc view]
