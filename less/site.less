@@ -79,7 +79,7 @@
         justify-content: center;
     }
 
-    .max-height-500 {
+    .column-summary, .filter-view  {
         max-height: 500px;
         overflow-y: scroll;
     }
@@ -154,11 +154,13 @@
         border-right:solid 1px @histogram-bg;
     }
 
-    div.summary-toolbar {
+    .summary-toolbar {
         vertical-align: top;
         display: inline-block;
         white-space: nowrap;
-
+        .dropdown-menu {
+          min-width:35vw;
+        }
         .filter-icon.active-filter {
             color: @highlightcolor;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.1);

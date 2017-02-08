@@ -114,7 +114,7 @@
     (fn [loc view]
       (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
             dropdown (reagent/current-component)]
-      [:form.form.min-width-275.filter-view {
+      [:form.form.filter-view {
        :on-submit (fn [e]
          (ocall e "preventDefault")
          (force-close dropdown)
@@ -152,10 +152,9 @@
        :reagent-render
        (fn [loc view]
          (let [close-fn (partial force-close (reagent/current-component))]
-           [:form.form.min-width-275.column-summary
+           [:form.form.column-summary
             [histogram/main (:results @response)]
             [filter-input loc view @text-filter]
-            [:div.max-height-400
              [:table.table.table-striped.table-condensed
               [:thead [:tr [:th] [:th "Item"] [:th "Count"]]]
               (into [:tbody]
@@ -169,7 +168,7 @@
                                           :type      "checkbox"}]]
                                  [:td (if item item [:i.fa.fa-ban.mostly-transparent])]
                                  [:td
-                                  [:div count]]]))))]]
+                                  [:div count]]]))))]
             [:div.btn-toolbar
              [:button.btn.btn-primary
               {:type     "button"
@@ -208,12 +207,9 @@
         :data-toggle "dropdown"
         :class (cond active-filters? "active-filter")
         :title (str "Filter " view " column")}]
-      [:div.dropdown-menu
-       {:style {:min-width "400px"}}
-       [filter-view loc view]]]
+      [:div.dropdown-menu [filter-view loc view]]]
      [:span.dropdown
       [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
       [:div.dropdown-menu
-       {:style {:min-width "400px"}
-        :title (str "Summarise " view " column")}
+       {:title (str "Summarise " view " column")}
        [column-summary loc view]]]])))
