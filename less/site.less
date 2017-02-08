@@ -79,7 +79,8 @@
         justify-content: center;
     }
 
-    .column-summary, .filter-view  {
+    .column-summary,
+    .filter-view {
         max-height: 500px;
         overflow-y: scroll;
     }
@@ -140,27 +141,34 @@
     }
 
     .histogram {
-      width: 100%;
-      max-width:50vw;
-      height: 50px; //if you change this value, change it in src/views/graphs.cljs too
-      background-color: @histogram-bg;
-      display:flex;
-      align-items:flex-end;
+        width: 100%;
+        max-width: 50vw;
+        height: 50px; //if you change this value, change it in src/views/graphs.cljs too
+        background-color: @histogram-bg;
+        display: flex;
+        align-items: flex-end;
     }
 
     .histo-bar {
         background-color: @histogram-bars;
-        width:12px;
-        border-right:solid 1px @histogram-bg;
+        width: 12px;
+        border-right: solid 1px @histogram-bg;
+    }
+
+    .dropdown-right {
+        right: 100%;
+        left: auto;
     }
 
     .summary-toolbar {
         vertical-align: top;
         display: inline-block;
         white-space: nowrap;
+
         .dropdown-menu {
-          min-width:35vw;
+            min-width: 35vw;
         }
+
         .filter-icon.active-filter {
             color: @highlightcolor;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
@@ -172,6 +180,18 @@
     }
 
     .dropdown-menu {
+        animation-duration: 0.4s;
+        animation-name: fadein;
+        transition-timing-function: ease-in;
+        @keyframes fadein {
+            from {
+                opacity: 0.1;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
         padding-top: 0;
         font-weight: normal;
         white-space: normal;

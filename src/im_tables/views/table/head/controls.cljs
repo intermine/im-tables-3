@@ -188,11 +188,11 @@
                  :on-click (fn [] (dispatch [:select/clear-selection loc view]))}
                 [:span [:i.fa.fa-square-o] " Clear"]])]]))})))
 
-
 (defn toolbar []
-  (fn [loc view]
+  (fn [loc view idx col-count]
     (let [query (subscribe [:main/temp-query loc view])
-          active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))]
+          active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
+          direction (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")]
     [:div.summary-toolbar
      [:i.fa.fa-sort.sort-icon
       {:on-click (fn [] (dispatch [:main/sort-by loc view]))
@@ -206,9 +206,10 @@
         :data-toggle "dropdown"
         :class (cond active-filters? "active-filter")
         :title (str "Filter " view " column")}]
-      [:div.dropdown-menu [filter-view loc view]]]
+      [:div.dropdown-menu {:class direction} [filter-view loc view]]]
      [:span.dropdown
       [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
       [:div.dropdown-menu
-       {:title (str "Summarise " view " column")}
+       {:title (str "Summarise " view " column")
+        :class direction}
        [column-summary loc view]]]])))

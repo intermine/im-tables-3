@@ -23,6 +23,7 @@
                                                                :dragging-item @dragging-item
                                                                :loc           loc
                                                                :idx           idx
+                                                               :col-count     (count columnHeaders)
                                                                :view          (get views idx)}]))))]
           (into [:tbody]
                 (->>
