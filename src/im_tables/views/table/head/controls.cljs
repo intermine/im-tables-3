@@ -114,7 +114,7 @@
     (fn [loc view]
       (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
             dropdown (reagent/current-component)]
-      [:form.form.min-width-275 {
+      [:form.form.min-width-275.filter-view {
        :on-submit (fn [e]
          (ocall e "preventDefault")
          (force-close dropdown)
@@ -152,7 +152,7 @@
        :reagent-render
        (fn [loc view]
          (let [close-fn (partial force-close (reagent/current-component))]
-           [:form.form.min-width-275
+           [:form.form.min-width-275.column-summary
             [histogram/main (:results @response)]
             [filter-input loc view @text-filter]
             [:div.max-height-400
