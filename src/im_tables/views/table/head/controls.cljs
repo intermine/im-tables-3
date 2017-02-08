@@ -2,7 +2,7 @@
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
-            [oops.core :refer [oget ocall! oapply]]))
+            [oops.core :refer [oget ocall ocall! oapply]]))
 
 
 (defn filter-input []
@@ -58,6 +58,9 @@
 (defn blank-constraint [loc path]
   (let [state (reagent/atom {:path path :op "=" :value nil})]
     (fn [loc path]
+      (let [submit-constraint (fn [] (dispatch
+                          [:filters/add-constraint loc @state]
+                          (reset! state {:path path :op "=" :value nil})))]
       [:div.container-fluid
        [:div.row
         [:div.col-xs-4
@@ -65,15 +68,27 @@
           {:value     (:op @state)
            :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
         [:div.col-xs-6
-         [:input.form-control {:type      "text"
-                               :value     (:value @state)
-                               :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))}]]
+         [:input.form-control
+          {:type      "text"
+           :value     (:value @state)
+           :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
+           :on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
+                              (submit-constraint)))
+           :on-key-press
+             (fn [e]
+               (let [keycode (.-charCode e)
+                     input   (.. e -target -value)]
+                 ;; submit when pressing enter & not blank.
+                 (when (and (= keycode 13) (not (clojure.string/blank? input)))
+                  (submit-constraint)
+                  )))
+            }]]
         [:div.col-xs-2
          [:button.btn.btn-success
           {:on-click (fn [] (dispatch
                               [:filters/add-constraint loc @state]
                               (reset! state {:path path :op "=" :value nil})))
-           :type     "button"} [:i.fa.fa-plus]]]]])))
+           :type     "button"} [:i.fa.fa-plus]]]]]))))
 
 (defn constraint []
   (fn [loc {:keys [path op value values code] :as const}]
@@ -97,8 +112,14 @@
         selections (subscribe [:selection/selections loc view])
         query      (subscribe [:main/temp-query loc view])]
     (fn [loc view]
-      (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))]
-      [:form.form.min-width-275
+      (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
+            dropdown (reagent/current-component)]
+      [:form.form.min-width-275 {
+       :on-submit (fn [e]
+         (ocall e "preventDefault")
+         (force-close dropdown)
+         (dispatch [:filters/save-changes loc])
+       )}
        [:div.alert.alert-success
           (if (seq active-filters)
             (into [:div [:h4 "Active filters:"] ] active-filters)
@@ -112,10 +133,12 @@
          [:button.btn.btn-default
           {:type        "button"
            :data-toggle "dropdown"} "Cancel"]
-         [:button.btn.btn-primary.pull-right
-          {:type        "button"
-           :data-toggle "dropdown"
-           :on-click    (fn [] (dispatch [:filters/save-changes loc]))} "Apply"]]]]))))
+         [:input.btn.btn-primary.pull-right
+          {:type        "submit"
+           ; don't put :data-toggle "dropdown" in here, it stops
+           ; the form submitting.... silently. Nice.
+           :value  "Apply"
+           }]]]]))))
 
 (defn column-summary [loc view]
   (let [response    (subscribe [:selection/response loc view])
