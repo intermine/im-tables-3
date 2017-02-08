@@ -7,14 +7,16 @@
 
 (defn filter-input []
   (fn [loc view val]
-    [:input.form-control
+    [:div.inline-filter [:i.fa.fa-filter]
+     [:input.form-control
      {:type      "text"
       :value     val
+      :placeholder "Search for a value..."
       :on-change (fn [e]
                    (dispatch [:select/set-text-filter
                               loc
                               view
-                              (oget e :target :value)]))}]))
+                              (oget e :target :value)]))}]]))
 
 (defn force-close
   "Force a dropdown to close "
@@ -161,7 +163,8 @@
                          (map (fn [{:keys [count item]}]
                                 [:tr.hoverable
                                  {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                                 [:td                                         [:input
+                                 [:td
+                                  [:input
                                          {:on-change (fn [])
                                           :checked   (contains? @selections item)
                                           :type      "checkbox"}]]

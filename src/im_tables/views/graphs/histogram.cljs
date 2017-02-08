@@ -28,6 +28,6 @@
             [datum height-scale idx d (count points)])
                 points))
         (cond only-one-column?
-          [:div.no-histogram "No histogram; only one value in entire column"]
+          [:div.no-histogram [:i.fa.fa-bar-chart] " No histogram; only one value in entire column"]
               only-one-count-result?
-          [:div.no-histogram "No histogram; all values occur exactly "(first unique-results) " time(s)"])))))
+          [:div.no-histogram [:i.fa.fa-bar-chart] " No histogram; all values occur exactly "(first unique-results) " time(s)"])))))
