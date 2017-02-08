@@ -7,23 +7,18 @@
           (- r1-upper r1-lower))
        r2-lower)))
 
-(defn datum []
+(defn datum
+  "A single scaled bar for the histogram"
+  []
   (fn [height-scale idx {:keys [item count]}]
-    [:rect.histo {:x      idx
-                  :y      (- 60 (height-scale count))
-                  :width  1
-                  :height (height-scale count)}]))
+    [:div.histo-bar
+     {:style {:height (str (height-scale count) "px")}
+      :title (str item ": " count)}]))
 
 (defn main []
   (fn [points]
-    (let [height-scale (linear-scale [0 (apply max (map :count points))] [0 60])]
-      [:svg.graph
-       {:width                 "100%"
-        :height                "50px"
-        :preserve-aspect-ratio "none"
-        :shapeRendering        "crispEdges"
-        :view-box              (str "0 0 " (count points) " 60")}
-       (into [:g]
-             (map-indexed (fn [idx d]
-                            [datum height-scale idx d (count points)])
-                          points))])))
+    (let [height-scale (linear-scale [0 (apply max (map :count points))] [0 50])]
+      (into [:div.graph.histogram]
+        (map-indexed (fn [idx d]
+          [datum height-scale idx d (count points)])
+              points)))))

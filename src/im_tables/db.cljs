@@ -58,6 +58,3 @@
               :overlay?  false
               :filters   {}
               :tree-view {:selection #{}}}})
-
-
-

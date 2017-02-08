@@ -4,6 +4,9 @@
 .im-table {
     @spacer: 1em;
     @highlightcolor: cornflowerblue;
+    @drag-color: #337ab7; //why isn't "fabulous and glittery" a colour?
+    @histogram-bars: #0058a6;
+    @histogram-bg: aliceblue;
     min-height: 200px;
     padding-bottom: 40px;
 
@@ -49,11 +52,11 @@
     .table-bordered > thead > tr > td,
     .table-bordered > thead > tr > th {
         &.drag-left {
-            border-left: 5px solid #337ab7;
+            border-left: 5px solid @drag-color;
         }
 
         &.drag-right {
-            border-right: 5px solid #337ab7;
+            border-right: 5px solid @drag-color;
         }
     }
 
@@ -136,13 +139,19 @@
         padding-right: 5px;
     }
 
-    svg.graph {
-        background-color: aliceblue;
+    .histogram {
+      width: 100%;
+      max-width:50vw;
+      height: 50px; //if you change this value, change it in src/views/graphs.cljs too
+      background-color: @histogram-bg;
+      display:flex;
+      align-items:flex-end;
     }
 
-    rect.histo {
-        fill: #0058a6;
-        stroke-width: 0;
+    .histo-bar {
+        background-color: @histogram-bars;
+        width:12px;
+        border-right:solid 1px @histogram-bg;
     }
 
     div.summary-toolbar {
