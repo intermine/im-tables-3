@@ -198,7 +198,7 @@
     [:div.summary-toolbar
      [:i.fa.fa-sort.sort-icon
       {:on-click (fn [] (dispatch [:main/sort-by loc view]))
-       :title (str "Summarise " view " column")}]
+       :title (str "Sort " view " column")}]
      [:i.fa.fa-times.remove-icon
       {:on-click (fn [] (dispatch [:main/remove-view loc view]))
        :title (str "Remove " view " column")}]
@@ -214,5 +214,6 @@
      [:span.dropdown
       [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
       [:div.dropdown-menu
-       {:style {:min-width "400px"}}
+       {:style {:min-width "400px"}
+        :title (str "Summarise " view " column")}
        [column-summary loc view]]]])))
