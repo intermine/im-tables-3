@@ -17,11 +17,17 @@
 
 (defn main []
   (fn [points]
-    (let [show-graph? (> (count (distinct points)) 1)
+    (let [only-one-column? (= (count (distinct points)) 1)
+          unique-results (reduce (fn [new-set point] (conj new-set (:count point))) #{} points)
+          only-one-count-result? (= (count unique-results) 1)
+          show-graph? (not (or only-one-column? only-one-count-result?))
           height-scale (linear-scale [0 (apply max (map :count points))] [0 50])]
       (if show-graph?
         (into [:div.graph.histogram]
           (map-indexed (fn [idx d]
             [datum height-scale idx d (count points)])
                 points))
-        [:div "No histogram; only one value in column"]))))
+        (cond only-one-column?
+          [:div.no-histogram "No histogram; only one value in entire column"]
+              only-one-count-result?
+          [:div.no-histogram "No histogram; all values occur exactly "(first unique-results) " time(s)"])))))
