@@ -125,9 +125,8 @@
             (into [:div [:h4 "Active filters:"] ] active-filters)
             [:h4 "No active filters"])]
        [:div.alert.alert-default
-        [:div
          [:h4 "Add a new filter:"]
-         [blank-constraint loc view]]]
+         [blank-constraint loc view]]
        [:div.container-fluid
         [:div.btn-toolbar
          [:button.btn.btn-default

@@ -17,8 +17,11 @@
 
 (defn main []
   (fn [points]
-    (let [height-scale (linear-scale [0 (apply max (map :count points))] [0 50])]
-      (into [:div.graph.histogram]
-        (map-indexed (fn [idx d]
-          [datum height-scale idx d (count points)])
-              points)))))
+    (let [show-graph? (> (count (distinct points)) 1)
+          height-scale (linear-scale [0 (apply max (map :count points))] [0 50])]
+      (if show-graph?
+        (into [:div.graph.histogram]
+          (map-indexed (fn [idx d]
+            [datum height-scale idx d (count points)])
+                points))
+        [:div "No histogram; only one value in column"]))))
