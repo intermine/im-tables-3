@@ -196,15 +196,18 @@
     (let [query (subscribe [:main/temp-query loc view])
           active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))]
     [:div.summary-toolbar
-     [:i.fa.fa-sort
-      {:on-click (fn [] (dispatch [:main/sort-by loc view]))}]
-     [:i.fa.fa-times
-      {:on-click (fn [] (dispatch [:main/remove-view loc view]))}]
+     [:i.fa.fa-sort.sort-icon
+      {:on-click (fn [] (dispatch [:main/sort-by loc view]))
+       :title (str "Summarise " view " column")}]
+     [:i.fa.fa-times.remove-icon
+      {:on-click (fn [] (dispatch [:main/remove-view loc view]))
+       :title (str "Remove " view " column")}]
      [:span.dropdown
       [:i.fa.fa-filter.dropdown-toggle.filter-icon
        {:on-click    (fn [] (dispatch [:main/set-temp-query loc]))
         :data-toggle "dropdown"
-        :class (cond active-filters? "active-filter")}]
+        :class (cond active-filters? "active-filter")
+        :title (str "Filter " view " column")}]
       [:div.dropdown-menu
        {:style {:min-width "400px"}}
        [filter-view loc view]]]
@@ -213,8 +216,3 @@
       [:div.dropdown-menu
        {:style {:min-width "400px"}}
        [column-summary loc view]]]])))
-
-(defn main []
-  (fn [loc view]
-    [:div
-     [toolbar loc view]]))
