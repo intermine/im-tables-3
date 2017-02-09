@@ -2,6 +2,7 @@
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
+            [im-tables.views.common :refer [no-value]]
             [oops.core :refer [oget ocall ocall! oapply]]))
 
 
@@ -157,7 +158,13 @@
             [histogram/main (:results @response)]
             [filter-input loc view @text-filter]
              [:table.table.table-striped.table-condensed
-              [:thead [:tr [:th] [:th "Item"] [:th "Count"]]]
+              [:thead [:tr [:th
+              (if (empty? @selections)
+                 [:span {:title "Select all"
+                         :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o] ]
+                 [:span {:title "Deselect all"
+                         :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
+                            ] [:th "Item"] [:th "Count"]]]
               (into [:tbody]
                     (->> (filter (partial has-text? @text-filter) (:results @response))
                          (map (fn [{:keys [count item]}]
@@ -168,7 +175,7 @@
                                          {:on-change (fn [])
                                           :checked   (contains? @selections item)
                                           :type      "checkbox"}]]
-                                 [:td (if item item [:i.fa.fa-ban.mostly-transparent])]
+                                 [:td (if item item [no-value])]
                                  [:td
                                   [:div count]]]))))]
             [:div.btn-toolbar
@@ -179,17 +186,7 @@
                            (close-fn))}
               [:span
                [:i.fa.fa-filter]
-               (str " Filter (" (count (keys @selections)) ")")]]
-             (if (empty? @selections)
-               [:button.btn.btn-default
-                {:type     "button"
-                 :on-click (fn [] (dispatch [:select/select-all loc view]))}
-                [:span [:i.fa.fa-check-square-o] " All"]]
-               [:button.btn.btn-default
-                {:type     "button"
-                 :disabled (empty? @selections)
-                 :on-click (fn [] (dispatch [:select/clear-selection loc view]))}
-                [:span [:i.fa.fa-square-o] " Clear"]])]]))})))
+               (str " Filter (" (count (keys @selections)) ")")]]]]))})))
 
 (defn toolbar []
   (fn [loc view idx col-count]

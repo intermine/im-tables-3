@@ -2,6 +2,7 @@
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
             [clojure.string :refer [split]]
+            [im-tables.views.common :refer [no-value]]
             [oops.core :refer [ocall oget]]))
 
 (defn dot-split
@@ -104,7 +105,7 @@
                         (partial on-click ((get-in @settings [:links :url])
                              (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
                      [:a
-                      (if value value [:i.fa.fa-ban.mostly-transparent])]]
+                      (if value value [no-value])]]
                     (if @show-tooltip? [tooltip table-dimensions my-dimensions show-tooltip? summary]
                       )])))})))
 

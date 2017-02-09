@@ -10,6 +10,15 @@
     min-height: 200px;
     padding-bottom: 40px;
 
+    .no-value {
+        font-weight: bold;
+        color: #666;
+        font-family: "Fira Mono", "DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", Monaco, "Lucida Console", monospace;
+        background-color: #ddd;
+        border-radius: 2px;
+        padding: 1px 2px;
+    }
+
     .fade-enter {
         opacity: 0.01;
     }
@@ -140,10 +149,23 @@
         padding-right: 5px;
     }
 
-    .inline-filter {display:flex; align-items:stretch;
-      input {border-radius:0; border-width:1px 1px 1px 0;}
-      .fa {width:2em;text-align:center; border:solid 1px #ccc; line-height:2em; display:block;}
-      background-color:#ededed;
+    .inline-filter {
+        display: flex;
+        align-items: stretch;
+
+        input {
+            border-radius: 0;
+            border-width: 1px 1px 1px 0;
+        }
+
+        .fa {
+            width: 2em;
+            text-align: center;
+            border: solid 1px #ccc;
+            line-height: 2em;
+            display: block;
+        }
+        background-color: #ededed;
     }
 
     .no-histogram {
