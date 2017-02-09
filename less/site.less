@@ -88,10 +88,18 @@
         justify-content: center;
     }
 
-    .column-summary,
+    .column-summary .main-view,
     .filter-view {
-        max-height: 500px;
+        max-height: 60vh;
         overflow-y: scroll;
+    }
+    .column-summary-toolbar {
+      box-shadow: 0px -1px 1px rgba(0,0,0,0.35);
+      padding:@spacer/4;
+      display:flex;
+      justify-content:flex-end;
+      background-color:#ddd;
+      margin-left:0px;
     }
 
     .square-view {
@@ -202,6 +210,7 @@
 
         .dropdown-menu {
             min-width: 35vw;
+            padding:0;
         }
 
         .filter-icon.active-filter {

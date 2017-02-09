@@ -155,6 +155,7 @@
        (fn [loc view]
          (let [close-fn (partial force-close (reagent/current-component))]
            [:form.form.column-summary
+            [:div.main-view
             [histogram/main (:results @response)]
             [filter-input loc view @text-filter]
              [:table.table.table-striped.table-condensed
@@ -177,16 +178,15 @@
                                           :type      "checkbox"}]]
                                  [:td (if item item [no-value])]
                                  [:td
-                                  [:div count]]]))))]
-            [:div.btn-toolbar
+                                  [:div count]]]))))]]
+            [:div.btn-toolbar.column-summary-toolbar
              [:button.btn.btn-primary
               {:type     "button"
                :on-click (fn []
                            (dispatch [:main/apply-summary-filter loc view])
                            (close-fn))}
-              [:span
-               [:i.fa.fa-filter]
-               (str " Filter (" (count (keys @selections)) ")")]]]]))})))
+                             [:i.fa.fa-filter]
+               (str " Only show selected values")]]]))})))
 
 (defn toolbar []
   (fn [loc view idx col-count]
