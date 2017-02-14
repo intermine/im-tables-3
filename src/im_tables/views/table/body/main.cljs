@@ -101,11 +101,10 @@
                      :class drag-class}
                     [:span
                      {:on-click
-                      (if on-click
+                      (if (and on-click value)
                         (partial on-click ((get-in @settings [:links :url])
                              (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
-                     [:a
-                      (if value value [no-value])]]
+                      (if value [:a value] [no-value])]
                     (if @show-tooltip? [tooltip table-dimensions my-dimensions show-tooltip? summary]
                       )])))})))
 
