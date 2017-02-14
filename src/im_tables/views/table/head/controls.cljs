@@ -64,14 +64,12 @@
       (let [submit-constraint (fn [] (dispatch
                           [:filters/add-constraint loc @state]
                           (reset! state {:path path :op "=" :value nil})))]
-      [:div.container-fluid
-       [:div.row
-        [:div.col-xs-4
+      [:div.imtable-constraint
+        [:div.constraint-operator
          [constraint-dropdown
           {:value     (:op @state)
            :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
-        [:div.col-xs-6
-         [:input.form-control
+         [:div.constraint-input [:input.form-control
           {:type      "text"
            :value     (:value @state)
            :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
@@ -86,28 +84,25 @@
                   (submit-constraint)
                   )))
             }]]
-        [:div.col-xs-2
          [:button.btn.btn-success
           {:on-click (fn [] (dispatch
                               [:filters/add-constraint loc @state]
                               (reset! state {:path path :op "=" :value nil})))
-           :type     "button"} [:i.fa.fa-plus]]]]]))))
+           :type     "button"} [:i.fa.fa-plus]]]))))
 
 (defn constraint []
   (fn [loc {:keys [path op value values code] :as const}]
     (letfn [(on-change [new-value] (dispatch [:filters/update-constraint loc (merge const new-value)]))]
-      [:div.container-fluid
-       [:div.row
-        [:div.col-xs-4
+    [:div.imtable-constraint
+      [:div.constraint-operator
          [constraint-dropdown {:value     op
                                :on-change on-change}]]
-        [:div.col-xs-6
+        [:div.constraint-input
          [constraint-text {:value     (or value values)
                            :on-change on-change}]]
-        [:div.col-xs-2
          [:button.btn.btn-danger
           {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
-           :type     "button"} [:i.fa.fa-times]]]]])))
+           :type     "button"} [:i.fa.fa-times]]])))
 
 
 (defn filter-view [loc view]
@@ -130,8 +125,7 @@
        [:div.alert.alert-default
          [:h4 "Add a new filter:"]
          [blank-constraint loc view]]
-       [:div.container-fluid
-        [:div.btn-toolbar
+        [:div.toolbar 
          [:button.btn.btn-default
           {:type        "button"
            :data-toggle "dropdown"} "Cancel"]
@@ -140,7 +134,7 @@
            ; don't put :data-toggle "dropdown" in here, it stops
            ; the form submitting.... silently. Nice.
            :value  "Apply"
-           }]]]]))))
+           }]]]))))
 
 (defn column-summary [loc view]
   (let [response    (subscribe [:selection/response loc view])
@@ -186,7 +180,7 @@
                            (dispatch [:main/apply-summary-filter loc view])
                            (close-fn))}
                              [:i.fa.fa-filter]
-               (str " Only show selected values")]]]))})))
+               (str " Filter")]]]))})))
 
 (defn toolbar []
   (fn [loc view idx col-count]
