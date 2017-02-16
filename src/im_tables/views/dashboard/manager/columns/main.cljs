@@ -43,16 +43,16 @@
       [:div
        [tree-node loc (keyword (:from query)) (get-in model [:classes (keyword (:from query))]) model [(:from query)] selected views]])))
 
-(defn my-modal [loc]
-  (let [model    (subscribe [:assets/model loc])
-        selected (subscribe [:tree-view/selection loc])
-        query    (subscribe [:main/query loc])]
+(defn my-modal []
     (fn [loc]
+      (let [model    (subscribe [:assets/model loc])
+            selected (subscribe [:tree-view/selection loc])
+            query    (subscribe [:main/query loc])]
      [:div#myModal.modal.fade {:role "dialog"}
       [:div.modal-dialog
        [:div.modal-content
         [:div.modal-header [:h3 "Add Columns"]]
-        [:div.modal-body.max-height-500
+        [:div.modal-body
          [tree-view loc @model @query @selected]]
         [:div.modal-footer
          [:div.btn-toolbar.pull-right
