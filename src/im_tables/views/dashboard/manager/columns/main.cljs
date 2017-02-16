@@ -1,6 +1,7 @@
 (ns im-tables.views.dashboard.manager.columns.main
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
+            [imcljs.query :as query]
             [inflections.core :refer [plural]]))
 
 (defn tree-node []
@@ -37,7 +38,8 @@
 
 (defn tree-view []
   (fn [loc model query selected]
-    (let [views (into #{} (map (fn [v] (apply conj ["Gene"] (clojure.string/split v "."))) (:select query)))]
+    (let [sterilized-query (query/sterilize-query query)
+          views (into #{} (map (fn [v] (apply conj [] (clojure.string/split v "."))) (:select sterilized-query)))]
       [:div
        [tree-node loc (keyword (:from query)) (get-in model [:classes (keyword (:from query))]) model [(:from query)] selected views]])))
 
