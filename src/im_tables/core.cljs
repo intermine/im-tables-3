@@ -25,7 +25,8 @@
                                                "symbol"
                                                "primaryIdentifier"
                                                "organism.name"
-                                               ;"homologues.homologue.symbol"
+                                               "homologues.homologue.symbol"
+                                               "homologues.homologue.organism.name"
                                                ]
                                       :where [{:path "Gene"
                                                :op "IN"

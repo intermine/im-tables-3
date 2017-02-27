@@ -2,19 +2,22 @@
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
-            [oops.core :refer [oget ocall! oapply]]))
+            [im-tables.views.common :refer [no-value]]
+            [oops.core :refer [oget ocall ocall! oapply]]))
 
 
 (defn filter-input []
   (fn [loc view val]
-    [:input.form-control
+    [:div.inline-filter [:i.fa.fa-filter]
+     [:input.form-control
      {:type      "text"
       :value     val
+      :placeholder "Search for a value..."
       :on-change (fn [e]
                    (dispatch [:select/set-text-filter
                               loc
                               view
-                              (oget e :target :value)]))}]))
+                              (oget e :target :value)]))}]]))
 
 (defn force-close
   "Force a dropdown to close "
@@ -58,38 +61,48 @@
 (defn blank-constraint [loc path]
   (let [state (reagent/atom {:path path :op "=" :value nil})]
     (fn [loc path]
-      [:div.container-fluid
-       [:div.row
-        [:div.col-xs-4
+      (let [submit-constraint (fn [] (dispatch
+                          [:filters/add-constraint loc @state]
+                          (reset! state {:path path :op "=" :value nil})))]
+      [:div.imtable-constraint
+        [:div.constraint-operator
          [constraint-dropdown
           {:value     (:op @state)
            :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
-        [:div.col-xs-6
-         [:input.form-control {:type      "text"
-                               :value     (:value @state)
-                               :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))}]]
-        [:div.col-xs-2
+         [:div.constraint-input [:input.form-control
+          {:type      "text"
+           :value     (:value @state)
+           :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
+           :on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
+                              (submit-constraint)))
+           :on-key-press
+             (fn [e]
+               (let [keycode (.-charCode e)
+                     input   (.. e -target -value)]
+                 ;; submit when pressing enter & not blank.
+                 (when (and (= keycode 13) (not (clojure.string/blank? input)))
+                  (submit-constraint)
+                  )))
+            }]]
          [:button.btn.btn-success
           {:on-click (fn [] (dispatch
                               [:filters/add-constraint loc @state]
                               (reset! state {:path path :op "=" :value nil})))
-           :type     "button"} [:i.fa.fa-plus]]]]])))
+           :type     "button"} [:i.fa.fa-plus]]]))))
 
 (defn constraint []
   (fn [loc {:keys [path op value values code] :as const}]
     (letfn [(on-change [new-value] (dispatch [:filters/update-constraint loc (merge const new-value)]))]
-      [:div.container-fluid
-       [:div.row
-        [:div.col-xs-4
+    [:div.imtable-constraint
+      [:div.constraint-operator
          [constraint-dropdown {:value     op
                                :on-change on-change}]]
-        [:div.col-xs-6
+        [:div.constraint-input
          [constraint-text {:value     (or value values)
                            :on-change on-change}]]
-        [:div.col-xs-2
          [:button.btn.btn-danger
           {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
-           :type     "button"} [:i.fa.fa-times]]]]])))
+           :type     "button"} [:i.fa.fa-times]]])))
 
 
 (defn filter-view [loc view]
@@ -97,25 +110,31 @@
         selections (subscribe [:selection/selections loc view])
         query      (subscribe [:main/temp-query loc view])]
     (fn [loc view]
-      [:form.form.min-width-275
+      (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
+            dropdown (reagent/current-component)]
+      [:form.form.filter-view {
+       :on-submit (fn [e]
+         (ocall e "preventDefault")
+         (force-close dropdown)
+         (dispatch [:filters/save-changes loc])
+       )}
        [:div.alert.alert-success
-        [:div.container-fluid
-         [:div
-          [:h4 "Filters"]
-          (into [:div] (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))]]]
+          (if (seq active-filters)
+            (into [:div [:h4 "Active filters:"] ] active-filters)
+            [:h4 "No active filters"])]
        [:div.alert.alert-default
-        [:div.container-fluid
-         [:h4 "Add..."]
-         [blank-constraint loc view]]]
-       [:div.container-fluid
-        [:div.btn-toolbar.pull-right
+         [:h4 "Add a new filter:"]
+         [blank-constraint loc view]]
+        [:div.toolbar 
          [:button.btn.btn-default
           {:type        "button"
            :data-toggle "dropdown"} "Cancel"]
-         [:button.btn.btn-primary
-          {:type        "button"
-           :data-toggle "dropdown"
-           :on-click    (fn [] (dispatch [:filters/save-changes loc]))} "Apply"]]]])))
+         [:input.btn.btn-primary.pull-right
+          {:type        "submit"
+           ; don't put :data-toggle "dropdown" in here, it stops
+           ; the form submitting.... silently. Nice.
+           :value  "Apply"
+           }]]]))))
 
 (defn column-summary [loc view]
   (let [response    (subscribe [:selection/response loc view])
@@ -129,68 +148,62 @@
        :reagent-render
        (fn [loc view]
          (let [close-fn (partial force-close (reagent/current-component))]
-           [:form.form.min-width-275
+           [:form.form.column-summary
+            [:div.main-view
             [histogram/main (:results @response)]
             [filter-input loc view @text-filter]
-            [:div.max-height-400
              [:table.table.table-striped.table-condensed
-              [:thead [:tr [:th] [:th "Item"] [:th "Count"]]]
+              [:thead [:tr [:th
+              (if (empty? @selections)
+                 [:span {:title "Select all"
+                         :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o] ]
+                 [:span {:title "Deselect all"
+                         :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
+                            ] [:th "Item"] [:th "Count"]]]
               (into [:tbody]
                     (->> (filter (partial has-text? @text-filter) (:results @response))
                          (map (fn [{:keys [count item]}]
                                 [:tr.hoverable
                                  {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                                 [:td [:div
-                                       [:label
-                                        [:input
+                                 [:td
+                                  [:input
                                          {:on-change (fn [])
                                           :checked   (contains? @selections item)
-                                          :type      "checkbox"}]]]]
-                                 [:td (if item item [:i.fa.fa-ban.mostly-transparent])]
+                                          :type      "checkbox"}]]
+                                 [:td (if item item [no-value])]
                                  [:td
                                   [:div count]]]))))]]
-            [:div.btn-toolbar
+            [:div.btn-toolbar.column-summary-toolbar
              [:button.btn.btn-primary
               {:type     "button"
                :on-click (fn []
                            (dispatch [:main/apply-summary-filter loc view])
                            (close-fn))}
-              [:span
-               [:i.fa.fa-filter]
-               (str " Filter (" (count (keys @selections)) ")")]]
-             (if (empty? @selections)
-               [:button.btn.btn-default
-                {:type     "button"
-                 :on-click (fn [] (dispatch [:select/select-all loc view]))}
-                [:span [:i.fa.fa-check-square-o] " All"]]
-               [:button.btn.btn-default
-                {:type     "button"
-                 :disabled (empty? @selections)
-                 :on-click (fn [] (dispatch [:select/clear-selection loc view]))}
-                [:span [:i.fa.fa-square-o] " Clear"]])]]))})))
-
+                             [:i.fa.fa-filter]
+               (str " Filter")]]]))})))
 
 (defn toolbar []
-  (fn [loc view]
+  (fn [loc view idx col-count]
+    (let [query (subscribe [:main/temp-query loc view])
+          active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
+          direction (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")]
     [:div.summary-toolbar
-     [:i.fa.fa-sort
-      {:on-click (fn [] (dispatch [:main/sort-by loc view]))}]
-     [:i.fa.fa-times
-      {:on-click (fn [] (dispatch [:main/remove-view loc view]))}]
+     [:i.fa.fa-sort.sort-icon
+      {:on-click (fn [] (dispatch [:main/sort-by loc view]))
+       :title (str "Sort " view " column")}]
+     [:i.fa.fa-times.remove-icon
+      {:on-click (fn [] (dispatch [:main/remove-view loc view]))
+       :title (str "Remove " view " column")}]
      [:span.dropdown
-      [:i.fa.fa-filter.dropdown-toggle
+      [:i.fa.fa-filter.dropdown-toggle.filter-icon
        {:on-click    (fn [] (dispatch [:main/set-temp-query loc]))
-        :data-toggle "dropdown"}]
-      [:div.dropdown-menu
-       {:style {:min-width "400px"}}
-       [filter-view loc view]]]
+        :data-toggle "dropdown"
+        :class (cond active-filters? "active-filter")
+        :title (str "Filter " view " column")}]
+      [:div.dropdown-menu {:class direction} [filter-view loc view]]]
      [:span.dropdown
       [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
       [:div.dropdown-menu
-       {:style {:min-width "400px"}}
-       [column-summary loc view]]]]))
-
-(defn main []
-  (fn [loc view]
-    [:div
-     [toolbar loc view]]))
+       {:title (str "Summarise " view " column")
+        :class direction}
+       [column-summary loc view]]]])))

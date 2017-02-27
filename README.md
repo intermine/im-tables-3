@@ -9,6 +9,13 @@ Development goals
 
 ## Development Mode
 
+### Initial setup
+Once you've checked this project, you'll need to download the css dependencies using [bower](https://bower.io/). Assuming you have bower installed already, it's just
+
+```
+bower install
+```
+
 ### Compile css:
 
 Compile css file once.
@@ -32,7 +39,7 @@ lein figwheel dev
 
 Figwheel will automatically push cljs changes to the browser.
 
-Wait a bit, then browse to [http://localhost:3449](http://localhost:3449).
+Wait a bit, then browse to [http://localhost:3448](http://localhost:3448).
 
 ### Run tests:
 

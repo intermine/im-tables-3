@@ -12,14 +12,14 @@
     [:div.container-fluid
      [:div.row
       [column-manager/main loc]]
-     [:div.row
+     [:div.row.im-table-toolbar
       [:div.col-xs-6
        [:div.btn-toolbar
         [:div.btn-group
          [:button.btn.btn-default
           {:data-toggle "modal"
            :data-target "#myModal"}
-          [:span [:i.fa.fa-columns] " Add Columns"]]]
+           [:i.fa.fa-columns] " Add Columns"]]
         [:div.btn-group
          [save/main loc]]]]
       [:div.col-xs-6
@@ -36,4 +36,3 @@
                  (inc (:start pagination)) " to "
                  (+ (:start pagination) (:limit pagination)) " of "
                  (:iTotalRecords response) " rows")]]]]]]]]))
-

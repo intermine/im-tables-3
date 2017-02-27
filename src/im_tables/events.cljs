@@ -118,27 +118,29 @@
 
 
 
-(reg-event-db
+(reg-event-fx
   :filters/add-constraint
   (sandbox)
-  (fn [db [_ loc new-constraint]]
+  (fn [{db :db} [_ loc new-constraint]]
     (.log js/console "ADDING CONSTRAINT" new-constraint)
-    (update-in db [:temp-query :where]
+    {:dispatch [:filters/save-changes loc]
+     :db (update-in db [:temp-query :where]
                (fn [constraints]
-                 (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))))
+                 (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))
 
 
-(reg-event-db
+(reg-event-fx
   :filters/remove-constraint
   (sandbox)
-  (fn [db [_ loc new-constraint]]
+  (fn [{db :db} [_ loc new-constraint]]
     (.log js/console "removing constraint" loc new-constraint)
-    (update-in db [:temp-query :where]
+    {:dispatch [:filters/save-changes loc]
+     :db (update-in db [:temp-query :where]
                (fn [constraints]
                  (remove nil? (map (fn [constraint]
                                      (if (= constraint new-constraint)
                                        nil
-                                       constraint)) constraints))))))
+                                       constraint)) constraints))))}))
 
 (reg-event-fx
   :filters/save-changes
@@ -405,4 +407,3 @@
 
       {:db         (assoc db :query-parts deconstructed-query)
        :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction loc part details]) deconstructed-query))})))
-

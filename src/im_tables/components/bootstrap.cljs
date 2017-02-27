@@ -65,7 +65,7 @@
   (let [mystate (reagent/atom {})
         show?   (reagent/atom false)]
     (reagent/create-class
-      {:name "BANANA"
+      {:name "Tooltip"
        :component-did-mount
              (fn [this]
                (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")]
@@ -112,4 +112,3 @@
        body
        [:div.modal-footer
         footer]]]]))
-

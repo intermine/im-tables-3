@@ -1,6 +1,7 @@
 (ns im-tables.views.dashboard.manager.columns.main
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
+            [imcljs.query :as query]
             [inflections.core :refer [plural]]))
 
 (defn tree-node []
@@ -37,20 +38,21 @@
 
 (defn tree-view []
   (fn [loc model query selected]
-    (let [views (into #{} (map (fn [v] (apply conj ["Gene"] (clojure.string/split v "."))) (:select query)))]
+    (let [sterilized-query (query/sterilize-query query)
+          views (into #{} (map (fn [v] (apply conj [] (clojure.string/split v "."))) (:select sterilized-query)))]
       [:div
        [tree-node loc (keyword (:from query)) (get-in model [:classes (keyword (:from query))]) model [(:from query)] selected views]])))
 
-(defn my-modal [loc]
-  (let [model    (subscribe [:assets/model loc])
-        selected (subscribe [:tree-view/selection loc])
-        query    (subscribe [:main/query loc])]
+(defn my-modal []
     (fn [loc]
+      (let [model    (subscribe [:assets/model loc])
+            selected (subscribe [:tree-view/selection loc])
+            query    (subscribe [:main/query loc])]
      [:div#myModal.modal.fade {:role "dialog"}
       [:div.modal-dialog
        [:div.modal-content
         [:div.modal-header [:h3 "Add Columns"]]
-        [:div.modal-body.max-height-500
+        [:div.modal-body
          [tree-view loc @model @query @selected]]
         [:div.modal-footer
          [:div.btn-toolbar.pull-right
@@ -67,44 +69,3 @@
 (defn main []
   (fn [loc]
     [my-modal loc]))
-
-;;;;;;;;;;;;;;;;;
-
-; TODO
-
-#_(defn square-node []
-  (let [expanded-map (reagent/atom {})]
-    (fn [class details model current-path selected views]
-      (let [attributes  (get details :attributes)
-            collections (get details :collections)]
-        [:div
-         (into [:div.grid_lg-4]
-               (map (fn [[attribute-kw {:keys [name type]}]]
-                      (let [original-view? (some? (some #{(conj current-path name)} views))
-                            selected?      (some? (some #{(conj current-path name)} selected))]
-                        [:div.col.collection
-                         {:on-click (fn [e]
-                                      (if-not original-view?
-                                        (dispatch [:tree-view/toggle-selection (conj current-path name)]))
-                                      (.stopPropagation e))}
-                         [:span
-                          {:class (cond
-                                    original-view? "label label-default"
-                                    selected? "label label-success disabled")}
-                          [:i.fa.fa-tag] name]])) attributes))
-         [:h4 "Collections"]
-         (into [:div.grid_xs-4]
-               (map (fn [{:keys [name referencedType] :as collection}]
-                      (let [referenced-class (get model (keyword referencedType))]
-                        [:div.col.collection (plural (:displayName referenced-class))])) (vals collections)))]))))
-
-#_(defn square-view []
-  (let [model    (subscribe [:assets/model])
-        selected (subscribe [:tree-view/selection])
-        query    (subscribe [:main/query])]
-    (let [views (into #{} (map (fn [v] (apply conj ["Gene"] (clojure.string/split v "."))) (:select @query)))]
-      [:div.square-view
-       [:button.btn.btn-success
-        {:on-click (fn [] (dispatch [:tree-view/merge-new-columns]))}
-        (str "Add " (count @selected) " columns")]
-       [square-node :Gene (get @model :Gene) @model ["Gene"] @selected views]])))
