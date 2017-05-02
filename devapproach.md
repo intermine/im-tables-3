@@ -15,9 +15,9 @@ Practically speaking, this means two things for you:
       (sandbox) ;<---- you'll need to include this interceptor in all event handlers.
       (fn [db [_ loc]]
         (assoc-in db [:cache :overlay?] true)))
-- The first argument of event handlers and subscriptions needs to be `loc`. This is simply passing around the sandbox location keyword we mentioned earlier on, and should be available as a variable in all existing functions. Don't ignore it - mkae sure to pass it on to all new functions and handlers / subs that you write. If you forget this rule and pass other things as the first argument, Strange Things will happen, and im-tables-3 won't work properly in RedGenes.
+- The first argument of event handlers and subscriptions needs to be `loc`. This is simply passing around the sandbox location keyword we mentioned earlier on, and should be available as a variable in all existing functions. **Don't ignore it** - make sure to pass it on to all new functions and handlers / subs that you write. If you forget this rule and pass other things as the first argument, **Strange Things will happen**, and im-tables-3 won't work properly in RedGenes.
 
-Example event dispatch and function:
+**Example event dispatch and function:**
 
 
     (dispatch [:prep-modal loc ;<--- loc is the first arg after the name
@@ -25,6 +25,6 @@ Example event dispatch and function:
                     {:query query
                      :type  class})])  
 
-Example subscription:
+**Example subscription:**
 
     (subscribe [:assets/model loc])
