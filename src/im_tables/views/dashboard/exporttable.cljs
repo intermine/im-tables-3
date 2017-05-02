@@ -6,9 +6,9 @@
             [imcljs.path :as path :refer [walk class]]
             [im-tables.components.bootstrap :refer [modal]]))
 
-(defn exporttable []
+(defn exporttable [loc]
   [:button.btn.btn-default
    {:type "button"
     :on-click
     (fn [e]
-      (dispatch [:exporttable/exporttable]))} "Export"])
+      (dispatch [:exporttable/exporttable loc]))} "Export"])

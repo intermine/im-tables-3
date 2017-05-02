@@ -28,7 +28,7 @@
         [:div.row
          [:div.col-xs-offset-2
           [:div.pull-right
-           [exporttable/exporttable]
+           [exporttable/exporttable loc]
            [:div.pull-right [pager/main loc
                              (merge pagination
                                     {:total (get response :iTotalRecords)})]]
