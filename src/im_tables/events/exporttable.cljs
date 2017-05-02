@@ -19,11 +19,14 @@
 (defn stringify-query-results
   "converts results into a csv/tsv-style string."
   [query-results separator]
-  (reduce (fn [new-str [i rowvals]]
-            (str  new-str
-                  (reduce (fn [new-sub-str rowval]
-                            (str new-sub-str separator " " (:value rowval))) "" rowvals)
-                  "\n")) "" query-results))
+  (let [vec-file
+        (reduce (fn [new-str [i rowvals]]
+            (conj new-str
+                  (join separator (reduce (fn [new-sub-str rowval]
+                            (conj new-sub-str (:value rowval))) [] rowvals)
+                  ))) [] query-results)]
+    (join "\n" vec-file)
+    ))
 
 (reg-event-fx
  :exporttable/exporttable

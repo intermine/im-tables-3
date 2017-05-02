@@ -7,7 +7,8 @@
             [im-tables.components.bootstrap :refer [modal]]))
 
 (defn exporttable []
-  [:a.btn
-   {:on-click
+  [:button.btn.btn-default
+   {:type "button"
+    :on-click
     (fn [e]
       (dispatch [:exporttable/exporttable]))} "Export"])
