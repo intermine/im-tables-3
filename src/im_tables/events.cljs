@@ -7,6 +7,7 @@
             [im-tables.interceptors :refer [sandbox]]
             [im-tables.events.boot]
             [im-tables.events.pagination]
+            [im-tables.events.exporttable]
             [imcljs.save :as save]
             [imcljs.fetch :as fetch]
             [imcljs.query :as query]
@@ -18,13 +19,6 @@
   (fn [db]
     (.log js/console "DB" db)
     db))
-
-;(reg-event-fx
-;  :im-tables.main/replace-all-state
-;  (sandbox)
-;  (fn [{db :db} [_ loc state]]
-;    {:db       (merge db/default-db state)
-;     :dispatch [:im-tables.main/run-query loc]}))
 
 (defn deep-merge
   "Recursively merges maps. If keys are not maps, the last value wins."

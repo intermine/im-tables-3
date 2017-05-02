@@ -2,7 +2,8 @@
   (:require [im-tables.views.dashboard.pagination :as pager]
             [im-tables.views.dashboard.manager.columns.main :as column-manager]
             [im-tables.views.dashboard.undo :as undo]
-            [im-tables.views.dashboard.save :as save]))
+            [im-tables.views.dashboard.save :as save]
+            [im-tables.views.dashboard.exporttable :as exporttable]))
 
 
 
@@ -27,6 +28,7 @@
         [:div.row
          [:div.col-xs-offset-2
           [:div.pull-right
+           [exporttable/exporttable]
            [:div.pull-right [pager/main loc
                              (merge pagination
                                     {:total (get response :iTotalRecords)})]]
