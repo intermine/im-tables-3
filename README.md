@@ -6,6 +6,7 @@ Development goals
 * Simplify im-tables for future developers
 * Build in clojure for easy integration with Intermine's new UI
 * Decrease file size (current im-tables is around 1.2mb uncompressed)
+* See [dev approach](devapproach.md) before attempting to make code changes.
 
 ## Development Mode
 
