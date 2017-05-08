@@ -46,6 +46,7 @@
    :settings {:buffer 2
               :pagination {:start 0
                            :limit 20}
+              :export {:format :tsv}
               :links {:vocab {:mine "flymine"}
                       :on-click nil
                       :url (fn [vocab] (str "#/reportpage/"

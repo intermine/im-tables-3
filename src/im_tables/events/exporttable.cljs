@@ -21,19 +21,24 @@
   [query-results separator]
   (let [vec-file
         (reduce (fn [new-str [i rowvals]]
-            (conj new-str
-                  (join separator (reduce (fn [new-sub-str rowval]
-                            (conj new-sub-str (:value rowval))) [] rowvals)
-                  ))) [] query-results)]
-    (join "\n" vec-file)
-    ))
+                  (conj new-str
+                        (join separator (reduce (fn [new-sub-str rowval]
+                                                  (conj new-sub-str (:value rowval))) [] rowvals)))) [] query-results)]
+    (join "\n" vec-file)))
+
+(reg-event-db
+ :exporttable/set-format
+ (sandbox)
+ (fn [db [_ loc format]]
+   ;;sets preferred format for the file export
+   (assoc-in db [:settings :export :format] (keyword format))))
 
 (reg-event-fx
- :exporttable/exporttable
+ :exporttable/download
  (sandbox)
  (fn [{db :db}]
    (let [query-results (get-in db [:query-response :results])
-         file-type (:tsv xsv)
+         file-type ((get-in db [:settings :export :format]) xsv)
          stringified-file (stringify-query-results query-results (:separator file-type))]
      (ocall js/window "open" (encode-file stringified-file (:file-type file-type)))
      {:db db})))
