@@ -16,17 +16,18 @@
 
 (defn stringify-query-results
   "converts results into a csv/tsv-style string."
-  [query-results file-type]
-  (let [separator (:separator file-type)
-        vec-file
+  [separator query-results]
+  (let [vec-file
         (reduce (fn [new-str [i rowvals]]
                   (conj new-str
                         (join separator (reduce (fn [new-sub-str rowval]
                                                   (conj new-sub-str (:value rowval))) [] rowvals)))) [] query-results)]
     (join "\n" vec-file)))
 
-    (def xsv {:csv {:file-type "csv" :separator "," :action stringify-query-results}
-              :tsv {:file-type "tsv" :separator "\t" :action stringify-query-results}})
+;;config for various file types
+(def xsv {:csv {:file-type "csv" :action (partial stringify-query-results ",") }
+          :tsv {:file-type "tsv" :action (partial stringify-query-results "\t")}
+          })
 
 
 (reg-event-db
@@ -40,7 +41,7 @@
   "Selects the appropriate file type to generated based upon the :action parameter in xsv"
   [query-results file-type]
   (let [generate-file-function (:action file-type)
-        generated-file (generate-file-function query-results (:separator file-type))]
+        generated-file (generate-file-function query-results)]
   (encode-file generated-file (:file-type file-type))))
 
 (reg-event-fx
