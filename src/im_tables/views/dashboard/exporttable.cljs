@@ -13,12 +13,12 @@
   (fn []
     (reduce
        (fn [select format]
-         (conj select [:option (name format)])) [:select {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}] valid-formats)))
+         (conj select [:option (name format)])) [:select.form-control {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}] valid-formats)))
 
 (defn export-menu [loc]
     {:header [:h4 "Export this table as..."]
-     :body [modal-body loc]
-     :footer [:button {:on-click (fn [] (dispatch [:exporttable/download loc]))} "download now!"]
+     :body [:div.modal-body [:form [:label "Select a format" [modal-body loc]]]]
+     :footer [:button.btn.btn-primary {:on-click (fn [] (dispatch [:exporttable/download loc]))} "Download now!"]
      })
 
 (defn exporttable [loc]
