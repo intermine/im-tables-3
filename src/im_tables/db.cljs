@@ -46,7 +46,10 @@
    :settings {:buffer 2
               :pagination {:start 0
                            :limit 20}
-              :export {:format :tsv}
+              :data-out {:selected-format :tsv
+                       :accepted-formats {:tsv :all
+                                          :csv :all
+                                          :fasta [:Gene :Protein]}}
               :links {:vocab {:mine "flymine"}
                       :on-click nil
                       :url (fn [vocab] (str "#/reportpage/"

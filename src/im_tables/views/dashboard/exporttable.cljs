@@ -6,16 +6,44 @@
             [imcljs.path :as path :refer [walk class]]
             [im-tables.components.bootstrap :refer [modal]]))
 
-;;todo: make this live in the db, possibly a per-mine config
-(def valid-formats [:tsv :csv])
 
-(defn modal-body [loc]
+(defn check-if-good
+  "checks if certain formats are suitable for export given the data in the table
+    Right now this is explicitly for FASTA, which requires a gene or protein.
+    Returns either the list of acceptable formats as it was, or the same list
+    with the new possible format appended to the end. "
+  [good-formats model-parts suitable-for format]
+  (let [model-bits (set (keys model-parts))]
+  (distinct
+   (reduce
+    (fn [suitable-bit]
+     (if (contains? model-bits (name suitable-bit))
+       (conj good-formats format)
+       good-formats)
+      ) suitable-for))))
+
+(defn modal-body
+  "creates the dropdown to allow users to select their preferred format"
+  [loc]
   (fn []
+    (let [settings (subscribe [:settings/settings])
+          model-parts (subscribe [:main/query-parts])
+          export-formats (get-in @settings [:data-out :accepted-formats])
+          valid-export-formats (reduce (fn [good-formats [format suitable-for]]
+                                         (if (= suitable-for :all)
+                                           (conj good-formats format)
+                                           (check-if-good good-formats @model-parts suitable-for format)
+                                           )) [] export-formats)]
     (reduce
        (fn [select format]
-         (conj select [:option (name format)])) [:select.form-control {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}] valid-formats)))
+         (conj select [:option (name format)]))
+       [:select.form-control
+        {:on-change
+         #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}] valid-export-formats))))
 
-(defn export-menu [loc]
+(defn export-menu
+  "UI element. Presents the modal to allow user to select an export format."
+  [loc]
     {:header [:h4 "Export this table as..."]
      :body [:div.modal-body [:form [:label "Select a format" [modal-body loc]]]]
      :footer [:button.btn.btn-primary {:on-click (fn [] (dispatch [:exporttable/download loc]))} "Download now!"]
