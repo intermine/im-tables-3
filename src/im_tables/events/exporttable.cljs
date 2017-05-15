@@ -65,9 +65,8 @@
 (reg-event-fx
   :exporttable/download-fasta-response
   (sandbox)
-  (fn [{db :db} [_ loc]]
-;    (ocall js/window "open" (generate-file query-results file-type query))
-    (.log js/console "fasta done")
+  (fn [{db :db} [_ loc results]]
+    (ocall js/window "open" (encode-file results "fasta"))
     {:db db}))
 
 (defn select-column-for-fasta [query]
@@ -83,8 +82,10 @@
   (sandbox)
   (fn [{db :db} [_ loc]]
     (.log js/console "Running FASTA query" (get db :query))
-      {:im-tables/im-operation {:on-success [:export/download-fasta-response loc]
+    (let [query (get db :query)
+          fasta-query (assoc query :select ["id"])]
+      {:im-tables/im-operation {:on-success [:exporttable/download-fasta-response loc]
                                 :op         (partial fetch/fasta
                                                      (get db :service)
-                                                     (get db :query))}
-       :db db}))
+                                                     fasta-query)}
+       :db db})))
