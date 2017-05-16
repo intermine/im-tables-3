@@ -45,7 +45,9 @@
   "UI element. Presents the modal to allow user to select an export format."
   [loc]
     {:header [:h4 "Export this table as..."]
-     :body [:div.modal-body [:form [:label "Select a format" [modal-body loc]]]]
+     :body [:div.modal-body [:form [:label "Select a format" [modal-body loc]]]
+            [:a {:id "hiddendownloadlink" :download "download"}]
+            ]
      :footer [:button.btn.btn-primary {:on-click (fn [] (dispatch [:exporttable/download loc]))} "Download now!"]
      })
 
