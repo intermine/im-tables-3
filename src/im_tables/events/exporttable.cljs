@@ -16,8 +16,9 @@
 
 (defn stringify-query-results
   "converts results into a csv/tsv-style string."
-  [separator query-results _] ;we don't care about the query arg
-  (let [vec-file
+  [file-type query-results]
+  (let [separator (:separator file-type)
+        vec-file
         (reduce (fn [new-str [i rowvals]]
                   (conj new-str
                         (join separator (reduce (fn [new-sub-str rowval]
@@ -25,23 +26,17 @@
     (join "\n" vec-file)))
 
 ;;config for various file types
-(def xsv {:csv {:file-type "csv" :action (partial stringify-query-results ",")}
-          :tsv {:file-type "tsv" :action (partial stringify-query-results "\t")}
-          :fasta {:file-type "fasta" :action nil}})
+;;probably should be abstracted to somewhere else more central
+(def xsv {:csv {:file-type "csv" :separator ","}
+          :tsv {:file-type "tsv" :separator "\t"}
+          :fasta {:file-type "fasta"}})
 
 (reg-event-db
  :exporttable/set-format
+ ;;sets preferred format for the file export
  (sandbox)
  (fn [db [_ loc format]]
-   ;;sets preferred format for the file export
    (assoc-in db [:settings :data-out :format] (keyword format))))
-
-(defn generate-file
-  "Selects the appropriate file type to generated based upon the :action parameter in xsv"
-  [query-results file-type query]
-  (let [generate-file-function (:action file-type)]
-        (generate-file-function query-results query)
-  ))
 
 (reg-event-fx
  :exporttable/download
@@ -55,14 +50,17 @@
        {:db db :dispatch [:exporttable/run-fasta-query]}
        {:db db :exporttable/download-simple-text [query-results file-type query]}))))
 
-(defn set-download-link-properties [results file-type]
-  (.log js/console "%cresults" "background:DEEPSKYBLUE; border-radius:2px;" (clj->js results) (.log js/console "%cfile-type" "background:DEEPSKYBLUE; border-radius:2px;" (clj->js file-type)))
+(defn set-download-link-properties
+  "We're setting the attributes of a link with the download property enabled.
+   This spawns a nice download without having to create a new window
+   which might be pop-up blocked. It also allows us to set the filename.
+   We live in the future!"
+  [results file-type]
   (let [downloadlink (ocall js/document :getElementById "hiddendownloadlink")]
     (ocall downloadlink :setAttribute "href" (encode-file results file-type))
     (ocall downloadlink :setAttribute "download" (str "results." file-type))
     (ocall downloadlink :click)
 ))
-
 
 (reg-event-fx
  :exporttable/download-fasta-response
@@ -75,10 +73,10 @@
 
 (reg-fx
   :exporttable/download-simple-text
-  ;;csv/tsv simple text downloats
+  ;;csv/tsv simple text downloads
   (fn [[query-results file-type query]]
-    (set-download-link-properties (generate-file query-results file-type query) (:file-type file-type))))
-
+    (let [generated-file (stringify-query-results file-type query-results)]
+      (set-download-link-properties generated-file (:file-type file-type)))))
 
 (reg-event-fx
  :exporttable/run-fasta-query
