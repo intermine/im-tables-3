@@ -28,3 +28,13 @@ Practically speaking, this means two things for you:
 **Example subscription:**
 
     (subscribe [:assets/model loc])
+
+## Initialising im-tables-3 inside another reframe app: 
+
+When initialising an im-table, make sure to provide a keyword or set of keywords to sandbox im-tables with. For example, see the bluegenes list results page: https://github.com/intermine/redgenes/blob/87eaafcf8b8ed3ccbd4e36c0294752b88ccfcbd7/src/cljs/redgenes/sections/results/views.cljs#L48
+
+It may look something like this: 
+
+    [tables/main [:results :fortable]]]
+
+In this case, the `loc` that gets passed around inside im-tables will be `:results :fortable`, and in bluegenes when you look in the app db, you'll see all the im-tables settings nested under these two keys. 
