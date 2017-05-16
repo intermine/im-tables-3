@@ -26,10 +26,11 @@
   "creates the dropdown to allow users to select their preferred format"
   [loc]
   (fn []
-    (let [settings (subscribe [:settings/settings])
-          model-parts (subscribe [:main/query-parts])
+    (let [settings (subscribe [:settings/settings loc])
+          model-parts (subscribe [:main/query-parts loc])
           export-formats (get-in @settings [:data-out :accepted-formats])
-          valid-export-formats (reduce (fn [good-formats [format suitable-for]]
+          valid-export-formats
+            (reduce (fn [good-formats [format suitable-for]]
                                          (if (= suitable-for :all)
                                            (conj good-formats format)
                                            (check-if-good good-formats @model-parts suitable-for format)

@@ -36,18 +36,18 @@
  ;;sets preferred format for the file export
  (sandbox)
  (fn [db [_ loc format]]
-   (assoc-in db [:settings :data-out :format] (keyword format))))
+   (assoc-in db [:settings :data-out :selected-format] (keyword format))))
 
 (reg-event-fx
  :exporttable/download
  ;;the main action to download files. This gets called by the download modal button.
  (sandbox)
- (fn [{db :db}]
+ (fn [{db :db} [_ loc]]
    (let [query-results (get-in db [:query-response :results])
-         file-type ((get-in db [:settings :data-out :format]) xsv)
+         file-type ((get-in db [:settings :data-out :selected-format]) xsv)
          query (get-in db [:query])]
      (if (= (:file-type file-type) "fasta")
-       {:db db :dispatch [:exporttable/run-fasta-query]}
+       {:db db :dispatch [:exporttable/run-fasta-query loc]}
        {:db db :exporttable/download-simple-text [query-results file-type query]}))))
 
 (defn set-download-link-properties
