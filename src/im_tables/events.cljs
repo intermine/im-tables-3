@@ -11,7 +11,7 @@
             [imcljs.save :as save]
             [imcljs.fetch :as fetch]
             [imcljs.query :as query]
-            [oops.core :refer [oapply oget]]
+            [oops.core :refer [oapply ocall oget]]
             [clojure.string :refer [split join]]))
 
 (reg-event-db
@@ -57,6 +57,14 @@
   (fn [{db :db} [_ loc contents]]
     {:db (assoc-in db [:cache :modal] contents)}))
 
+(reg-event-fx
+  :modal/close
+  (sandbox)
+  (fn [{db :db} [_ loc]]
+    (let [modal (ocall js/document :getElementById "testModal")]
+      ;;feigning a click is easier than dismissing it programatically for some reason
+    (ocall modal "click"))
+    {:db (assoc-in db [:cache :modal] nil)}))
 
 (reg-event-db
   :show-overlay
