@@ -47,11 +47,14 @@
          file-type ((get-in db [:settings :data-out :selected-format]) xsv)
          query (get-in db [:query])]
      (if (= (:file-type file-type) "fasta")
-       {:db db :dispatch [:exporttable/run-fasta-query loc]}
-       {:db db :exporttable/download-simple-text [query-results file-type query]}))))
+       ;;fasta queries need to have only one column selected, so have slightly
+       ;; differetnt conditions
+       {:db db :dispatch [:exporttable/run-fasta-query loc file-type]}
+       {:db db :dispatch [:exporttable/run-export-query loc file-type]}))))
 
 (defn set-download-link-properties
-  "We're setting the attributes of a link with the download property enabled.
+  "We're setting the attributes of a link with the download property enabled,
+   then clicking it programatically.
    This spawns a nice download without having to create a new window
    which might be pop-up blocked. It also allows us to set the filename.
    We live in the future!"
@@ -59,35 +62,42 @@
   (let [downloadlink (ocall js/document :getElementById "hiddendownloadlink")]
     (ocall downloadlink :setAttribute "href" (encode-file results file-type))
     (ocall downloadlink :setAttribute "download" (str "results." file-type))
-    (ocall downloadlink :click)
-))
+    (ocall downloadlink :click)))
 
 (reg-event-fx
- :exporttable/download-fasta-response
- ;;generating a FASTA download requires an additional server call.
- ;;this event is dispatched after the fasta query has been downloaded successfully
+ :exporttable/download-export-response
+ ;;fx event handler for downloading the file once the query is complete
  (sandbox)
- (fn [{db :db} [_ loc results]]
-   (set-download-link-properties results "fasta")
+ (fn [{db :db} [_ loc file-type results]]
+   (set-download-link-properties results (:file-type file-type))
    {:db db}))
 
-(reg-fx
-  :exporttable/download-simple-text
-  ;;csv/tsv simple text downloads
-  (fn [[query-results file-type query]]
-    (let [generated-file (stringify-query-results file-type query-results)]
-      (set-download-link-properties generated-file (:file-type file-type)))))
+(reg-event-fx
+ :exporttable/run-export-query
+ ;; default query dispatch to download *all* the rows for this query
+ ;; we can't use the data we have because it's limited to the first page or two
+ ;; around 40 records. Many queries are bigger than this.
+ (sandbox)
+ (fn [{db :db} [_ loc file-type]]
+   {:im-tables/im-operation
+    {:on-success [:exporttable/download-export-response loc file-type]
+     :op         (partial fetch/fetch-custom-format
+                          (get db :service)
+                          (get db :query)
+                          {:format (:file-type file-type)})}
+     :db db}))
 
 (reg-event-fx
  :exporttable/run-fasta-query
-  ;;generating a FASTA file requires another server call - unlike csv/tsv it
- ;;isn't generated client side
+ ;;like run-export-query but limited to selecting one column as required by
+ ;;the fasta endpoint
  (sandbox)
- (fn [{db :db} [_ loc]]
+ (fn [{db :db} [_ loc file-type]]
    (let [query (get db :query)
          fasta-query (assoc query :select ["id"])]
-     {:im-tables/im-operation {:on-success [:exporttable/download-fasta-response loc]
-                               :op         (partial fetch/fasta
-                                                    (get db :service)
-                                                    fasta-query)}
+     {:im-tables/im-operation
+      {:on-success [:exporttable/download-export-response loc file-type]
+       :op         (partial fetch/fasta
+                            (get db :service)
+                            fasta-query)}
       :db db})))
