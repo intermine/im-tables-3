@@ -21,14 +21,14 @@
           {:data-toggle "modal"
            :data-target "#myModal"}
            [:i.fa.fa-columns] " Add Columns"]]
-        [:div.btn-group
-         [save/main loc]]]]
+        [:div.btn-group [save/main loc]]
+         [:div.btn-group [exporttable/exporttable loc]]]
+       ]
       [:div.col-xs-6
        [:div.container-fluid
         [:div.row
          [:div.col-xs-offset-2
           [:div.pull-right
-           [exporttable/exporttable loc]
            [:div.pull-right [pager/main loc
                              (merge pagination
                                     {:total (get response :iTotalRecords)})]]

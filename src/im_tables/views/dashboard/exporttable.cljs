@@ -59,5 +59,5 @@
     :type "button"
     :on-click
     (fn [e]
-
-      (dispatch [:prep-modal loc (export-menu loc)]))} "Export"])
+      (dispatch [:prep-modal loc (export-menu loc)]))}
+   [:i.fa.fa-download] " Export"])
