@@ -12,7 +12,7 @@
   "Encode a stringified text file such that it can be downloaded by the browser.
   Results must be stringified - don't pass objects / vectors / arrays / whatever."
   [data filetype]
-  (ocall js/window "encodeURI" (str "data:text/" filetype ";charset=utf-8," data)))
+  (ocall js/URL "createObjectURL" (js/Blob. (clj->js [data]) {:type (str "text/" filetype)})))
 
 (defn stringify-query-results
   "converts results into a csv/tsv-style string."
