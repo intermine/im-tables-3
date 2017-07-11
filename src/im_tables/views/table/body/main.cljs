@@ -47,8 +47,7 @@
              (fn [this]
                [:div.im-tooltip
                 {:on-mouse-enter (fn [e] (reset! show-tooltip? false))
-                 :style
-                                 (cond-> {:bottom    (- (int (/ @tooltip-height 2)))
+                 :style          (cond-> {:bottom    (- (int (/ @tooltip-height 2)))
                                           :max-width (int (/ (:width @table-dimensions) 2))}
                                          (= tooltip-position "tooltip-right")
                                          (assoc :left (:width @cell-dimensions))
@@ -78,16 +77,16 @@
           {:on-click (fn [] (swap! open? not))}
           [:i.fa.fa-table.fa-fw]
           (str " " (count (:rows data)) " publications ")
-          (if @open? [:i.fa.fa-chevron-down.fa-fw] [:i.fa.fa-chevron-up.fa-fw])]
+          [:i.fa.fa-chevron-up.fa-fw.ani (when @open? {:class "upside-down"})]]
          (when @open?
            [:div
-            (-> [:table.table.table-condensed.table-bordered.sub-table]
+            (-> [:table.table.table-bordered.sub-table]
                 (conj [:thead (into [:tr] (map
                                             (fn [th] [:th (end-of-dot-path th)]) (:view data)))])
                 (conj (into [:tbody] (map (fn [r]
                                             (into [:tr]
                                                   (map (fn [c]
-                                                         [:td (:value c)])) r)) (:rows data)))))])]))))
+                                                         [:td [:a (:value c)]])) r)) (:rows data)))))])]))))
 
 (defn table-cell [loc idx {id :id}]
   (let [show-tooltip?    (reagent/atom false)
@@ -133,8 +132,9 @@
                           (partial on-click ((get-in @settings [:links :url])
                                               (merge (:value @summary) (get-in @settings [:links :vocab])))))}
                        (if value [:a value] [no-value])])
-                    (if @show-tooltip? [tooltip table-dimensions my-dimensions show-tooltip? summary]
-                                       )])))})))
+                    (if @show-tooltip?
+                      [tooltip table-dimensions my-dimensions show-tooltip? summary]
+                      )])))})))
 
 (defn table-row [loc row]
   (into [:tr]

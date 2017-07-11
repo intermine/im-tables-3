@@ -64,6 +64,10 @@
 (defn member-of-outer-join? [outer-join-str view]
   (starts-with? view outer-join-str))
 
+(defn print-pass [val]
+  (.log js/console "VAL" val)
+  val)
+
 (defn main [loc]
   (let [dragging-item (subscribe [:style/dragging-item loc])
         dragging-over (subscribe [:style/dragging-over loc])
@@ -100,10 +104,10 @@
             [:thead
              (into [:tr]
                    (->> column-headers-without-joins
+                        ;column-headers-without-joins
                         (map-indexed (fn [idx h]
                                        ^{:key (get views idx)}
-                                       (println "looking for" (get views idx))
-                                       (println "SUBIEWS" (map (partial filter-join (get views idx)) views))
+
                                        [table-head/header
                                         {:header        h
                                          :dragging-over @dragging-over
@@ -111,11 +115,12 @@
                                          :loc           loc
                                          :idx           idx
                                          :subviews      nil
-
                                          :col-count     (count columnHeaders)
                                          :view          (get views idx)}]))))]
             (into [:tbody]
                   (->>
                     (map second (into (sorted-map) (select-keys results (range start (+ start limit)))))
                     ;(take (:limit pagination) (drop (:start pagination) results))
+                    print-pass
+
                     (map (fn [r] [table-body/table-row loc r]))))]])))))
