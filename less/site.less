@@ -10,6 +10,20 @@
     min-height: 200px;
     padding-bottom: 40px;
 
+/*
+    .table > thead > tr > th {
+        background-color: #337ab9;
+        color: white;
+    }
+
+    */
+
+    .inset {
+        -webkit-box-shadow: inset 3px 3px 6px -4px rgba(0,0,0,0.69);
+        -moz-box-shadow: inset 3px 3px 6px -4px rgba(0,0,0,0.69);
+        box-shadow: inset 3px 3px 6px -4px rgba(0,0,0,0.69);
+    }
+
     .sub-table {
         width: 100%;
         font-size: 0.7em;
@@ -23,14 +37,15 @@
         }
 
         th {
-            background-color: #b1b1b1;
-            color: white;
+            background-color: white;
+            color: black;
 
         }
 
         tr {
             border-bottom: 1px solid #c4c4c4;
         }
+
     }
 
     .no-value {
@@ -42,8 +57,17 @@
         padding: 1px 2px;
     }
 
+    .no-join-results {
+        color: grey;
+    }
+
     .pad-free {
         padding: 0;
+    }
+
+    .extra-padding {
+        padding-left: 23px;
+        background-color: #e8e8f0;
     }
 
     .indent {

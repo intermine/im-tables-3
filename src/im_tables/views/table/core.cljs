@@ -96,7 +96,7 @@
           ;(.log js/console "CHWO" column-headers-without-joins)
           ;(.log js/console "joins" (mapcat #(filter-join % views) (:joins @query)))
           [:div.relative
-           [:table.table.table-striped.table-condensed.table-bordered
+           [:table.table.table-condensed.table-bordered.table-striped
             [:thead
              (into [:tr]
                    (->> column-headers-without-joins

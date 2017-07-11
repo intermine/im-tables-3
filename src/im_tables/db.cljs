@@ -41,7 +41,7 @@
                        :where [
                                {:path "secondaryIdentifier"
                                 :op "="
-                                :value "2*"
+                                :value "AC3*"
                                 :code "A"}
                                ]})
 

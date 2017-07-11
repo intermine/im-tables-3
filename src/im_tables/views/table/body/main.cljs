@@ -27,70 +27,75 @@
 (defn tooltip-position
   "automatically positin the tooltip within the imtables div as much as possible. "
   [table-dimensions cell-dimensions]
-  (let [middle (/ (- (:right table-dimensions) (:left table-dimensions)) 2)
+  (let [middle                  (/ (- (:right table-dimensions) (:left table-dimensions)) 2)
         is-cell-left-of-middle? (< (:left cell-dimensions) middle)]
     (if is-cell-left-of-middle?
       "tooltip-right"
       "tooltip-left")
-))
+    ))
 
 (defn tooltip
   "UI component for a table cell tooltip"
   [table-dimensions cell-dimensions show-tooltip? summary]
-    (let [tooltip-position (tooltip-position @table-dimensions @cell-dimensions)
-          tooltip-height (reagent/atom 0)]
+  (let [tooltip-position (tooltip-position @table-dimensions @cell-dimensions)
+        tooltip-height   (reagent/atom 0)]
     (reagent/create-class
       {:name "Tooltip"
        :component-did-mount
-       (fn [this] (reset! tooltip-height (oget (reagent/dom-node this) "clientHeight")))
+             (fn [this] (reset! tooltip-height (oget (reagent/dom-node this) "clientHeight")))
        :reagent-render
-         (fn [this]
-              [:div.im-tooltip
-                {:on-mouse-enter (fn [e] (reset! show-tooltip? false) )
+             (fn [this]
+               [:div.im-tooltip
+                {:on-mouse-enter (fn [e] (reset! show-tooltip? false))
                  :style
-                (cond-> {:bottom (- (int (/ @tooltip-height 2)))
-                         :max-width (int (/ (:width @table-dimensions) 2))}
-                 (= tooltip-position "tooltip-right")
-                   (assoc :left (:width @cell-dimensions))
-                 (= tooltip-position "tooltip-left")
-                   (assoc :right (:width @cell-dimensions)))
-                 :class tooltip-position}
+                                 (cond-> {:bottom    (- (int (/ @tooltip-height 2)))
+                                          :max-width (int (/ (:width @table-dimensions) 2))}
+                                         (= tooltip-position "tooltip-right")
+                                         (assoc :left (:width @cell-dimensions))
+                                         (= tooltip-position "tooltip-left")
+                                         (assoc :right (:width @cell-dimensions)))
+                 :class          tooltip-position}
                 (generate-summary-table @summary)])})))
 
 (defn bbox->map [bb]
-    {:width (oget bb "width")
-    :height (oget bb "height")
-    :left (oget bb "left")
-    :right (oget bb "right")
-    :top (oget bb "top")
-    :bottom (oget bb "bottom")})
+  {:width  (oget bb "width")
+   :height (oget bb "height")
+   :left   (oget bb "left")
+   :right  (oget bb "right")
+   :top    (oget bb "top")
+   :bottom (oget bb "bottom")})
 
 (defn end-of-dot-path [s]
   (last (split s #"\.")))
 
 (defn outer-join-table []
-  (fn [data]
-    (.log js/console "data" data)
-    (if (> 1 (count (:rows data)))
-      [:span [:i.fa.fa-table.fa-fw] "0 publications"]
-      [:div
-       [:span [:i.fa.fa-table.fa-fw] (str " " (count (:rows data)) " publications")]
-       [:div
-        (-> [:table.sub-table.indent]
-            (conj [:thead (into [:tr] (map
-                                        (fn [th] [:th (end-of-dot-path th)]) (:view data)))])
-            (conj (into [:tbody] (map (fn [r]
-                                        (into [:tr]
-                                              (map (fn [c]
-                                                     [:td (:value c)])) r)) (:rows data)))))]])))
+  (let [open? (reagent/atom false)]
+    (fn [data]
+      (if (> 1 (count (:rows data)))
+        [:span.no-join-results [:i.fa.fa-table.fa-fw] "0 publications"]
+        [:div
+         [:div
+          {:on-click (fn [] (swap! open? not))}
+          [:i.fa.fa-table.fa-fw]
+          (str " " (count (:rows data)) " publications ")
+          (if @open? [:i.fa.fa-chevron-down.fa-fw] [:i.fa.fa-chevron-up.fa-fw])]
+         (when @open?
+           [:div
+            (-> [:table.table.table-condensed.table-bordered.sub-table]
+                (conj [:thead (into [:tr] (map
+                                            (fn [th] [:th (end-of-dot-path th)]) (:view data)))])
+                (conj (into [:tbody] (map (fn [r]
+                                            (into [:tr]
+                                                  (map (fn [c]
+                                                         [:td (:value c)])) r)) (:rows data)))))])]))))
 
 (defn table-cell [loc idx {id :id}]
-  (let [show-tooltip? (reagent/atom false)
-        dragging-item (subscribe [:style/dragging-item loc])
-        dragging-over (subscribe [:style/dragging-over loc])
-        my-dimensions (reagent/atom {})
+  (let [show-tooltip?    (reagent/atom false)
+        dragging-item    (subscribe [:style/dragging-item loc])
+        dragging-over    (subscribe [:style/dragging-over loc])
+        my-dimensions    (reagent/atom {})
         table-dimensions (reagent/atom {})
-        settings (subscribe [:settings/settings loc])]
+        settings         (subscribe [:settings/settings loc])]
     (reagent/create-class
       {:name "Table Cell"
        :component-will-unmount
@@ -112,12 +117,14 @@
                    [:td.cell
                     {:on-mouse-enter
                             (fn []
-                              (dispatch [:main/summarize-item loc c])
-                              (reset! show-tooltip? true))
+                              (when (not rows)
+                                (do
+                                  (dispatch [:main/summarize-item loc c])
+                                  (reset! show-tooltip? true))))
                      :on-mouse-leave
                             (fn [] (reset! show-tooltip? false))
 
-                     :class (str drag-class)}
+                     :class (str drag-class (when (> (count rows) 0) nil))}
                     (if (and view rows)
                       [outer-join-table c]
                       [:span
