@@ -1,7 +1,7 @@
 (ns im-tables.views.table.body.main
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
-            [clojure.string :refer [split]]
+            [clojure.string :refer [split join]]
             [im-tables.views.common :refer [no-value]]
             [oops.core :refer [ocall oget]]))
 
@@ -65,6 +65,25 @@
     :top (oget bb "top")
     :bottom (oget bb "bottom")})
 
+(defn end-of-dot-path [s]
+  (last (split s #"\.")))
+
+(defn outer-join-table []
+  (fn [data]
+    (.log js/console "data" data)
+    (if (> 1 (count (:rows data)))
+      [:span [:i.fa.fa-table.fa-fw] "0 publications"]
+      [:div
+       [:span [:i.fa.fa-table.fa-fw] (str " " (count (:rows data)) " publications")]
+       [:div
+        (-> [:table.sub-table.indent]
+            (conj [:thead (into [:tr] (map
+                                        (fn [th] [:th (end-of-dot-path th)]) (:view data)))])
+            (conj (into [:tbody] (map (fn [r]
+                                        (into [:tr]
+                                              (map (fn [c]
+                                                     [:td (:value c)])) r)) (:rows data)))))]])))
+
 (defn table-cell [loc idx {id :id}]
   (let [show-tooltip? (reagent/atom false)
         dragging-item (subscribe [:style/dragging-item loc])
@@ -78,18 +97,18 @@
              (fn [])
        :component-did-mount
              (fn [this]
-               (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")
+               (let [bb           (ocall (reagent/dom-node this) "getBoundingClientRect")
                      bb-parent-tr (ocall (oget (reagent/dom-node this) "parentElement") "getBoundingClientRect")]
-                (reset! my-dimensions (bbox->map bb))
-                (reset! table-dimensions (bbox->map bb-parent-tr))
+                 (reset! my-dimensions (bbox->map bb))
+                 (reset! table-dimensions (bbox->map bb-parent-tr))
                  ))
        :reagent-render
              (let [summary (subscribe [:summary/item-details loc id])]
-               (fn [loc idx {:keys [value id] :as c}]
+               (fn [loc idx {:keys [value id view rows] :as c}]
                  (let [{:keys [on-click url vocab]} (get-in @settings [:links])
-                       drag-class    (cond
-                                       (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
-                                       (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
+                       drag-class (cond
+                                    (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
+                                    (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
                    [:td.cell
                     {:on-mouse-enter
                             (fn []
@@ -98,15 +117,17 @@
                      :on-mouse-leave
                             (fn [] (reset! show-tooltip? false))
 
-                     :class drag-class}
-                    [:span
-                     {:on-click
-                      (if (and on-click value)
-                        (partial on-click ((get-in @settings [:links :url])
-                             (merge (:value @summary) (get-in @settings [:links :vocab]))) ))}
-                      (if value [:a value] [no-value])]
+                     :class (str drag-class)}
+                    (if (and view rows)
+                      [outer-join-table c]
+                      [:span
+                       {:on-click
+                        (if (and on-click value)
+                          (partial on-click ((get-in @settings [:links :url])
+                                              (merge (:value @summary) (get-in @settings [:links :vocab])))))}
+                       (if value [:a value] [no-value])])
                     (if @show-tooltip? [tooltip table-dimensions my-dimensions show-tooltip? summary]
-                      )])))})))
+                                       )])))})))
 
 (defn table-row [loc row]
   (into [:tr]

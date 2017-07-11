@@ -37,10 +37,13 @@
                                 "publications.pages"
                                 "publications.pubMedId"]
                        :joins ["publications"]
-                       :where [{:path "secondaryIdentifier"
+                       :size 10
+                       :where [
+                               {:path "secondaryIdentifier"
                                 :op "="
-                                :value "2RSSE.1"
-                                :code "A"}]})
+                                :value "2*"
+                                :code "A"}
+                               ]})
 
 (def default-db
   {

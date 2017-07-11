@@ -10,6 +10,29 @@
     min-height: 200px;
     padding-bottom: 40px;
 
+    .sub-table {
+        width: 100%;
+        font-size: 0.7em;
+        margin: 0;
+
+        th, td {
+            padding: 5px;
+            &:not(:last-child) {
+                border-right: 1px solid #c4c4c4;
+            }
+        }
+
+        th {
+            background-color: #b1b1b1;
+            color: white;
+
+        }
+
+        tr {
+            border-bottom: 1px solid #c4c4c4;
+        }
+    }
+
     .no-value {
         font-weight: bold;
         color: #666;
@@ -17,6 +40,14 @@
         background-color: #ddd;
         border-radius: 2px;
         padding: 1px 2px;
+    }
+
+    .pad-free {
+        padding: 0;
+    }
+
+    .indent {
+        padding-left: 20px;
     }
 
     .fade-enter {
