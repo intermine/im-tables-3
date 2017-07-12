@@ -89,3 +89,40 @@
   :modal
   (fn [db [_ prefix]]
     (get-in db (glue prefix [:cache :modal]))))
+
+
+(defn head-contains?
+  "True if a collection's head contains all elements of another collection (sub-coll)
+  (coll-head-contains? [1 2] [1 2 3 4]) => true"
+  [sub-coll coll]
+  (every? true? (map = sub-coll coll)))
+
+(def head-missing? (complement head-contains?))
+
+(defn group-by-starts-with
+  "Given a substring and a collection of strings, shift all occurences
+  of strings beginning with that substring to immediately follow the first occurence
+  ex: (group-by-starts-with apple [orange apple banana applepie apricot applejuice])
+  => [orange apple applepie applejuice banana apricot]"
+  [string-coll starts-with]
+  (let [leading (take-while (partial head-missing? starts-with) string-coll)]
+    (concat leading
+            (filter (partial head-contains? starts-with) string-coll)
+            (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
+
+(reg-sub
+  :query-response/views
+  (fn [db [_ prefix]]
+    (get-in db (glue prefix [:query-response :views]))))
+
+(reg-sub
+  :query/joins
+  (fn [db [_ prefix]]
+    (get-in db (glue prefix [:query :joins]))))
+
+(reg-sub
+  :query-response/views-sorted-by-joins
+  :<- [:query-response/views]
+  :<- [:query/joins]
+  (fn [[views joins]]
+    (reduce (fn [total next] (group-by-starts-with total next)) views joins)))

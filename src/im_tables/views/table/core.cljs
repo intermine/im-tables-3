@@ -54,35 +54,39 @@
                    "Gene.publications.pubMedId"])
 
 (defn head-contains?
-  "True if a collection's head contains all elements of another collection (reference-coll)
+  "True if a collection's head contains all elements of another collection (sub-coll)
   (coll-head-contains? [1 2] [1 2 3 4]) => true"
-  [reference-coll coll]
-  (every? true? (map = reference-coll coll)))
+  [sub-coll coll]
+  (every? true? (map = sub-coll coll)))
+
+(def head-missing? (complement head-contains?))
 
 
 
 (defn member-of-outer-join? [outer-join-str view]
   (starts-with? view outer-join-str))
 
-(defn print-pass [val]
-  (.log js/console "VAL" val)
-  val)
+(defn group-by-starts-with
+  "Given a substring and a collection of strings, shift all occurences
+  of strings beginning with that substring to immediately follow the first occurence
+  ex: (group-by-starts-with apple [orange apple banana applepie apricot applejuice])
+  => [orange apple applepie applejuice banana apricot]"
+  [string-coll starts-with]
+  (let [leading (take-while (partial head-missing? starts-with) string-coll)]
+    (concat leading
+            (filter (partial head-contains? starts-with) string-coll)
+            (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
 
 (defn main [loc]
   (let [dragging-item (subscribe [:style/dragging-item loc])
         dragging-over (subscribe [:style/dragging-over loc])
-        query         (subscribe [:main/query])
-        model         (subscribe [:assets/model])]
+        query (subscribe [:main/query])
+        model (subscribe [:assets/model])
+        sorted-views (subscribe [:query-response/views-sorted-by-joins])]
     (fn [loc {:keys [results columnHeaders views] :as response} pagination]
 
-      [
-       {:view     "Gene.symbol"
-        :subviews []}
-       {:view     "Gene.publications"
-        :subviews ["Gene.publications.title"
-                   "Gene.publications.year"
-                   "Gene.publications.journal"]}
-       ]
+      (.log js/console "yo yo" @sorted-views)
+
 
       (filter (partial member-of-outer-join? "Gene.publications") string-views)
 
@@ -109,18 +113,18 @@
                                        ^{:key (get views idx)}
 
                                        [table-head/header
-                                        {:header        h
+                                        {:header h
                                          :dragging-over @dragging-over
                                          :dragging-item @dragging-item
-                                         :loc           loc
-                                         :idx           idx
-                                         :subviews      nil
-                                         :col-count     (count columnHeaders)
-                                         :view          (get views idx)}]))))]
+                                         :loc loc
+                                         :idx idx
+                                         :subviews nil
+                                         :col-count (count columnHeaders)
+                                         :view (get views idx)}]))))]
             (into [:tbody]
                   (->>
                     (map second (into (sorted-map) (select-keys results (range start (+ start limit)))))
                     ;(take (:limit pagination) (drop (:start pagination) results))
-                    print-pass
+
 
                     (map (fn [r] [table-body/table-row loc r]))))]])))))
