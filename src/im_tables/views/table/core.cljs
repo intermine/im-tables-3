@@ -98,7 +98,7 @@
                                      :idx idx
                                      :subviews nil
                                      :col-count (count @collapsed-views)
-                                     :view (get views idx)}]))))]
+                                     :view h}]))))]
         (into [:tbody]
               (->>
                 (map second (into (sorted-map) (select-keys results (range start (+ start limit)))))
