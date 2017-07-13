@@ -110,6 +110,13 @@
             (filter (partial head-contains? starts-with) string-coll)
             (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
 
+(defn replace-join-views
+  [string-coll starts-with]
+  (let [leading (take-while (partial head-missing? starts-with) string-coll)]
+    (concat leading
+            [starts-with]
+            (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
+
 (reg-sub
   :query-response/views
   (fn [db [_ prefix]]
@@ -126,3 +133,10 @@
   :<- [:query/joins]
   (fn [[views joins]]
     (reduce (fn [total next] (group-by-starts-with total next)) views joins)))
+
+(reg-sub
+  :query-response/views-collapsed-by-joins
+  :<- [:query-response/views-sorted-by-joins]
+  :<- [:query/joins]
+  (fn [[views joins]]
+    (reduce (fn [total next] (replace-join-views total next)) views joins)))
