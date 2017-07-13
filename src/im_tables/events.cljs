@@ -37,7 +37,7 @@
   :im-tables.main/replace-all-state
   (sandbox)
   (fn [_ [_ loc state]]
-    {:db       (deep-merge db/default-db state)
+    {:db (deep-merge db/default-db state)
      :dispatch [:im-tables.main/run-query loc]}))
 
 
@@ -53,9 +53,9 @@
   :imt.io/save-list
   (sandbox)
   (fn [{db :db} [_ loc name query options]]
-    {:db                     db
+    {:db db
      :im-tables/im-operation {:on-success [:imt.io/save-list-success]
-                              :op         (partial save/im-list (get db :service) name query options)}}))
+                              :op (partial save/im-list (get db :service) name query options)}}))
 
 (reg-event-fx
   :prep-modal
@@ -125,8 +125,8 @@
     (.log js/console "ADDING CONSTRAINT" new-constraint)
     {:dispatch [:filters/save-changes loc]
      :db (update-in db [:temp-query :where]
-               (fn [constraints]
-                 (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))
+                    (fn [constraints]
+                      (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))
 
 
 (reg-event-fx
@@ -136,17 +136,17 @@
     (.log js/console "removing constraint" loc new-constraint)
     {:dispatch [:filters/save-changes loc]
      :db (update-in db [:temp-query :where]
-               (fn [constraints]
-                 (remove nil? (map (fn [constraint]
-                                     (if (= constraint new-constraint)
-                                       nil
-                                       constraint)) constraints))))}))
+                    (fn [constraints]
+                      (remove nil? (map (fn [constraint]
+                                          (if (= constraint new-constraint)
+                                            nil
+                                            constraint)) constraints))))}))
 
 (reg-event-fx
   :filters/save-changes
   (sandbox)
   (fn [{db :db} [_ loc]]
-    {:db       (assoc db :query (get db :temp-query))
+    {:db (assoc db :query (get db :temp-query))
      :dispatch [:im-tables.main/run-query loc]}))
 
 ;;;; TRANSIENT VALUES
@@ -189,11 +189,10 @@
   :tree-view/merge-new-columns
   (sandbox)
   (fn [{db :db} [_ loc]]
-    ; Drop the root of each path [Gene organism name] and create a string path "organism.name"
-    (let [columns-to-add (map (comp (partial clojure.string/join ".") rest) (get-in db [:cache :tree-view :selection]))]
-      {:db       (-> db
-                     (update-in [:query :select] #(apply conj % columns-to-add))
-                     (assoc-in [:cache :tree-view :selection] #{}))
+    (let [columns-to-add (map (partial clojure.string/join ".") (get-in db [:cache :tree-view :selection]))]
+      {:db (-> db
+               (update-in [:query :select] #(apply conj % columns-to-add))
+               (assoc-in [:cache :tree-view :selection] #{}))
        :dispatch [:im-tables.main/run-query loc]
        })))
 
@@ -239,13 +238,13 @@
   :main/summarize-column
   (sandbox)
   (fn [{db :db} [_ loc view]]
-    {:db                     db
+    {:db db
      :im-tables/im-operation {:on-success [:main/save-column-summary loc view]
-                              :op         (partial fetch/rows
-                                                   (get db :service)
-                                                   (get db :query)
-                                                   {:summaryPath view
-                                                    :format      "jsonrows"})}}))
+                              :op (partial fetch/rows
+                                           (get db :service)
+                                           (get db :query)
+                                           {:summaryPath view
+                                            :format "jsonrows"})}}))
 
 (reg-event-fx
   :main/apply-summary-filter
@@ -253,9 +252,9 @@
   (sandbox)
   (fn [{db :db} [_ loc view]]
     (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
-      {:db       (update-in db [:query :where] conj {:path   view
-                                                     :op     "ONE OF"
-                                                     :values current-selection})
+      {:db (update-in db [:query :where] conj {:path view
+                                               :op "ONE OF"
+                                               :values current-selection})
        :dispatch [:im-tables.main/run-query loc]
        ;:undo     "Applying column filter"
        }
@@ -267,7 +266,7 @@
   ;(undoable)
   (fn [{db :db} [_ loc view]]
     (let [view view]
-      {:db       (update-in db [:query :select] (partial remove (fn [v] (= v view))))
+      {:db (update-in db [:query :select] (partial remove (fn [v] (= v view))))
        :dispatch [:im-tables.main/run-query loc]
        ;:undo     "Removed column"
        })))
@@ -280,14 +279,14 @@
           [current-sort-by] (get-in db [:query :orderBy])
           update?           (= view (:path current-sort-by))
           current-direction (get-in db [:query :orderBy 0 :direction])]
-      {:db       (if update?
-                   (update-in db [:query :orderBy 0]
-                              assoc :direction (case current-direction
-                                                 "ASC" "DESC"
-                                                 "DESC" "ASC"))
-                   (assoc-in db [:query :orderBy]
-                             [{:path      view
-                               :direction "ASC"}]))
+      {:db (if update?
+             (update-in db [:query :orderBy 0]
+                        assoc :direction (case current-direction
+                                           "ASC" "DESC"
+                                           "DESC" "ASC"))
+             (assoc-in db [:query :orderBy]
+                       [{:path view
+                         :direction "ASC"}]))
        :dispatch [:im-tables.main/run-query loc]
        })))
 
@@ -295,11 +294,11 @@
 ;;;;;; SUMMARY CACHING
 
 (defn summary-query [{:keys [class id summary-fields]}]
-  {:from   class
+  {:from class
    :select summary-fields
-   :where  [{:path  (str class ".id")
-             :op    "="
-             :value id}]})
+   :where [{:path (str class ".id")
+            :op "="
+            :value id}]})
 
 (reg-event-db
   :main/cache-item-summary
@@ -309,8 +308,8 @@
                (fn [summary-map]
                  (let [{:keys [objectId] :as r} (first (:results response))]
                    (assoc summary-map objectId
-                                      {:value          r
-                                       :views          (:views response)
+                                      {:value r
+                                       :views (:views response)
                                        :column-headers (:columnHeaders response)}))))))
 
 (reg-event-fx
@@ -340,7 +339,7 @@
   (fn [{db :db} [_ loc {:keys [start size]} results]]
     (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
           updated-results (assoc results :results new-results-map)]
-      {:db         (assoc db :query-response updated-results)
+      {:db (assoc db :query-response updated-results)
        ;:db         (assoc db :query-response results)
        :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
                          (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
@@ -351,7 +350,7 @@
   (fn [{db :db} [_ loc {:keys [start size]} results]]
     (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
           updated-results (assoc results :results (merge (get-in db [:query-response :results]) new-results-map))]
-      {:db         (assoc db :query-response updated-results)
+      {:db (assoc db :query-response updated-results)
        ;:db         (assoc db :query-response results)
        :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
                          (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
@@ -362,18 +361,18 @@
   (fn [{db :db} [_ loc merge?]]
     (.debug js/console "Running query" (get db :query))
     (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
-      {:db                     (assoc-in db [:cache :column-summary] {})
+      {:db (assoc-in db [:cache :column-summary] {})
        ;:undo                   "Undo ran query"
-       :dispatch-n             [^:flush-dom [:show-overlay loc]
-                                [:main/deconstruct loc]]
+       :dispatch-n [^:flush-dom [:show-overlay loc]
+                    [:main/deconstruct loc]]
        :im-tables/im-operation {:on-success (if merge?
                                               [:main/merge-query-response loc pagination]
                                               [:main/replace-query-response loc pagination])
-                                :op         (partial fetch/table-rows
-                                                     (get db :service)
-                                                     (get db :query)
-                                                     {:start start
-                                                      :size  (* limit (get-in db [:settings :buffer]))})}})))
+                                :op (partial fetch/table-rows
+                                             (get db :service)
+                                             (get db :query)
+                                             {:start start
+                                              :size (* limit (get-in db [:settings :buffer]))})}})))
 
 
 
@@ -387,11 +386,11 @@
   :main/count-deconstruction
   (sandbox)
   (fn [{db :db} [_ loc path details]]
-    {:db                     db
+    {:db db
      :im-tables/im-operation {:on-success [:main/save-decon-count loc path]
-                              :op         (partial fetch/row-count
-                                                   (get db :service)
-                                                   (get details :query))}}))
+                              :op (partial fetch/row-count
+                                           (get db :service)
+                                           (get details :query))}}))
 
 (reg-event-fx
   :main/deconstruct
@@ -405,5 +404,5 @@
                                                                (map seq (vals (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query])))))))))]
 
 
-      {:db         (assoc db :query-parts deconstructed-query)
+      {:db (assoc db :query-parts deconstructed-query)
        :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction loc part details]) deconstructed-query))})))
