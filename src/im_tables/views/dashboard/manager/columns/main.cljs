@@ -33,37 +33,37 @@
                          [:span [:i.fa.fa-plus-square]
                           (plural (:displayName referenced-class))]
                          (if (get @expanded-map name)
-                           [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected])]))
+                           [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected views])]))
                     (sort-by (comp clojure.string/upper-case :referencedType) (vals collections))))]))))
 
 (defn tree-view []
   (fn [loc model query selected]
     (let [sterilized-query (query/sterilize-query query)
-          views (into #{} (map (fn [v] (apply conj [] (clojure.string/split v "."))) (:select sterilized-query)))]
+          views            (into #{} (map (fn [v] (apply conj [] (clojure.string/split v "."))) (:select sterilized-query)))]
       [:div
        [tree-node loc (keyword (:from query)) (get-in model [:classes (keyword (:from query))]) model [(:from query)] selected views]])))
 
 (defn my-modal []
-    (fn [loc]
-      (let [model    (subscribe [:assets/model loc])
-            selected (subscribe [:tree-view/selection loc])
-            query    (subscribe [:main/query loc])]
-     [:div#myModal.modal.fade {:role "dialog"}
-      [:div.modal-dialog
-       [:div.modal-content
-        [:div.modal-header [:h3 "Add Columns"]]
-        [:div.modal-body
-         [tree-view loc @model @query @selected]]
-        [:div.modal-footer
-         [:div.btn-toolbar.pull-right
-          [:button.btn.btn-default
-           {:data-dismiss "modal"}
-           "Cancel"]
-          [:button.btn.btn-success
-           {:data-dismiss "modal"
-            :disabled (< (count @selected) 1)
-            :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
-           (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]])))
+  (fn [loc]
+    (let [model    (subscribe [:assets/model loc])
+          selected (subscribe [:tree-view/selection loc])
+          query    (subscribe [:main/query loc])]
+      [:div#myModal.modal.fade {:role "dialog"}
+       [:div.modal-dialog
+        [:div.modal-content
+         [:div.modal-header [:h3 "Add Columns"]]
+         [:div.modal-body
+          [tree-view loc @model @query @selected]]
+         [:div.modal-footer
+          [:div.btn-toolbar.pull-right
+           [:button.btn.btn-default
+            {:data-dismiss "modal"}
+            "Cancel"]
+           [:button.btn.btn-success
+            {:data-dismiss "modal"
+             :disabled (< (count @selected) 1)
+             :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
+            (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]])))
 
 
 (defn main []
