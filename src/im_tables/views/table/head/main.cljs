@@ -37,8 +37,6 @@
           :on-drag-over (fn [] (dispatch [:style/dragging-over loc idx]))
           :on-drag-start (fn [e]
                            (ocall e "dataTransfer.setData" "text" (str "dragging column" idx))
-                           (println "LOC INDEX" loc idx)
-
                            (dispatch [:style/dragging-item loc idx]))
           :on-drag-end (fn [] (dispatch ^:flush-dom [:style/dragging-finished loc]))}
          [controls/toolbar loc view idx col-count]

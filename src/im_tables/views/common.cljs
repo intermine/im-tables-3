@@ -2,4 +2,4 @@
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]))
 
-(defn no-value [] [:span.no-value "[No value]"])
+(defn no-value [] [:span.no-value "NO VALUE"])
