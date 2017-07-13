@@ -11,7 +11,7 @@
             [imcljs.fetch :as fetch]
             [imcljs.query :as query]
             [oops.core :refer [oapply oget]]
-            [clojure.string :refer [split join]]))
+            [clojure.string :refer [split join starts-with?]]))
 
 (reg-event-db
   :printdb
@@ -265,11 +265,13 @@
   (sandbox)
   ;(undoable)
   (fn [{db :db} [_ loc view]]
-    (let [view view]
-      {:db (update-in db [:query :select] (partial remove (fn [v] (= v view))))
-       :dispatch [:im-tables.main/run-query loc]
-       ;:undo     "Removed column"
-       })))
+    (let [path-is-join? (some? (some #{view} (get-in db [:query :joins])))]
+      {:db (cond-> db
+                   (not path-is-join?) (update-in [:query :select] (partial remove (fn [v] (= v view))))
+                   path-is-join? (update-in [:query :select] (partial remove (fn [v] (starts-with? v view))))
+                   path-is-join? (update-in [:query :joins] (partial remove (fn [v] (= v view)))))
+       :dispatch [:im-tables.main/run-query loc]})))
+
 
 (reg-event-fx
   :main/sort-by
