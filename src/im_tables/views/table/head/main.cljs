@@ -15,6 +15,7 @@
 (defn header []
   (let [draggable? (reagent/atom true)]
     (fn [{:keys [idx header view loc dragging-over dragging-item col-count] :as header}]
+      (println "GOT HEADER" view)
       (let [drag-class (cond
                          (and (= idx dragging-over) (< idx dragging-item)) "drag-left"
                          (and (= idx dragging-over) (> idx dragging-item)) "drag-right")

@@ -71,7 +71,7 @@
   (let [open? (reagent/atom false)]
     (fn [data]
       (if (> 1 (count (:rows data)))
-        [:span.no-join-results [:i.fa.fa-table.fa-fw] "0 publications"]
+        [:span.no-join-results [no-value]]
         [:div
          [:div
           {:on-click (fn [] (swap! open? not))}
