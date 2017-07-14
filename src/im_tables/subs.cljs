@@ -93,7 +93,9 @@
 
 (defn head-contains?
   "True if a collection's head contains all elements of another collection (sub-coll)
-  (coll-head-contains? [1 2] [1 2 3 4]) => true"
+  (coll-head-contains? [1 2] [1 2 3 4]) => true
+  Strings are collections of characters, so this function also mimics clojure.string/starts-with?
+  (coll-head-contains? apple applejuice) => true"
   [sub-coll coll]
   (every? true? (map = sub-coll coll)))
 
