@@ -4,7 +4,9 @@
             [clojure.string :refer [split join]]
             [im-tables.views.common :refer [no-value]]
             [oops.core :refer [ocall oget]]
-            [imcljs.path :as impath]))
+            [imcljs.path :as impath]
+            [reagent.dom.server :as dom-server]
+            [im-tables.components.bootstrap :as bs]))
 
 (defn dot-split
   "Convert a view such as Gene.organism.name into [:organism :name]
@@ -43,26 +45,26 @@
     (reagent/create-class
       {:name "Tooltip"
        :component-did-mount
-             (fn [this] (reset! tooltip-height (oget (reagent/dom-node this) "clientHeight")))
+       (fn [this] (reset! tooltip-height (oget (reagent/dom-node this) "clientHeight")))
        :reagent-render
-             (fn [this]
-               [:div.im-tooltip
-                {:on-mouse-enter (fn [e] (reset! show-tooltip? false))
-                 :style          (cond-> {:bottom    (- (int (/ @tooltip-height 2)))
-                                          :max-width (int (/ (:width @table-dimensions) 2))}
-                                         (= tooltip-position "tooltip-right")
-                                         (assoc :left (:width @cell-dimensions))
-                                         (= tooltip-position "tooltip-left")
-                                         (assoc :right (:width @cell-dimensions)))
-                 :class          tooltip-position}
-                (generate-summary-table @summary)])})))
+       (fn [this]
+         [:div.im-tooltip
+          {:on-mouse-enter (fn [e] (reset! show-tooltip? false))
+           :style (cond-> {:bottom (- (int (/ @tooltip-height 2)))
+                           :max-width (int (/ (:width @table-dimensions) 2))}
+                          (= tooltip-position "tooltip-right")
+                          (assoc :left (:width @cell-dimensions))
+                          (= tooltip-position "tooltip-left")
+                          (assoc :right (:width @cell-dimensions)))
+           :class tooltip-position}
+          (generate-summary-table @summary)])})))
 
 (defn bbox->map [bb]
-  {:width  (oget bb "width")
+  {:width (oget bb "width")
    :height (oget bb "height")
-   :left   (oget bb "left")
-   :right  (oget bb "right")
-   :top    (oget bb "top")
+   :left (oget bb "left")
+   :right (oget bb "right")
+   :top (oget bb "top")
    :bottom (oget bb "bottom")})
 
 (defn outer-join-table []
@@ -97,43 +99,45 @@
     (reagent/create-class
       {:name "Table Cell"
        :component-will-unmount
-             (fn [])
+       (fn [])
        :component-did-mount
-             (fn [this]
-               (let [bb           (ocall (reagent/dom-node this) "getBoundingClientRect")
-                     bb-parent-tr (ocall (oget (reagent/dom-node this) "parentElement") "getBoundingClientRect")]
-                 (reset! my-dimensions (bbox->map bb))
-                 (reset! table-dimensions (bbox->map bb-parent-tr))
-                 ))
-       :reagent-render
-             (let [summary (subscribe [:summary/item-details loc id])]
-               (fn [loc idx {:keys [value id view rows] :as c}]
-                 (let [{:keys [on-click url vocab]} (get-in @settings [:links])
-                       drag-class (cond
-                                    (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
-                                    (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
-                   [:td.cell
-                    {:on-mouse-enter
-                            (fn []
-                              (when (not rows)
-                                (do
-                                  (dispatch [:main/summarize-item loc c])
-                                  (reset! show-tooltip? true))))
-                     :on-mouse-leave
-                            (fn [] (reset! show-tooltip? false))
+       (fn [this]
+         (let [bb           (ocall (reagent/dom-node this) "getBoundingClientRect")
+               bb-parent-tr (ocall (oget (reagent/dom-node this) "parentElement") "getBoundingClientRect")]
+           (reset! my-dimensions (bbox->map bb))
+           (reset! table-dimensions (bbox->map bb-parent-tr))
 
-                     :class (str drag-class (when (> (count rows) 0) nil))}
-                    (if (and view rows)
-                      [outer-join-table c view]
-                      [:span
-                       {:on-click
-                        (if (and on-click value)
-                          (partial on-click ((get-in @settings [:links :url])
-                                              (merge (:value @summary) (get-in @settings [:links :vocab])))))}
-                       (if value [:a value] [no-value])])
-                    (if @show-tooltip?
-                      [tooltip table-dimensions my-dimensions show-tooltip? summary]
-                      )])))})))
+           ))
+       :reagent-render
+       (let [summary (subscribe [:summary/item-details loc id])]
+         (fn [loc idx {:keys [value id view rows] :as c}]
+           (let [{:keys [on-click url vocab]} (get-in @settings [:links])
+                 drag-class (cond
+                              (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
+                              (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
+             [:td.cell
+              {:on-mouse-enter
+               (fn []
+                 (when (not rows)
+                   (do
+                     (dispatch [:main/summarize-item loc c])
+                     (reset! show-tooltip? true))))
+               :on-mouse-leave (fn [] (reset! show-tooltip? false))
+               :class (str drag-class (when (> (count rows) 0) nil))}
+              (if (and view rows)
+                [outer-join-table c view]
+                [:span
+                 {:on-click
+                  (if (and on-click value)
+                    (partial on-click ((get-in @settings [:links :url])
+                                        (merge (:value @summary) (get-in @settings [:links :vocab])))))}
+                 [:a {:data-trigger "hover"
+                      :data-content (dom-server/render-to-static-markup (generate-summary-table @summary))
+                      :data-html true
+                      :data-placement "auto"
+                      :ref (fn [x] (when x (.popover (js/$ x))))}
+                  (if value value [no-value])]])
+              ])))})))
 
 (defn table-row [loc row]
   (into [:tr]
