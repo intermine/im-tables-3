@@ -102,7 +102,7 @@
 (defn group-by-starts-with
   "Given a substring and a collection of strings, shift all occurences
   of strings beginning with that substring to immediately follow the first occurence
-  ex: (group-by-starts-with apple [orange apple banana applepie apricot applejuice])
+  ex: (group-by-starts-with [orange apple banana applepie apricot applejuice] apple)
   => [orange apple applepie applejuice banana apricot]"
   [string-coll starts-with]
   (let [leading (take-while (partial head-missing? starts-with) string-coll)]
@@ -112,7 +112,9 @@
 
 (defn replace-join-views
   "Remove all occurances of strings in a collection that begin with a value while
-   replacing the first occurance of the match with the value"
+   replacing the first occurance of the match with the value
+   ex: (replace-join-views [orange apple applepie applejuice banana apricot] apple)
+   => [orange apple banana apricot]"
   [string-coll starts-with]
   (let [leading (take-while (partial head-missing? starts-with) string-coll)]
     (concat leading
