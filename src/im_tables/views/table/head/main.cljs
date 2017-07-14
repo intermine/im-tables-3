@@ -21,7 +21,8 @@
                          (and (= idx dragging-over) (< idx dragging-item)) "drag-left"
                          (and (= idx dragging-over) (> idx dragging-item)) "drag-right")
             [class & path] (split header " > ")
-            display-name (impath/display-name @model view)]
+            display-name (when (and @model view)
+                           (impath/display-name @model view))]
         [:th
          {:class drag-class
           :draggable @draggable?

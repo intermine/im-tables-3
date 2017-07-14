@@ -134,7 +134,7 @@
                  [:a {:data-trigger "hover"
                       :data-content (dom-server/render-to-static-markup (generate-summary-table @summary))
                       :data-html true
-                      :data-placement "auto"
+                      :data-placement "auto right"
                       :ref (fn [x] (when x (.popover (js/$ x))))}
                   (if value value [no-value])]])
               ])))})))
