@@ -139,7 +139,6 @@
 (defn too-many-values []
   (fn []
     [:div.alert.alert-warning
-
      [:div
       {:style {:padding "10px"}}
       [:h3 "Column summary not available"]
