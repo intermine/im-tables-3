@@ -136,6 +136,15 @@
            :value  "Apply"
            }]]]))))
 
+(defn too-many-values []
+  (fn []
+    [:div.alert.alert-warning
+
+     [:div
+      {:style {:padding "10px"}}
+      [:h3 "Column summary not available"]
+      [:p "Summaries can only be made on columns with 1,000 values or less."]]]))
+
 (defn column-summary [loc view]
   (let [response    (subscribe [:selection/response loc view])
         selections  (subscribe [:selection/selections loc view])
@@ -148,39 +157,41 @@
        :reagent-render
        (fn [loc view]
          (let [close-fn (partial force-close (reagent/current-component))]
-           [:form.form.column-summary
-            [:div.main-view
-            [histogram/main (:results @response)]
-            [filter-input loc view @text-filter]
-             [:table.table.table-striped.table-condensed
-              [:thead [:tr [:th
-              (if (empty? @selections)
-                 [:span {:title "Select all"
-                         :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o] ]
-                 [:span {:title "Deselect all"
-                         :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
-                            ] [:th "Item"] [:th "Count"]]]
-              (into [:tbody]
-                    (->> (filter (partial has-text? @text-filter) (:results @response))
-                         (map (fn [{:keys [count item]}]
-                                [:tr.hoverable
-                                 {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                                 [:td
-                                  [:input
-                                         {:on-change (fn [])
-                                          :checked   (contains? @selections item)
-                                          :type      "checkbox"}]]
-                                 [:td (if item item [no-value])]
-                                 [:td
-                                  [:div count]]]))))]]
-            [:div.btn-toolbar.column-summary-toolbar
-             [:button.btn.btn-primary
-              {:type     "button"
-               :on-click (fn []
-                           (dispatch [:main/apply-summary-filter loc view])
-                           (close-fn))}
-                             [:i.fa.fa-filter]
-               (str " Filter")]]]))})))
+           (if (false? @response)
+             [too-many-values]
+             [:form.form.column-summary
+             [:div.main-view
+              [histogram/main (:results @response)]
+              [filter-input loc view @text-filter]
+              [:table.table.table-striped.table-condensed
+               [:thead [:tr [:th
+                             (if (empty? @selections)
+                               [:span {:title "Select all"
+                                       :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
+                               [:span {:title "Deselect all"
+                                       :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
+                             ] [:th "Item"] [:th "Count"]]]
+               (into [:tbody]
+                     (->> (filter (partial has-text? @text-filter) (:results @response))
+                          (map (fn [{:keys [count item]}]
+                                 [:tr.hoverable
+                                  {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
+                                  [:td
+                                   [:input
+                                    {:on-change (fn [])
+                                     :checked (contains? @selections item)
+                                     :type "checkbox"}]]
+                                  [:td (if item item [no-value])]
+                                  [:td
+                                   [:div count]]]))))]]
+             [:div.btn-toolbar.column-summary-toolbar
+              [:button.btn.btn-primary
+               {:type "button"
+                :on-click (fn []
+                            (dispatch [:main/apply-summary-filter loc view])
+                            (close-fn))}
+               [:i.fa.fa-filter]
+               (str " Filter")]]])))})))
 
 (defn toolbar []
   (fn [loc view idx col-count]
