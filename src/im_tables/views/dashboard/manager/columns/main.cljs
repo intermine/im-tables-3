@@ -2,6 +2,8 @@
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
             [imcljs.query :as query]
+            [imcljs.path :as impath]
+            [clojure.string :refer [join]]
             [inflections.core :refer [plural]]))
 
 (defn tree-node []
@@ -14,6 +16,7 @@
                (map (fn [{:keys [name type]}]
                       (let [original-view? (some? (some #{(conj current-path name)} views))
                             selected?      (some? (some #{(conj current-path name)} selected))]
+
                         [:li
                          {:on-click (fn [e]
                                       (if-not original-view?
@@ -24,14 +27,16 @@
                           {:class (cond
                                     original-view? "label label-default"
                                     selected? "label label-success disabled")}
-                          [:i.fa.fa-tag] name]])) (vals attributes)))
+                          [:i.fa.fa-tag]
+                          (last (impath/display-name model (join "." (conj current-path name))))
+                          ]])) (vals attributes)))
          (into [:ul.collections.list-unstyled]
                (map (fn [{:keys [name referencedType name] :as collection}]
                       (let [referenced-class (get-in model [:classes (keyword referencedType)])]
                         [:li
                          {:on-click (fn [e] (.stopPropagation e) (swap! expanded-map update name not))}
                          [:span [:i.fa.fa-plus-square]
-                          (plural (:displayName referenced-class))]
+                          (plural (last (impath/display-name model (join "." (conj current-path name)))))]
                          (if (get @expanded-map name)
                            [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected views])]))
                     (sort-by (comp clojure.string/upper-case :referencedType) (vals collections))))]))))
