@@ -392,7 +392,7 @@
      :im-tables/im-operation {:on-success [:main/save-decon-count loc path]
                               :op (partial fetch/row-count
                                            (get db :service)
-                                           (get details :query))}}))
+                                           (dissoc (get details :query) :joins))}}))
 
 (reg-event-fx
   :main/deconstruct
