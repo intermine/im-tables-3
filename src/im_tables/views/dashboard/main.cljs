@@ -2,7 +2,8 @@
   (:require [im-tables.views.dashboard.pagination :as pager]
             [im-tables.views.dashboard.manager.columns.main :as column-manager]
             [im-tables.views.dashboard.undo :as undo]
-            [im-tables.views.dashboard.save :as save]))
+            [im-tables.views.dashboard.save :as save]
+            [im-tables.views.dashboard.exporttable :as exporttable]))
 
 
 
@@ -20,8 +21,9 @@
           {:data-toggle "modal"
            :data-target "#myModal"}
            [:i.fa.fa-columns] " Add Columns"]]
-        [:div.btn-group
-         [save/main loc]]]]
+        [:div.btn-group [save/main loc]]
+         [:div.btn-group [exporttable/exporttable loc]]]
+       ]
       [:div.col-xs-6
        [:div.container-fluid
         [:div.row

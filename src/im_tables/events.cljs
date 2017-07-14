@@ -7,10 +7,11 @@
             [im-tables.interceptors :refer [sandbox]]
             [im-tables.events.boot]
             [im-tables.events.pagination]
+            [im-tables.events.exporttable]
             [imcljs.save :as save]
             [imcljs.fetch :as fetch]
             [imcljs.query :as query]
-            [oops.core :refer [oapply oget]]
+            [oops.core :refer [oapply ocall oget]]
             [clojure.string :refer [split join]]))
 
 (reg-event-db
@@ -18,13 +19,6 @@
   (fn [db]
     (.log js/console "DB" db)
     db))
-
-;(reg-event-fx
-;  :im-tables.main/replace-all-state
-;  (sandbox)
-;  (fn [{db :db} [_ loc state]]
-;    {:db       (merge db/default-db state)
-;     :dispatch [:im-tables.main/run-query loc]}))
 
 (defn deep-merge
   "Recursively merges maps. If keys are not maps, the last value wins."
@@ -63,6 +57,14 @@
   (fn [{db :db} [_ loc contents]]
     {:db (assoc-in db [:cache :modal] contents)}))
 
+(reg-event-fx
+  :modal/close
+  (sandbox)
+  (fn [{db :db} [_ loc]]
+    (let [modal (ocall js/document :getElementById "testModal")]
+      ;;feigning a click is easier than dismissing it programatically for some reason
+    (ocall modal "click"))
+    {:db (assoc-in db [:cache :modal] nil)}))
 
 (reg-event-db
   :show-overlay

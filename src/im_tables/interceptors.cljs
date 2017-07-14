@@ -5,7 +5,7 @@
   "Returns an interceptor factory that shrinks the world
    down to a subset of app-db. Changes are merged back into
    the real db when the handler finishes at a path supplied
-   as the last argument in an event.
+   as the first argument in an event (or second argument if you count the name of the event as an arg).
   (dispatch [:some-event some-data [:my :sandboxed :location])"
   []
   (->interceptor
