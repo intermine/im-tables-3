@@ -78,7 +78,7 @@
          [:div
           {:on-click (fn [] (swap! open? not))}
           [:i.fa.fa-table.fa-fw]
-          (str " " (count (:rows data)) " publications ")
+          (str " " (count (:rows data)) " " (last (impath/display-name @model (:column data))))
           [:i.fa.fa-chevron-up.fa-fw.ani (when @open? {:class "upside-down"})]]
          (when @open?
            [:div
@@ -127,7 +127,7 @@
 
                      :class (str drag-class (when (> (count rows) 0) nil))}
                     (if (and view rows)
-                      [outer-join-table c]
+                      [outer-join-table c view]
                       [:span
                        {:on-click
                         (if (and on-click value)
