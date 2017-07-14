@@ -131,6 +131,8 @@
   (fn [db [_ prefix]]
     (get-in db (glue prefix [:query :joins]))))
 
+; The following two subscriptions do 2 things to support outer joins...
+; First move any views that are part of outer joins next to eachother:
 (reg-sub
   :query-response/views-sorted-by-joins
   :<- [:query-response/views]
@@ -138,9 +140,19 @@
   (fn [[views joins]]
     (reduce (fn [total next] (group-by-starts-with total next)) views joins)))
 
+; Then replace all views that are part of outer joins with the name of the outer joins:
 (reg-sub
   :query-response/views-collapsed-by-joins
   :<- [:query-response/views-sorted-by-joins]
   :<- [:query/joins]
   (fn [[views joins]]
     (reduce (fn [total next] (replace-join-views total next)) views joins)))
+
+; Resulting in:
+; Gene.secondaryIdentifier Gene.publications.year Gene.symbol Gene.publications.title
+;    ... with outer joins [Gene.publications]
+; Becoming:
+; Gene.secondaryIdentifier Gene.publications Gene.symbol
+
+; This could have been done with a single subscription but having a reference
+; to the grouped views [:query-response/views-sorted-by-joins] is useful elsewhere
