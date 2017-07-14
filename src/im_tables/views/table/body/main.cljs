@@ -3,7 +3,8 @@
             [reagent.core :as reagent]
             [clojure.string :refer [split join]]
             [im-tables.views.common :refer [no-value]]
-            [oops.core :refer [ocall oget]]))
+            [oops.core :refer [ocall oget]]
+            [imcljs.path :as impath]))
 
 (defn dot-split
   "Convert a view such as Gene.organism.name into [:organism :name]
@@ -68,7 +69,8 @@
   (last (split s #"\.")))
 
 (defn outer-join-table []
-  (let [open? (reagent/atom false)]
+  (let [model (subscribe [:assets/model])
+        open? (reagent/atom false)]
     (fn [data]
       (if (> 1 (count (:rows data)))
         [:span.no-join-results [no-value]]
@@ -82,7 +84,7 @@
            [:div
             (-> [:table.table.table-bordered.sub-table]
                 (conj [:thead (into [:tr] (map
-                                            (fn [th] [:th (end-of-dot-path th)]) (:view data)))])
+                                            (fn [th] [:th (last (impath/display-name @model th))]) (:view data)))])
                 (conj (into [:tbody] (map (fn [r]
                                             (into [:tr]
                                                   (map (fn [c]

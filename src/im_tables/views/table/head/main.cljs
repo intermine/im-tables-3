@@ -3,7 +3,8 @@
             [im-tables.views.table.head.controls :as controls]
             [reagent.core :as reagent]
             [clojure.string :refer [join split]]
-            [oops.core :refer [ocall oget]]))
+            [oops.core :refer [ocall oget]]
+            [imcljs.path :as impath]))
 
 (defn is-child-of?
   "Utility method to check if a given dom node contains another"
@@ -13,13 +14,14 @@
     false))
 
 (defn header []
-  (let [draggable? (reagent/atom true)]
+  (let [model (subscribe [:assets/model])
+        draggable? (reagent/atom true)]
     (fn [{:keys [idx header view loc dragging-over dragging-item col-count] :as header}]
       (let [drag-class (cond
                          (and (= idx dragging-over) (< idx dragging-item)) "drag-left"
                          (and (= idx dragging-over) (> idx dragging-item)) "drag-right")
             [class & path] (split header " > ")
-            ]
+            display-name (impath/display-name @model view)]
         [:th
          {:class drag-class
           :draggable @draggable?
@@ -41,5 +43,5 @@
           :on-drag-end (fn [] (dispatch ^:flush-dom [:style/dragging-finished loc]))}
          [controls/toolbar loc view idx col-count]
          [:div
-          [:div class]
-          [:div (join " . " path)]]]))))
+          [:div (last (drop-last display-name))]
+          [:div (last display-name)]]]))))
