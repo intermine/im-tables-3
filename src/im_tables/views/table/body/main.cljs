@@ -65,9 +65,6 @@
    :top    (oget bb "top")
    :bottom (oget bb "bottom")})
 
-(defn end-of-dot-path [s]
-  (last (split s #"\.")))
-
 (defn outer-join-table []
   (let [model (subscribe [:assets/model])
         open? (reagent/atom false)]
