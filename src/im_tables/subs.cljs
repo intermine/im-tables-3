@@ -111,6 +111,8 @@
             (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
 
 (defn replace-join-views
+  "Remove all occurances of strings in a collection that begin with a value while
+   replacing the first occurance of the match with the value"
   [string-coll starts-with]
   (let [leading (take-while (partial head-missing? starts-with) string-coll)]
     (concat leading
