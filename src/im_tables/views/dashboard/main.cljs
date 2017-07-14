@@ -34,5 +34,8 @@
             {:style {:padding-right "20px"}}
             (str "Showing "
                  (inc (:start pagination)) " to "
-                 (+ (:start pagination) (:limit pagination)) " of "
+                 (min
+                   (+ (:start pagination) (:limit pagination))
+                   (:iTotalRecords response))
+                 " of "
                  (:iTotalRecords response) " rows")]]]]]]]]))
