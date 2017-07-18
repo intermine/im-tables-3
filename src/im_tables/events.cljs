@@ -201,17 +201,29 @@
 (defn swap [v i1 i2]
   (assoc v i2 (v i1) i1 (v i2)))
 
+(defn index [pred coll]
+  (first (filter some? (map-indexed (fn [idx n] (when (pred n) idx)) coll))))
+
+(defn begins-with? [substring string]
+  (clojure.string/starts-with? string substring))
+
 (reg-event-db
   :style/dragging-item
   (sandbox)
-  (fn [db [_ loc idx]]
-    (assoc-in db [:cache :dragging-item] idx)))
+  (fn [db [_ loc view]]
+    (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
+      (if outer-join?
+        (assoc-in db [:cache :dragging-item] (index (partial begins-with? view) (get-in db [:query :select])))
+        (assoc-in db [:cache :dragging-item] (index (partial = view) (get-in db [:query :select])))))))
 
 (reg-event-db
   :style/dragging-over
   (sandbox)
-  (fn [db [_ loc idx]]
-    (assoc-in db [:cache :dragging-over] idx)))
+  (fn [db [_ loc view]]
+    (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
+      (if outer-join?
+        (assoc-in db [:cache :dragging-over] (index (partial begins-with? view) (get-in db [:query :select])))
+        (assoc-in db [:cache :dragging-over] (index (partial = view) (get-in db [:query :select])))))))
 
 (reg-event-fx
   :style/dragging-finished

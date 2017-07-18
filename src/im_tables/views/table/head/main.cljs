@@ -37,10 +37,10 @@
                   filter-clicked? (is-child-of? clicked-element (ocall target "querySelector" ".filter-view"))
                   summary-clicked? (is-child-of? clicked-element (ocall target "querySelector" ".column-summary"))]
               (reset! draggable? (not (or filter-clicked? summary-clicked?)))))
-          :on-drag-over (fn [] (dispatch [:style/dragging-over loc idx]))
+          :on-drag-over (fn [] (dispatch [:style/dragging-over loc view]))
           :on-drag-start (fn [e]
-                           (ocall e "dataTransfer.setData" "text" (str "dragging column" idx))
-                           (dispatch [:style/dragging-item loc idx]))
+                           (ocall e "dataTransfer.setData" "text" (str "dragging column" view))
+                           (dispatch [:style/dragging-item loc view]))
           :on-drag-end (fn [] (dispatch ^:flush-dom [:style/dragging-finished loc]))}
          [controls/toolbar loc view idx col-count]
          [:div
