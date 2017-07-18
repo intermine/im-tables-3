@@ -68,9 +68,10 @@
    :bottom (oget bb "bottom")})
 
 (defn outer-join-table []
-  (let [model (subscribe [:assets/model])
-        open? (reagent/atom false)]
-    (fn [data]
+  (let [model         (subscribe [:assets/model])
+        open?         (reagent/atom false)
+        show-tooltip? (reagent/atom false)]
+    (fn [loc data]
       (if (> 1 (count (:rows data)))
         [:span.no-join-results [no-value]]
         [:div
@@ -84,10 +85,30 @@
             (-> [:table.table.table-bordered.sub-table]
                 (conj [:thead (into [:tr] (map
                                             (fn [th] [:th (last (impath/display-name @model th))]) (:view data)))])
-                (conj (into [:tbody] (map (fn [r]
-                                            (into [:tr]
-                                                  (map (fn [c]
-                                                         [:td [:a (:value c)]])) r)) (:rows data)))))])]))))
+                (conj
+                  (into [:tbody]
+                        (map (fn [r]
+                               (into [:tr]
+                                     (map (fn [{:keys [id] :as c}]
+                                            (println @(subscribe [:summary/item-details loc id]))
+                                            [:td
+                                             [:a {:on-mouse-enter (fn []
+                                                                    (dispatch [:main/summarize-item loc c]))
+                                                  :data-trigger "hover"
+                                                  :data-content (dom-server/render-to-static-markup
+                                                                  (generate-summary-table
+                                                                     @(subscribe [:summary/item-details loc id])))
+                                                  :data-html true
+                                                  :data-placement "auto right"
+                                                  :ref (fn [x] (when x (.popover (js/$ x))))}
+                                              (if (:value c) (:value c) [no-value])]]
+                                            #_[:td [:a {:on-mouse-enter
+                                                      (fn []
+                                                        (do
+                                                          (dispatch [:main/summarize-item loc c])
+                                                          (reset! show-tooltip? true)))}
+                                                  (:value c)]])) r))
+                             (:rows data)))))])]))))
 
 (defn table-cell [loc idx {id :id}]
   (let [show-tooltip?    (reagent/atom false)
@@ -125,7 +146,7 @@
                :on-mouse-leave (fn [] (reset! show-tooltip? false))
                :class (str drag-class (when (> (count rows) 0) nil))}
               (if (and view rows)
-                [outer-join-table c view]
+                [outer-join-table loc c view]
                 [:span
                  {:on-click
                   (if (and on-click value)

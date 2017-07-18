@@ -18,6 +18,8 @@
        [:div.overlay
         [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
 
+
+
 (defn main [loc state]
   (let [response     (subscribe [:main/query-response loc])
         pagination   (subscribe [:settings/pagination loc])
