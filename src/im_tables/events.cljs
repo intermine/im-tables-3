@@ -198,13 +198,20 @@
 
 ;;;;; STYLE
 
-(defn swap [v i1 i2]
-  (assoc v i2 (v i1) i1 (v i2)))
+(defn swap
+  "Given a collection, swap the positions of elements at index-a and index-b with eachother"
+  [coll index-a index-b]
+  (assoc coll index-b (coll index-a) index-a (coll index-b)))
 
-(defn index [pred coll]
+(defn index
+  "Given a predicate and a collection, find the index of the first truthy value
+  (index (partial = :b) [:a :b :c]) => 1
+  (index #(clojure.string/sarts-with? % xyz) [abc1 def2 xyz3]) => 2"
+  [pred coll]
   (first (filter some? (map-indexed (fn [idx n] (when (pred n) idx)) coll))))
 
-(defn begins-with? [substring string]
+(defn begins-with? "Clojure.string/starts-with? with reversed argument order"
+  [substring string]
   (clojure.string/starts-with? string substring))
 
 (reg-event-db
@@ -213,7 +220,9 @@
   (fn [db [_ loc view]]
     (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
       (if outer-join?
+        ; If the column (view) being dragged is part of an outer join then get the idx of the first occurance
         (assoc-in db [:cache :dragging-item] (index (partial begins-with? view) (get-in db [:query :select])))
+        ; Otherwise, find an identical match
         (assoc-in db [:cache :dragging-item] (index (partial = view) (get-in db [:query :select])))))))
 
 (reg-event-db
@@ -222,7 +231,9 @@
   (fn [db [_ loc view]]
     (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
       (if outer-join?
+        ; If the column (view) being dragged over is part of an outer join then get the idx of the first occurance
         (assoc-in db [:cache :dragging-over] (index (partial begins-with? view) (get-in db [:query :select])))
+        ; Otherwise, find an identical match
         (assoc-in db [:cache :dragging-over] (index (partial = view) (get-in db [:query :select])))))))
 
 (reg-event-fx
