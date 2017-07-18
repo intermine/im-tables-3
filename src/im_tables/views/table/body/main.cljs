@@ -87,27 +87,21 @@
                                             (fn [th] [:th (last (impath/display-name @model th))]) (:view data)))])
                 (conj
                   (into [:tbody]
-                        (map (fn [r]
+                        (map (fn [rows]
                                (into [:tr]
                                      (map (fn [{:keys [id] :as c}]
-                                            (println @(subscribe [:summary/item-details loc id]))
                                             [:td
                                              [:a {:on-mouse-enter (fn []
                                                                     (dispatch [:main/summarize-item loc c]))
                                                   :data-trigger "hover"
                                                   :data-content (dom-server/render-to-static-markup
                                                                   (generate-summary-table
-                                                                     @(subscribe [:summary/item-details loc id])))
+                                                                    @(subscribe [:summary/item-details loc id])))
                                                   :data-html true
                                                   :data-placement "auto right"
                                                   :ref (fn [x] (when x (.popover (js/$ x))))}
-                                              (if (:value c) (:value c) [no-value])]]
-                                            #_[:td [:a {:on-mouse-enter
-                                                      (fn []
-                                                        (do
-                                                          (dispatch [:main/summarize-item loc c])
-                                                          (reset! show-tooltip? true)))}
-                                                  (:value c)]])) r))
+                                              (if (:value c) (:value c) [no-value])]]))
+                                     rows))
                              (:rows data)))))])]))))
 
 (defn table-cell [loc idx {id :id}]
@@ -137,7 +131,9 @@
                               (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
                               (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
              [:td.cell
-              {:on-mouse-enter
+              {
+
+               :on-mouse-enter
                (fn []
                  (when (not rows)
                    (do
@@ -148,15 +144,17 @@
               (if (and view rows)
                 [outer-join-table loc c view]
                 [:span
-                 {:on-click
+                 {
+                  :data-trigger "hover"
+                  :data-content (dom-server/render-to-static-markup (generate-summary-table @summary))
+                  :data-html true
+                  :data-placement "auto right"
+                  :ref (fn [x] (when x (.popover (js/$ x) #js {:container "body"})))
+                  :on-click
                   (if (and on-click value)
                     (partial on-click ((get-in @settings [:links :url])
                                         (merge (:value @summary) (get-in @settings [:links :vocab])))))}
-                 [:a {:data-trigger "hover"
-                      :data-content (dom-server/render-to-static-markup (generate-summary-table @summary))
-                      :data-html true
-                      :data-placement "auto right"
-                      :ref (fn [x] (when x (.popover (js/$ x))))}
+                 [:a {}
                   (if value value [no-value])]])
               ])))})))
 

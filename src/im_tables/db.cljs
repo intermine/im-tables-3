@@ -26,7 +26,6 @@
 
 (def outer-join-query {:from "Gene"
                        :select ["secondaryIdentifier"
-                                "symbol"
                                 "primaryIdentifier"
                                 "organism.name"
                                 "publications.firstAuthor"
@@ -35,7 +34,8 @@
                                 "publications.journal"
                                 "publications.volume"
                                 "publications.pages"
-                                "publications.pubMedId"]
+                                "publications.pubMedId"
+                                "symbol"]
                        :joins ["publications"]
                        :size 10
                        :where [

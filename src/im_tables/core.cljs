@@ -23,20 +23,10 @@
 (defn ^:export init []
   (re-frame/dispatch-sync [:initialize-db
                            nil
-                           {:service {:root "yeastmine.yeastgenome.org/yeastmine"}
+                           {
+                            :service {:root "www.flymine.org/query"}
+                            ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}
                             :query (query/sterilize-query db/outer-join-query)}])
 
   (dev-setup)
   (mount-root))
-
-{:from   "Gene"
- :select ["secondaryIdentifier"
-          "symbol"
-          "primaryIdentifier"
-          "organism.name"
-          "homologues.homologue.symbol"
-          "homologues.homologue.organism.name"
-          ]
- :where [{:path "Gene"
-          :op "IN"
-          :value "PL FlyAtlas_maleglands_top"}]}
