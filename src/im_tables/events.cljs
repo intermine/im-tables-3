@@ -329,6 +329,7 @@
   :main/cache-item-summary
   (sandbox)
   (fn [db [_ loc response]]
+    (println "CACHING ITEM SUMMARY" response)
     (update-in db [:cache :item-details]
                (fn [summary-map]
                  (let [{:keys [objectId] :as r} (first (:results response))]
@@ -341,6 +342,7 @@
   :main/summarize-item
   (sandbox)
   (fn [{db :db} [_ loc {:keys [class id] :as item}]]
+    (js/console.log "SUMMARIZING?" (get-in db [:cache :item-details id]))
     (cond-> {:db db}
             (not (get-in db [:cache :item-details id]))
             (assoc :im-tables/im-operation {:on-success
@@ -351,6 +353,7 @@
                                                      (summary-query
                                                        (assoc item :summary-fields
                                                                    (into [] (keys (get-in db [:service :model :classes (keyword class) :attributes]))))))}))))
+
 
 
 

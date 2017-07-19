@@ -3,7 +3,7 @@
             [reagent.core :as reagent]
             [clojure.string :refer [split join]]
             [im-tables.views.common :refer [no-value]]
-            [oops.core :refer [ocall oget]]
+            [oops.core :refer [ocall oget oset!]]
             [imcljs.path :as impath]
             [reagent.dom.server :as dom-server]
             [im-tables.components.bootstrap :as bs]))
@@ -105,60 +105,137 @@
                              (:rows data)))))])]))))
 
 (defn table-cell [loc idx {id :id}]
-  (let [show-tooltip?    (reagent/atom false)
-        dragging-item    (subscribe [:style/dragging-item loc])
-        dragging-over    (subscribe [:style/dragging-over loc])
-        my-dimensions    (reagent/atom {})
-        table-dimensions (reagent/atom {})
-        settings         (subscribe [:settings/settings loc])]
+  (let [show-tooltip? (reagent/atom false)
+        dragging-item (subscribe [:style/dragging-item loc])
+        dragging-over (subscribe [:style/dragging-over loc])
+        settings      (subscribe [:settings/settings loc])
+        summary       (subscribe [:summary/item-details loc id])
+        dom-element   (reagent/atom nil)]
     (reagent/create-class
       {:name "Table Cell"
-       :component-will-unmount
-       (fn [])
-       :component-did-mount
-       (fn [this]
-         (let [bb           (ocall (reagent/dom-node this) "getBoundingClientRect")
-               bb-parent-tr (ocall (oget (reagent/dom-node this) "parentElement") "getBoundingClientRect")]
-           (reset! my-dimensions (bbox->map bb))
-           (reset! table-dimensions (bbox->map bb-parent-tr))
-
-           ))
+       :component-did-update (fn []
+                               (println "UPDATED" @dom-element)
+                               ;(some-> x
+                               ;        js/$
+                               ;        (ocall :popover "destroy")
+                               ;        (ocall :popover))
+                               )
        :reagent-render
-       (let [summary (subscribe [:summary/item-details loc id])]
-         (fn [loc idx {:keys [value id view rows] :as c}]
-           (let [{:keys [on-click url vocab]} (get-in @settings [:links])
-                 drag-class (cond
-                              (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
-                              (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
-             [:td.cell
-              {
+       (fn [loc idx {:keys [value id view rows] :as c}]
+         (let [{:keys [on-click url vocab]} (get-in @settings [:links])
+               drag-class (cond
+                            (and (= idx @dragging-over) (< idx @dragging-item)) "drag-left"
+                            (and (= idx @dragging-over) (> idx @dragging-item)) "drag-right")]
+           [:td.cell
+            {:on-mouse-enter
+             (fn []
+               (when (not rows)
+                 (do
+                   (dispatch [:main/summarize-item loc c])
+                   (reset! show-tooltip? true))))
+             :on-mouse-leave (fn [] (reset! show-tooltip? false))
+             :class (str drag-class (when (> (count rows) 0) nil))}
+            (if (and view rows)
+              [outer-join-table loc c view]
+              [:span
+               {:data-trigger "hover"
+                ;:data-content (dom-server/render-to-static-markup (generate-summary-table @summary))
+                :data-html true
+                :data-container "body"
+                :data-placement "auto right"
+                :ref (fn [el] (when el (reset! dom-element el))
 
-               :on-mouse-enter
-               (fn []
-                 (when (not rows)
-                   (do
-                     (dispatch [:main/summarize-item loc c])
-                     (reset! show-tooltip? true))))
-               :on-mouse-leave (fn [] (reset! show-tooltip? false))
-               :class (str drag-class (when (> (count rows) 0) nil))}
-              (if (and view rows)
-                [outer-join-table loc c view]
-                [:span
-                 {
-                  :data-trigger "hover"
-                  :data-content (dom-server/render-to-static-markup (generate-summary-table @summary))
-                  :data-html true
-                  :data-placement "auto right"
-                  :ref (fn [x] (when x (.popover (js/$ x) #js {:container "body"})))
-                  :on-click
-                  (if (and on-click value)
-                    (partial on-click ((get-in @settings [:links :url])
-                                        (merge (:value @summary) (get-in @settings [:links :vocab])))))}
-                 [:a {}
-                  (if value value [no-value])]])
-              ])))})))
+
+                       ;(when x (ocall (js/$ x) :popover "destroy"))
+                       )
+                :on-click (when (and on-click value)
+                            (partial on-click ((get-in @settings [:links :url])
+                                                (merge (:value @summary) (get-in @settings [:links :vocab])))))}
+               (println "BOOP" @summary)
+               [:a (if value value [no-value])]])
+            ]))})))
+
+
+
+
+
+
+;(defn poppable []
+;  (let [dom (reagent/atom nil)]
+;    (reagent/create-class
+;      {:component-did-mount (fn [this]
+;                              ; Initiate popover functionality
+;                              (some-> @dom (ocall :popover)))
+;       :component-did-update (fn [this]
+;                               ; Reset the popover content to the summary
+;                               (-> @dom
+;                                   (ocall :data "bs.popover")
+;                                   (oset! :options :content (dom-server/render-to-static-markup (generate-summary-table (:summary (reagent/props this))))))
+;                               ; When the popover is open...
+;                               (when (some true? (-> @dom
+;                                                     (ocall :data "bs.popover")
+;                                                     (oget :inState)
+;                                                     js->clj
+;                                                     vals))
+;                                 ; ...then re-open it with the new content
+;                                 (-> @dom (ocall :popover "show"))))
+;       :reagent-render (fn [{:keys [loc idx data summary]}]
+;                         [:td
+;                          [:span
+;                           {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
+;                            :data-trigger "hover"
+;                            :data-html true
+;                            :data-container "body"
+;                            :data-placement "auto right"
+;                            :ref (fn [el]
+;                                   ; Store the jQuery value in an atom (safer than reagent/dom-node in mount)
+;                                   (some->> el js/$ (reset! dom)))}
+;                           (or (:value data) [no-value])]])})))
+
+
+(defn cell []
+  (let [dom (reagent/atom nil)]
+    (reagent/create-class
+      {:component-did-mount (fn [this]
+                              ; Initiate popover functionality
+                              (some-> @dom (ocall :popover)))
+       :component-did-update (fn [this]
+                               ; Reset the popover content to the summary
+                               (-> @dom
+                                   (ocall :data "bs.popover")
+                                   (oset! :options :content (dom-server/render-to-static-markup (generate-summary-table (:summary (reagent/props this))))))
+                               ; When the popover is open...
+                               (when (some true? (-> @dom
+                                                     (ocall :data "bs.popover")
+                                                     (oget :inState)
+                                                     js->clj
+                                                     vals))
+                                 ; ...then re-open it with the new content
+                                 (-> @dom (ocall :popover "show"))))
+       :reagent-render (fn [{:keys [loc idx data summary]}]
+                         [:td
+                          [:span
+                           {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
+                            :data-trigger "hover"
+                            :data-html true
+                            :data-container "body"
+                            :data-placement "auto right"
+                            :ref (fn [el]
+                                   ; Store the jQuery value in an atom (safer than reagent/dom-node in mount)
+                                   (some->> el js/$ (reset! dom)))}
+                           (or (:value data) [no-value])]])})))
+
+(defn cell-wrapper []
+  (fn [loc idx {:keys [id] :as c}]
+    [cell {:loc loc
+           :idx idx
+           :data c
+           :summary @(subscribe [:summary/item-details loc id])}]))
 
 (defn table-row [loc row]
   (into [:tr]
         (map-indexed (fn [idx c]
-                       ^{:key (str idx (:id c) (:column c))} [table-cell loc idx c])) row))
+                       ^{:key (str idx (:id c) (:column c))}
+                       [cell-wrapper loc idx c]
+                       ;[table-cell loc idx c]
+                       )) row))
