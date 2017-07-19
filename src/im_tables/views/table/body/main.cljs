@@ -193,17 +193,14 @@
 ;                           (or (:value data) [no-value])]])})))
 
 
-(defn cell []
+(defn poppable []
   (let [dom (reagent/atom nil)]
     (reagent/create-class
-      {:component-did-mount (fn [this]
+      {:name "Poppable"
+       :component-did-mount (fn []
                               ; Initiate popover functionality
                               (some-> @dom (ocall :popover)))
-       :component-did-update (fn [this]
-                               ; Reset the popover content to the summary
-                               (-> @dom
-                                   (ocall :data "bs.popover")
-                                   (oset! :options :content (dom-server/render-to-static-markup (generate-summary-table (:summary (reagent/props this))))))
+       :component-did-update (fn []
                                ; When the popover is open...
                                (when (some true? (-> @dom
                                                      (ocall :data "bs.popover")
@@ -212,30 +209,33 @@
                                                      vals))
                                  ; ...then re-open it with the new content
                                  (-> @dom (ocall :popover "show"))))
-       :reagent-render (fn [{:keys [loc idx data summary]}]
-                         [:td
-                          [:span
-                           {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
-                            :data-trigger "hover"
-                            :data-html true
-                            :data-container "body"
-                            :data-placement "auto right"
-                            :ref (fn [el]
-                                   ; Store the jQuery value in an atom (safer than reagent/dom-node in mount)
-                                   (some->> el js/$ (reset! dom)))}
-                           (or (:value data) [no-value])]])})))
+       :reagent-render (fn [props & [remaining]]
+                         [:span
+                          (merge {:data-trigger "hover"
+                                  :data-html true
+                                  :data-container "body"
+                                  :data-content nil
+                                  :data-placement "auto right"
+                                  :ref (fn [el] (some->> el js/$ (reset! dom)))} props)
+                          remaining])})))
 
-(defn cell-wrapper []
-  (fn [loc idx {:keys [id] :as c}]
-    [cell {:loc loc
-           :idx idx
-           :data c
-           :summary @(subscribe [:summary/item-details loc id])}]))
+(defn cell []
+  (fn [loc {:keys [value id view rows] :as data}]
+    [:td
+     (if rows
+       ; Show outer-join table
+       [outer-join-table loc data view]
+       ; Show regular cell
+       [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
+                  :data-trigger "hover"
+                  :data-html true
+                  :data-container "body"
+                  :data-content (dom-server/render-to-static-markup (generate-summary-table @(subscribe [:summary/item-details loc id])))
+                  :data-placement "auto right"}
+        [:span (or value [no-value])]])]))
 
 (defn table-row [loc row]
   (into [:tr]
         (map-indexed (fn [idx c]
-                       ^{:key (str idx (:id c) (:column c))}
-                       [cell-wrapper loc idx c]
-                       ;[table-cell loc idx c]
-                       )) row))
+                       ^{:key (str idx (:id c) (:column c))} [cell loc c]))
+        row))
