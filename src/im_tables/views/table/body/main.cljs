@@ -14,7 +14,12 @@
   [string]
   (into [] (drop 1 (map keyword (split string ".")))))
 
-(defn generate-summary-table [{:keys [value column-headers] :as summary}]
+(defn ->html
+  "Return the HTML markup of a component"
+  [component]
+  (dom-server/render-to-static-markup component))
+
+(defn summary-table [{:keys [value column-headers] :as summary}]
   [:table.table.table-striped.table-condensed.table-bordered.summary-table
    (into [:tbody]
          (map-indexed
@@ -26,7 +31,11 @@
                   [:td v]])))
            column-headers))])
 
-(defn poppable []
+(defn poppable
+  "Wrap child(ren) in a Bootstrap popover, see render function for default values. Ex:
+  [:a [poppable {:class some-class :data-content <p>Hello!</p>} [:span banana]]
+  Bootstrap related properties can be found at: http://getbootstrap.com/javascript/#popovers-options"
+  []
   (let [dom (reagent/atom nil)]
     (reagent/create-class
       {:name "Poppable"
@@ -49,7 +58,8 @@
                                   :data-container "body"
                                   :data-content nil
                                   :data-placement "auto right"
-                                  :ref (fn [el] (some->> el js/$ (reset! dom)))} props)
+                                  :ref (fn [el] (some->> el js/$ (reset! dom)))}
+                                 props)
                           remaining])})))
 
 
@@ -77,9 +87,7 @@
                                             [:td
                                              [:a [poppable
                                                   {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc c]))
-                                                   :data-content (dom-server/render-to-static-markup
-                                                                   (generate-summary-table
-                                                                     @(subscribe [:summary/item-details loc id])))}
+                                                   :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
                                                   [:span (or value [no-value])]]]]))
                                      rows))
                              (:rows data)))))])]))))
@@ -92,9 +100,7 @@
        [outer-join-table loc data view]
        ; otherwise a regular cell
        [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
-                  :data-content (dom-server/render-to-static-markup
-                                  (generate-summary-table
-                                    @(subscribe [:summary/item-details loc id])))}
+                  :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
         [:a (or value [no-value])]])]))
 
 (defn table-row [loc row]
