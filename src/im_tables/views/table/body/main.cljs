@@ -235,7 +235,7 @@
         [:span (or value [no-value])]])]))
 
 (defn table-row [loc row]
-  (into [:tr]
-        (map-indexed (fn [idx c]
-                       ^{:key (str idx (:id c) (:column c))} [cell loc c]))
-        row))
+  (into [:tr] (map-indexed
+                (fn [idx c]
+                  ^{:key (str idx (:id c) (:column c))} [cell loc c])
+                row)))
