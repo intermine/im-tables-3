@@ -16,7 +16,7 @@
                  [org.clojure/core.async "0.2.395"]
                  [day8.re-frame/forward-events-fx "0.0.5"]
                  [intermine/imcljs "0.1.25"]]
-
+  
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-less "1.7.5"]]
 

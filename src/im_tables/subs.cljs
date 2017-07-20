@@ -51,6 +51,11 @@
     (get-in db (glue prefix [:settings :pagination]))))
 
 (reg-sub
+  :settings/data-out
+  (fn [db [_ prefix]]
+    (get-in db (glue prefix [:settings :data-out]))))
+
+(reg-sub
   :settings/settings
   (fn [db [_ prefix]]
     (get-in db (glue prefix [:settings]))))
@@ -89,7 +94,6 @@
   :modal
   (fn [db [_ prefix]]
     (get-in db (glue prefix [:cache :modal]))))
-
 
 (defn head-contains?
   "True if a collection's head contains all elements of another collection (sub-coll)
@@ -157,4 +161,3 @@
   :<- [:query/joins]
   (fn [[views joins]]
     (reduce (fn [total next] (replace-join-views total next)) views joins)))
-
