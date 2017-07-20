@@ -1,6 +1,6 @@
 (ns im-tables.subs
   (:require-macros [reagent.ratom :refer [reaction]])
-  (:require [re-frame.core :as re-frame :refer [reg-sub]]))
+  (:require [re-frame.core :as re-frame :refer [reg-sub subscribe]]))
 
 (defn glue [path remainder-vec]
   (reduce conj (or path []) remainder-vec))
@@ -63,7 +63,7 @@
 (reg-sub
   :summaries/column-summaries
   (fn [db [_ prefix]]
-    (get-in db [:cache :column-summary])))
+    (get-in db (glue prefix [:cache :column-summary]))))
 
 (reg-sub
   :selection/selections
@@ -149,15 +149,17 @@
 ; First move any views that are part of outer joins next to eachother:
 (reg-sub
   :query-response/views-sorted-by-joins
-  :<- [:query-response/views]
-  :<- [:query/joins]
+  (fn [[_ loc]]
+    [(subscribe [:query-response/views loc])
+     (subscribe [:query/joins loc])])
   (fn [[views joins]]
     (reduce (fn [total next] (group-by-starts-with total next)) views joins)))
 
 ; ...then replace all views that are part of outer joins with the name of the outer joins:
 (reg-sub
   :query-response/views-collapsed-by-joins
-  :<- [:query-response/views-sorted-by-joins]
-  :<- [:query/joins]
+  (fn [[_ loc]]
+    [(subscribe [:query-response/views-sorted-by-joins loc])
+     (subscribe [:query/joins loc])])
   (fn [[views joins]]
     (reduce (fn [total next] (replace-join-views total next)) views joins)))

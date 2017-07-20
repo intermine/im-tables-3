@@ -10,7 +10,7 @@
 (defn main [loc]
   (let [dragging-item (subscribe [:style/dragging-item loc])
         dragging-over (subscribe [:style/dragging-over loc])
-        collapsed-views (subscribe [:query-response/views-collapsed-by-joins])]
+        collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
     (fn [loc {:keys [results views]} {:keys [limit start] :or {limit 10 start 0}}]
       [:div.relative
        [:table.table.table-condensed.table-bordered.table-striped

@@ -26,7 +26,7 @@
                            {
                             :service {:root "www.flymine.org/query"}
                             ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}
-                            :query (query/sterilize-query db/outer-join-query)}])
+                            :query (query/sterilize-query db/list-query)}])
 
   (dev-setup)
   (mount-root))

@@ -31,16 +31,20 @@
                                 "organism.name"
                                 "publications.firstAuthor"
                                 "dataSets.name"]
-                       :joins ["publications" "dataSets"]
                        :size 10
                        :sortOrder [{:path "symbol"
-                                   :direction "ASC"}]
+                                    :direction "ASC"}]
                        :where [
                                {:path "secondaryIdentifier"
                                 :op "="
                                 :value "AC3.1*" ;AC3*
                                 :code "A"}
                                ]})
+
+(def list-query {:title "esyN demo list"
+                  :from "Gene"
+                  :select ["Gene.secondaryIdentifier" "Gene.symbol" "Gene.primaryIdentifier" "Gene.organism.name"]
+                  :where [{:path "Gene", :op "IN", :value "esyN demo list"}]})
 
 (def default-db
   {
@@ -65,9 +69,9 @@
               :pagination {:start 0
                            :limit 20}
               :data-out {:selected-format :tsv
-                       :accepted-formats {:tsv :all
-                                          :csv :all
-                                          :fasta [:Gene :Protein]}}
+                         :accepted-formats {:tsv :all
+                                            :csv :all
+                                            :fasta [:Gene :Protein]}}
               :links {:vocab {:mine "flymine"}
                       :on-click nil
                       :url (fn [vocab] (str "#/reportpage/"
