@@ -28,8 +28,9 @@
                (let [v (if (and (string? v) (> (count v) 200)) (str (clojure.string/join (take 200 v)) "...") v)]
                  [:tr
                   [:td (clojure.string/join " > " (drop 1 (clojure.string/split column-header " > ")))]
-                  [:td v]])))
+                  [:td.truncate-text v]])))
            column-headers))])
+
 
 (defn poppable
   "Wrap child(ren) in a Bootstrap popover, see render function for default values. Ex:
