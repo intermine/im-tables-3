@@ -13,8 +13,8 @@
     (ocall parent "contains" possible-child)
     false))
 
-(defn header []
-  (let [model (subscribe [:assets/model])
+(defn header [loc]
+  (let [model (subscribe [:assets/model loc])
         draggable? (reagent/atom true)]
     (fn [{:keys [idx header view loc dragging-over dragging-item col-count] :as header}]
       (let [drag-class (cond

@@ -8,8 +8,8 @@
             [clojure.string :refer [split starts-with?]]))
 
 (defn main [loc]
-  (let [dragging-item (subscribe [:style/dragging-item loc])
-        dragging-over (subscribe [:style/dragging-over loc])
+  (let [dragging-item   (subscribe [:style/dragging-item loc])
+        dragging-over   (subscribe [:style/dragging-over loc])
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
     (fn [loc {:keys [results views]} {:keys [limit start] :or {limit 10 start 0}}]
       [:div.relative
@@ -19,7 +19,7 @@
                (->> @collapsed-views
                     (map-indexed (fn [idx h]
                                    ^{:key (get views idx)}
-                                   [table-head/header
+                                   [table-head/header loc
                                     {:header h
                                      :dragging-over @dragging-over
                                      :dragging-item @dragging-item
