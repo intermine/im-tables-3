@@ -205,6 +205,21 @@
   [coll index-a index-b]
   (assoc coll index-b (coll index-a) index-a (coll index-b)))
 
+(defn drop-nth
+  "Drop a value from a collection at a specific index"
+  [n coll]
+  (keep-indexed #(if (not= %1 n) %2) coll))
+
+(defn insert-nth
+  "Insert a value into a collection at a specifix"
+  [coll n item]
+  (apply concat ((juxt first (comp (partial cons item) second)) (split-at n coll))))
+
+(defn move-nth
+  "Shift an item from one index in a collection to another "
+  [coll from-idx to-idx]
+  (insert-nth (drop-nth from-idx coll) to-idx (nth coll from-idx)))
+
 (defn index
   "Given a predicate and a collection, find the index of the first truthy value
   (index (partial = :b) [:a :b :c]) => 1
@@ -245,7 +260,7 @@
     (let [dragged-item (get-in db [:cache :dragging-item])
           dragged-over (get-in db [:cache :dragging-over])]
       (cond-> {:db (-> db
-                       (update-in [:query :select] swap dragged-item dragged-over)
+                       (update-in [:query :select] move-nth dragged-item dragged-over)
                        (update-in [:cache] dissoc :dragging-item :dragging-over))}
               (not= dragged-item dragged-over) (assoc :dispatch-n
                                                       [^:flush-dom [:show-overlay loc]

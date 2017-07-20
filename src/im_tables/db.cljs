@@ -25,21 +25,16 @@
    :model {:name "genomic"}})
 
 (def outer-join-query {:from "Gene"
-                       :select ["secondaryIdentifier"
+                       :select ["symbol"
+                                "secondaryIdentifier"
                                 "primaryIdentifier"
                                 "organism.name"
                                 "publications.firstAuthor"
-                                "publications.title"
-                                "publications.year"
-                                "publications.journal"
-                                "publications.volume"
-                                "publications.pages"
-                                "publications.pubMedId"
-                                "symbol"]
-                       :joins ["publications"]
+                                "dataSets.name"]
+                       :joins ["publications" "dataSets"]
                        :size 10
-                       :orderBy [{:path "secondaryIdentifier"
-                                   :direction "DESC"}]
+                       :sortOrder [{:path "symbol"
+                                   :direction "ASC"}]
                        :where [
                                {:path "secondaryIdentifier"
                                 :op "="
