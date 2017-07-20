@@ -10,13 +10,90 @@
     min-height: 200px;
     padding-bottom: 40px;
 
+
+    .popover {
+        padding: 0;
+        .table {
+            margin: 0;
+        }
+    }
+
+/*
+    .table > thead > tr > th {
+        background-color: #337ab9;
+        color: white;
+    }
+
+    */
+
+    .inset {
+        -webkit-box-shadow: inset 3px 3px 6px -4px rgba(0,0,0,0.69);
+        -moz-box-shadow: inset 3px 3px 6px -4px rgba(0,0,0,0.69);
+        box-shadow: inset 3px 3px 6px -4px rgba(0,0,0,0.69);
+    }
+
+    .sub-table {
+        width: 100%;
+        font-size: 0.7em;
+        margin: 0;
+
+        th, td {
+            padding: 5px;
+            &:not(:last-child) {
+                border-right: 1px solid #c4c4c4;
+            }
+        }
+
+        th {
+            background-color: white;
+            color: black;
+
+        }
+
+        tr {
+            border-bottom: 1px solid #c4c4c4;
+        }
+
+    }
+
     .no-value {
-        font-weight: bold;
-        color: #666;
-        font-family: "Fira Mono", "DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", Monaco, "Lucida Console", monospace;
-        background-color: #ddd;
-        border-radius: 2px;
-        padding: 1px 2px;
+        // font-family: "Fira Mono", "DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", Monaco, "Lucida Console", monospace;
+        // background-color: #ddd;
+        // padding: 1px 2px;
+        // font-weight: bold;
+        // color: #666;
+        // border-radius: 2px;
+        font-family: monospace;
+        font-size: 0.8em;
+        color: grey;
+    }
+
+    .no-join-results {
+        color: grey;
+    }
+
+    .pad-free {
+        padding: 0;
+    }
+
+    .ani {
+        transition: all 100ms ease;
+    }
+    .upside-down {
+          -webkit-transform: rotate(180deg);     /* Chrome and other webkit browsers */
+          -moz-transform: rotate(180deg);        /* FF */
+          -o-transform: rotate(180deg);          /* Opera */
+          -ms-transform: rotate(180deg);         /* IE9 */
+          transform: rotate(180deg);             /* W3C compliant browsers */
+    }
+
+    .extra-padding {
+        padding-left: 23px;
+        background-color: #e8e8f0;
+    }
+
+    .indent {
+        padding-left: 20px;
     }
 
     .fade-enter {

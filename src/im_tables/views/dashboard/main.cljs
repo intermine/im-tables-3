@@ -3,10 +3,8 @@
             [im-tables.views.dashboard.manager.columns.main :as column-manager]
             [im-tables.views.dashboard.undo :as undo]
             [im-tables.views.dashboard.save :as save]
-            [im-tables.views.dashboard.exporttable :as exporttable]))
-
-
-
+            [im-tables.views.dashboard.exporttable :as exporttable]
+            [oops.core :refer [ocall]]))
 
 (defn main []
   (fn [loc response pagination]
@@ -34,7 +32,11 @@
                                     {:total (get response :iTotalRecords)})]]
            [:span.pull-right
             {:style {:padding-right "20px"}}
-            (str "Showing "
-                 (inc (:start pagination)) " to "
-                 (+ (:start pagination) (:limit pagination)) " of "
-                 (:iTotalRecords response) " rows")]]]]]]]]))
+            (when (:iTotalRecords response)
+              (str "Showing "
+                  (inc (:start pagination)) " to "
+                  (min
+                    (+ (:start pagination) (:limit pagination))
+                    (:iTotalRecords response))
+                  " of "
+                  (.toLocaleString (:iTotalRecords response)) " rows"))]]]]]]]]))
