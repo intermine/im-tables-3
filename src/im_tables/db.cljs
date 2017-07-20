@@ -38,10 +38,12 @@
                                 "symbol"]
                        :joins ["publications"]
                        :size 10
+                       :orderBy [{:path "secondaryIdentifier"
+                                   :direction "DESC"}]
                        :where [
                                {:path "secondaryIdentifier"
                                 :op "="
-                                :value "*" ;AC3*
+                                :value "AC3.1*" ;AC3*
                                 :code "A"}
                                ]})
 
