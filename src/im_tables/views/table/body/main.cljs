@@ -93,8 +93,8 @@
                                      rows))
                              (:rows data)))))])]))))
 
-(defn cell []
-  (let [settings (subscribe [:settings/settings])]
+(defn cell [loc]
+  (let [settings (subscribe [:settings/settings loc])]
     (fn [loc {:keys [value id view rows] :as data}]
       (let [{:keys [on-click url vocab]} (get-in @settings [:links])]
         [:td
