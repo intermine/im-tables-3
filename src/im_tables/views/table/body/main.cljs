@@ -64,8 +64,8 @@
                           remaining])})))
 
 
-(defn outer-join-table []
-  (let [model (subscribe [:assets/model])
+(defn outer-join-table [loc]
+  (let [model (subscribe [:assets/model loc])
         open? (reagent/atom false)]
     (fn [loc data]
       (if (> 1 (count (:rows data)))

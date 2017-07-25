@@ -163,3 +163,8 @@
      (subscribe [:query/joins loc])])
   (fn [[views joins]]
     (reduce (fn [total next] (replace-join-views total next)) views joins)))
+
+(reg-sub
+  :rel-manager/query
+  (fn [db [_ loc]]
+    (get-in db (glue loc [:cache :rel-manager]))))

@@ -31,6 +31,7 @@
                                 "organism.name"
                                 "publications.firstAuthor"
                                 "dataSets.name"]
+                       :joins ["Gene.publications"]
                        :size 10
                        :sortOrder [{:path "symbol"
                                     :direction "ASC"}]
@@ -42,9 +43,9 @@
                                ]})
 
 (def list-query {:title "esyN demo list"
-                  :from "Gene"
-                  :select ["Gene.secondaryIdentifier" "Gene.symbol" "Gene.primaryIdentifier" "Gene.organism.name"]
-                  :where [{:path "Gene", :op "IN", :value "esyN demo list"}]})
+                 :from "Gene"
+                 :select ["Gene.secondaryIdentifier" "Gene.symbol" "Gene.primaryIdentifier" "Gene.organism.name"]
+                 :where [{:path "Gene", :op "IN", :value "esyN demo list"}]})
 
 (def default-db
   {
