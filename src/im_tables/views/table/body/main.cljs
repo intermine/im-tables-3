@@ -112,9 +112,9 @@
                               (when (and on-click value)
                                 (do
                                   ; Call the provided on-click
-                                  (partial on-click (url (merge
-                                                          (:value @(subscribe [:summary/item-details loc id]))
-                                                          (get-in @settings [:links :vocab]))))
+                                  (on-click (url (merge
+                                                   (:value @(subscribe [:summary/item-details loc id]))
+                                                   (get-in @settings [:links :vocab]))))
                                   ; Side effect!!
                                   ; Destroy the popover in case the table is embedded in an SPA
                                   ; otherwise it will stick after page routes
