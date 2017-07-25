@@ -16,7 +16,7 @@
 (defn header [loc]
   (let [model (subscribe [:assets/model loc])
         draggable? (reagent/atom true)]
-    (fn [{:keys [idx header view loc dragging-over dragging-item col-count] :as header}]
+    (fn [loc {:keys [idx header view dragging-over dragging-item col-count] :as header}]
       (let [drag-class (cond
                          (and (= idx dragging-over) (< idx dragging-item)) "drag-left"
                          (and (= idx dragging-over) (> idx dragging-item)) "drag-right")
