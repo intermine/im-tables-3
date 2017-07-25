@@ -111,16 +111,16 @@
              [:a {:on-click (fn []
                               (when (and on-click value)
                                 (do
+                                  ; Call the provided on-click
+                                  (partial on-click (url (merge
+                                                          (:value @(subscribe [:summary/item-details loc id]))
+                                                          (get-in @settings [:links :vocab]))))
                                   ; Side effect!!
                                   ; Destroy the popover in case the table is embedded in an SPA
                                   ; otherwise it will stick after page routes
                                   (-> @pop-el js/$
                                       (ocall :find "[data-trigger='hover']")
-                                      (ocall :popover "destroy"))
-                                  ; Then do whatever it is we're told to do
-                                  (partial on-click (url (merge
-                                                          (:value @(subscribe [:summary/item-details loc id]))
-                                                          (get-in @settings [:links :vocab])))))))}
+                                      (ocall :popover "destroy")))))}
               (or value [no-value])]]])]))))
 
 (defn table-row [loc row]
