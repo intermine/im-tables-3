@@ -104,8 +104,7 @@
            ; rows means outer-join, so show outer-join table
            [outer-join-table loc data view]
            ; otherwise a regular cell
-           [:span
-            {:ref (fn [p] (when p (reset! pop-el p)))}
+           [:span {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
             [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
                        :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
              [:a {:on-click (fn []
