@@ -29,10 +29,21 @@
           [:div.btn-group.pull-right
            [:button.btn {:class (if (not is-join?) "btn-primary" "btn-default")
                          :on-click rmv-join-fn}
-            "Required"]
+            ; You may ask why there are so many invisible icons here - it's (unfortunately)
+            ; a hack to keep things visually aligned when switching from selected to unselected.
+            ; We need the checkmarks to indicate clearly which is selected!
+            ; (try removing the check icons if you like;
+            ;it becomes really hard to see which option is active)
+           [:i {:class (if (not is-join?) "fa fa-check" "fa fa-check invisible") :aria-hidden true}]
+            " Required"
+            [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]
+            ]
            [:button.btn {:class (if is-join? "btn-primary" "btn-default")
                          :on-click add-join-fn}
-            "Optional"]]]
+            [:i {:class (if is-join? "fa fa-check" "fa fa-check invisible") :aria-hidden true}]
+            " Optional"
+            [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]
+            ]]]
          [:div.clearfix]]))))
 
 (defn relationship-form [loc {:keys [query model]}]
