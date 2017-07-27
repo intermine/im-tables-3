@@ -6,7 +6,6 @@
             [imcljs.path :as path]
             [oops.core :refer [ocall oget]]))
 
-
 (defn not-root? "String includes a dot?" [path] (includes? path "."))
 (defn coll-contains? "Haystack contains needle?" [needle haystack] (some? (some #{needle} haystack)))
 (defn without "Remove item froma collection" [coll item] (filter (partial not= item) coll))
@@ -34,16 +33,14 @@
             ; We need the checkmarks to indicate clearly which is selected!
             ; (try removing the check icons if you like;
             ;it becomes really hard to see which option is active)
-           [:i {:class (if (not is-join?) "fa fa-check" "fa fa-check invisible") :aria-hidden true}]
+            [:i {:class (if (not is-join?) "fa fa-check" "fa fa-check invisible") :aria-hidden true}]
             " Required"
-            [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]
-            ]
+            [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]]
            [:button.btn {:class (if is-join? "btn-primary" "btn-default")
                          :on-click add-join-fn}
             [:i {:class (if is-join? "fa fa-check" "fa fa-check invisible") :aria-hidden true}]
             " Optional"
-            [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]
-            ]]]
+            [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]]]]
          [:div.clearfix]]))))
 
 (defn relationship-form [loc {:keys [query model]}]
@@ -80,10 +77,11 @@
 (defn main [loc]
   (let [rel-query (subscribe [:rel-manager/query loc])]
     (fn [loc]
-      [:div.btn-group
-       [:button.btn.btn-default
-        {:on-click (fn [] (dispatch [:rel-manager/reset loc]))
-         :data-toggle "modal"
-         :data-target "#relModal"}
-        [:i.fa.fa-share-alt] " Manage Relationships"]
-       [modal loc @rel-query]])))
+      [:div
+       [:div.btn-group
+        [:button.btn.btn-default
+         {:on-click (fn [] (dispatch [:rel-manager/reset loc]))
+          :data-toggle "modal"
+          :data-target "#relModal"}
+         [:i.fa.fa-share-alt] " Manage Relationships"]]
+        [modal loc @rel-query]])))
