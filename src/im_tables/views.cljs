@@ -4,5 +4,5 @@
 
 (defn main-panel []
   (fn []
-    [:div.container
+    [:div.container-fluid
      [main-view/main nil]]))

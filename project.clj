@@ -1,4 +1,4 @@
-(defproject intermine/im-tables "0.1.13-SNAPSHOT"
+(defproject intermine/im-tables "0.1.14-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/clojurescript "1.9.229"]
                  [reagent "0.6.0" :exclusions [cljsjs/react]]
@@ -12,9 +12,11 @@
                  [day8.re-frame/undo "0.3.2"]
                  [binaryage/oops "0.5.2"]
                  [inflections "0.12.2"]
+                 [re-frisk "0.4.5"]
                  [org.clojure/core.async "0.2.395"]
+                 [criterium "0.4.4"]
                  [day8.re-frame/forward-events-fx "0.0.5"]
-                 [intermine/imcljs "0.1.13-SNAPSHOT"]]
+                 [intermine/imcljs "0.1.26"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-less "1.7.5"]]
@@ -26,49 +28,50 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
                                     "test/js"]
 
-  :figwheel {:css-dirs     ["resources/public/css"]
-             :server-port  3448}
+  :figwheel {:css-dirs ["resources/public/css"]
+             :server-port 3448}
 
   :less {:source-paths ["less"]
-         :target-path  "resources/public/css"}
+         :target-path "resources/public/css"}
 
   :profiles
   {:dev
    {:dependencies [[binaryage/devtools "0.8.2"]]
 
-    :plugins      [[lein-figwheel "0.5.7"]
-                   [lein-doo "0.1.7"]]
+    :plugins [[lein-figwheel "0.5.7"]
+              [lein-doo "0.1.7"]]
     }}
 
   :cljsbuild
   {:builds
-   [{:id           "dev"
+   [{:id "dev"
      :source-paths ["src"]
-     :figwheel     {:on-jsload "im-tables.core/mount-root"}
-     :compiler     {:main                 im-tables.core
-                    :output-to            "resources/public/js/compiled/app.js"
-                    :output-dir           "resources/public/js/compiled/out"
-                    :asset-path           "js/compiled/out"
-                    :source-map-timestamp true
-                    :preloads             [devtools.preload]
-                    :external-config      {:devtools/config {:features-to-install :all}}
-                    }}
+     :figwheel {:on-jsload "im-tables.core/mount-root"}
+     :compiler {:main im-tables.core
+                :output-to "resources/public/js/compiled/app.js"
+                :output-dir "resources/public/js/compiled/out"
+                :asset-path "js/compiled/out"
+                :source-map-timestamp true
+                :preloads [devtools.preload]
+                :parallel-build true
+                :external-config {:devtools/config {:features-to-install :all}}
+                }}
 
-    {:id           "min"
+    {:id "min"
      :source-paths ["src"]
-     :jar          true
-     :compiler     {:main            im-tables.core
-                    :output-to       "resources/public/js/compiled/app.js"
-                    :optimizations   :advanced
-                    :closure-defines {goog.DEBUG false}
-                    :pretty-print    false}}
+     :jar true
+     :compiler {:main im-tables.core
+                :output-to "resources/public/js/compiled/app.js"
+                :optimizations :advanced
+                :closure-defines {goog.DEBUG false}
+                :pretty-print false}}
 
-    {:id           "test"
+    {:id "test"
      :source-paths ["src" "test/cljs"]
-     :compiler     {:main          im-tables.runner
-                    :output-to     "resources/public/js/compiled/test.js"
-                    :output-dir    "resources/public/js/compiled/test/out"
-                    :optimizations :none}}
+     :compiler {:main im-tables.runner
+                :output-to "resources/public/js/compiled/test.js"
+                :output-dir "resources/public/js/compiled/test/out"
+                :optimizations :none}}
     ]}
 
   ;:prep-tasks [["cljsbuild" "once" "min"] ["less" "once"] "compile"]

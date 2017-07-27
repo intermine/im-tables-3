@@ -84,4 +84,3 @@
              (->> @query-parts
                   (map-indexed (fn [idx [path details]]
                                  [save-menu loc @model path details]))))])))
-
