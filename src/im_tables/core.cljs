@@ -22,7 +22,7 @@
 
 (defn ^:export init []
   (re-frame/dispatch-sync [:initialize-db
-                           nil
+                           [:test :location]
                            {
                             :service {:root "www.flymine.org/query"}
                             ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}

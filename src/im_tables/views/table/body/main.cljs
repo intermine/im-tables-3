@@ -64,8 +64,8 @@
                           remaining])})))
 
 
-(defn outer-join-table []
-  (let [model (subscribe [:assets/model])
+(defn outer-join-table [loc]
+  (let [model (subscribe [:assets/model loc])
         open? (reagent/atom false)]
     (fn [loc data]
       (if (> 1 (count (:rows data)))
@@ -93,16 +93,34 @@
                                      rows))
                              (:rows data)))))])]))))
 
-(defn cell []
-  (fn [loc {:keys [value id view rows] :as data}]
-    [:td
-     (if rows
-       ; rows means outer-join, so show outer-join table
-       [outer-join-table loc data view]
-       ; otherwise a regular cell
-       [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
-                  :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
-        [:a (or value [no-value])]])]))
+(defn cell [loc]
+  (let [pop-el   (reagent/atom nil)
+        settings (subscribe [:settings/settings loc])]
+    (fn [loc {:keys [value id view rows] :as data}]
+      (let [{:keys [on-click url vocab]} (get-in @settings [:links])]
+
+        [:td
+         (if rows
+           ; rows means outer-join, so show outer-join table
+           [outer-join-table loc data view]
+           ; otherwise a regular cell
+           [:span {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
+            [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
+                       :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
+             [:a {:on-click (fn []
+                              (when (and on-click value)
+                                (do
+                                  ; Call the provided on-click
+                                  (on-click (url (merge
+                                                   (:value @(subscribe [:summary/item-details loc id]))
+                                                   (get-in @settings [:links :vocab]))))
+                                  ; Side effect!!
+                                  ; Destroy the popover in case the table is embedded in an SPA
+                                  ; otherwise it will stick after page routes
+                                  (-> @pop-el js/$
+                                      (ocall :find "[data-trigger='hover']")
+                                      (ocall :popover "destroy")))))}
+              (or value [no-value])]]])]))))
 
 (defn table-row [loc row]
   (into [:tr]

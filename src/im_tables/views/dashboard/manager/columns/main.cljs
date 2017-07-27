@@ -28,7 +28,8 @@
                                     original-view? "label label-default"
                                     selected? "label label-success disabled")}
                           [:i.fa.fa-tag]
-                          (last (impath/display-name model (join "." (conj current-path name))))
+                          (when (and model current-path name)
+                            (last (impath/display-name model (join "." (conj current-path name)))))
                           ]])) (vals attributes)))
          (into [:ul.collections.list-unstyled]
                (map (fn [{:keys [name referencedType name] :as collection}]
@@ -36,7 +37,8 @@
                         [:li
                          {:on-click (fn [e] (.stopPropagation e) (swap! expanded-map update name not))}
                          [:span [:i.fa.fa-plus-square]
-                          (plural (last (impath/display-name model (join "." (conj current-path name)))))]
+                          (when (and model current-path name)
+                            (plural (last (impath/display-name model (join "." (conj current-path name))))))]
                          (if (get @expanded-map name)
                            [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected views])]))
                     (sort-by (comp clojure.string/upper-case :referencedType) (vals collections))))]))))
