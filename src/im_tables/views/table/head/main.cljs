@@ -13,16 +13,15 @@
     (ocall parent "contains" possible-child)
     false))
 
-(defn header []
-  (let [model (subscribe [:assets/model])
+(defn header [loc]
+  (let [model (subscribe [:assets/model loc])
         draggable? (reagent/atom true)]
-    (fn [{:keys [idx header view loc dragging-over dragging-item col-count] :as header}]
+    (fn [loc {:keys [idx header view dragging-over dragging-item col-count] :as header}]
       (let [drag-class (cond
                          (and (= idx dragging-over) (< idx dragging-item)) "drag-left"
                          (and (= idx dragging-over) (> idx dragging-item)) "drag-right")
             [class & path] (split header " > ")
-            display-name (when (and @model view)
-                           (impath/display-name @model view))]
+            display-name (when (and @model view) (impath/display-name @model view))]
         [:th
          {:class drag-class
           :draggable @draggable?

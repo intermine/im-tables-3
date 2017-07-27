@@ -5,4 +5,4 @@
 (defn main-panel []
   (fn []
     [:div.container-fluid
-     [main-view/main nil]]))
+     [main-view/main [:test :location]]]))

@@ -198,6 +198,37 @@
        :dispatch [:im-tables.main/run-query loc]
        })))
 
+
+(defn coll-contains? [needle haystack] (some? (some #{needle} haystack)))
+(defn without [coll item] (filter (partial not= item) coll))
+
+
+;;;;; Relationship Manager
+
+; Copy the main query to our cache for editing
+(reg-event-db
+  :rel-manager/reset
+  (sandbox)
+  (fn [db [_ loc]]
+    (assoc-in db [:cache :rel-manager] (get db :query))))
+
+; Copy the edited query from the cache back to the main query and run it
+(reg-event-fx
+  :rel-manager/apply-changes
+  (sandbox)
+  (fn [{db :db} [_ loc]]
+    {:db (assoc db :query (get-in db [:cache :rel-manager]))
+     :dispatch [:im-tables.main/run-query loc]}))
+
+(reg-event-db
+  :rel-manager/toggle-relationship
+  (sandbox)
+  (fn [db [_ loc view join?]]
+    (if join?
+      (update-in db [:cache :rel-manager :joins] conj view)
+      (update-in db [:cache :rel-manager :joins] without view))))
+
+
 ;;;;; STYLE
 
 (defn swap
