@@ -3,6 +3,7 @@
             [reagent.core :as reagent]
             [oops.core :refer [oget ocall ocall!]]
             [inflections.core :refer [plural]]
+            [imcljs.path :as path :refer [walk class]]
             [im-tables.components.bootstrap :refer [modal]]))
 
 
@@ -27,7 +28,7 @@
       "Cancel"]
      [:button.btn.btn-success
       {:data-dismiss "modal"
-       :on-click     (fn [] (dispatch [:imt.io/save-list loc (:query details) @state]))}
+       :on-click     (fn [] (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state]))}
       "Save"]]))
 
 (defn generate-dialog [loc {:keys [type count query] :as details}]
@@ -36,30 +37,50 @@
      :body   [save-dialog state details]
      :footer [save-footer loc state details]}))
 
-(defn menu-heading []
-  (fn [loc class details]
+(defn serialize-path [model path]
+  (let [[root & remaining] (remove nil? (map :displayName (walk model path)))]
+    (if remaining
+      (clojure.string/join " > " (conj (map plural remaining) root))
+      (plural root))))
+
+(defn menu-heading [loc]
+  (let [model (subscribe [:assets/model loc])]
+    (fn [loc class details]
+      [:li
+       [:span
+        [:h4 class]
+        (into [:ul]
+              (map (fn [[path query]]
+                     [:li [:a
+                           {:data-toggle "modal"
+                            :data-target "#testModal"
+                            :on-click    (fn [] (dispatch [:prep-modal loc
+                                                           (generate-dialog loc
+                                                                            {:query query
+                                                                             :type  class})]))}
+                           (serialize-path @model path)]]) details))]])))
+
+(defn save-menu []
+  (fn [loc model path {:keys [query count]}]
     [:li
-     [:span
-      [:h4 class]
-      (into [:ul]
-            (map (fn [[path query]]
-                   [:li [:a
-                         {:data-toggle "modal"
-                          :data-target "#testModal"
-                          :on-click    (fn [] (dispatch [:prep-modal loc
-                                                         (generate-dialog loc
-                                                                          {:query query
-                                                                           :type  class})]))}
-                         (str path)]]) details))]]))
+     {:data-toggle "modal"
+      :data-target "#testModal"
+      :on-click    (fn [] (dispatch [:prep-modal loc
+                                     (generate-dialog loc
+                                                      {:query query
+                                                       :count count
+                                                       :type  (name (path/class model path))})]))}
+     [:a (str (serialize-path model path) " (" count ")")]]))
+
 
 (defn main [loc]
-  (let [query-parts (subscribe [:main/query-parts loc])]
+  (let [model       (subscribe [:assets/model loc])
+        query-parts (subscribe [:main/query-parts loc])]
     (fn [loc]
-      [:div
-       [:div.dropdown
-        [:button.btn.btn-default.dropdown-toggle
-         {:data-toggle "dropdown"} "Save List"]
-        (into [:ul.dropdown-menu]
-              (->> @query-parts
-                   (map-indexed (fn [idx [path details]] [menu-heading loc path details]))))]])))
-
+      [:div.dropdown
+       [:button.btn.btn-default.dropdown-toggle
+        {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
+       (into [:ul.dropdown-menu]
+             (->> @query-parts
+                  (map-indexed (fn [idx [path details]]
+                                 [save-menu loc @model path details]))))])))

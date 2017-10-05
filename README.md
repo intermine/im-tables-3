@@ -6,8 +6,16 @@ Development goals
 * Simplify im-tables for future developers
 * Build in clojure for easy integration with Intermine's new UI
 * Decrease file size (current im-tables is around 1.2mb uncompressed)
+* See [dev approach](devapproach.md) before attempting to make code changes.
 
 ## Development Mode
+
+### Initial setup
+Once you've checked this project, you'll need to download the css dependencies using [bower](https://bower.io/). Assuming you have bower installed already, it's just
+
+```
+bower install
+```
 
 ### Compile css:
 
@@ -32,7 +40,7 @@ lein figwheel dev
 
 Figwheel will automatically push cljs changes to the browser.
 
-Wait a bit, then browse to [http://localhost:3449](http://localhost:3449).
+Wait a bit, then browse to [http://localhost:3448](http://localhost:3448).
 
 ### Run tests:
 

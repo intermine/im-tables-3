@@ -4,5 +4,5 @@
 
 (defn main-panel []
   (fn []
-    [:div.container
-     [main-view/main [:store :here]]]))
+    [:div.container-fluid
+     [main-view/main [:test :location]]]))
