@@ -49,7 +49,7 @@
   (fn [{db :db} [_ loc name query options]]
     {:db db
      :im-tables/im-operation {:on-success [:imt.io/save-list-success]
-                              :op (partial save/im-list (get db :service) name query options)}}))
+                              :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins ) options)}}))
 
 (reg-event-fx
   :prep-modal

@@ -1,4 +1,4 @@
-(defproject intermine/im-tables "0.3.2-SNAPSHOT"
+(defproject intermine/im-tables "0.3.3-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.671"]
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
@@ -16,7 +16,7 @@
                  [org.clojure/core.async "0.3.443"]
                  [criterium "0.4.4"]
                  [day8.re-frame/forward-events-fx "0.0.5"]
-                 [intermine/imcljs "0.1.26"]]
+                 [intermine/imcljs "0.1.30"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-less "1.7.5"]
