@@ -1,22 +1,21 @@
-(defproject intermine/im-tables "0.3.3"
+(defproject intermine/im-tables "0.3.4"
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.671"]
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
                  [cljsjs/react-with-addons "15.6.1-0"]
-                 [re-frame "0.9.4"]
+                 [re-frame "0.10.2"]
                  [compojure "1.6.0"]
-                 [yogthos/config "0.8"]
-                 [ring "1.6.2"]
-                 [cljs-http "0.1.43"]
+                 [ring "1.6.3"]
+                 [cljs-http "0.1.44"]
                  [day8.re-frame/async-flow-fx "0.0.8"]
                  [day8.re-frame/undo "0.3.2"]
-                 [binaryage/oops "0.5.5"]
+                 [binaryage/oops "0.5.6"]
                  [inflections "0.13.0"]
-                 [re-frisk "0.4.5"]
+                 [re-frisk "0.5.2"]
                  [org.clojure/core.async "0.3.443"]
                  [criterium "0.4.4"]
                  [day8.re-frame/forward-events-fx "0.0.5"]
-                 [intermine/imcljs "0.1.30"]]
+                 [intermine/imcljs "0.1.36"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-less "1.7.5"]
@@ -39,7 +38,7 @@
 
   :profiles
   {:dev
-   {:dependencies [[binaryage/devtools "0.9.4"]]
+   {:dependencies [[binaryage/devtools "0.9.7"]]
 
     :plugins [[lein-figwheel "0.5.7"]
               [lein-doo "0.1.7"]]
