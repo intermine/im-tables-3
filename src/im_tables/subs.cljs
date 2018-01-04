@@ -2,7 +2,7 @@
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :as re-frame :refer [reg-sub subscribe]]))
 
-(defn glue [path remainder-vec]
+(defn glue [path remainder-vec]z
   (reduce conj (or path []) remainder-vec))
 
 (reg-sub

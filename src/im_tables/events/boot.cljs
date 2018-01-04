@@ -22,6 +22,13 @@
                                 :imt.main/save-model]
                      :dispatch [:im-tables.main/run-query loc]}]})
 
+; TODO - WIP - If assets are missing when a component is mounted then
+; fetch them and/or run necessary queries
+(reg-event-fx :im-tables/sync
+              (sandbox)
+              (fn [{db :db} [_ loc {:keys [query service location]}]]
+                {:db db}))
+
 (reg-event-fx
   :initialize-db
   (fn [_ [_ loc initial-state]]

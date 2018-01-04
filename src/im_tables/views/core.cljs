@@ -11,7 +11,7 @@
 (defn table-thinking []
   (fn [show?]
     [css-transition-group
-     {:transition-name          "fade"
+     {:transition-name "fade"
       :transition-enter-timeout 50
       :transition-leave-timeout 50}
      (if show?
@@ -20,41 +20,28 @@
 
 
 
-(defn main [loc state]
-  (let [response     (subscribe [:main/query-response loc])
-        pagination   (subscribe [:settings/pagination loc])
-        overlay?     (subscribe [:style/overlay? loc])
-        modal-markup (subscribe [:modal loc])]
+(defn main [{:keys [location]} state]
+  (let [response (subscribe [:main/query-response location])
+        pagination (subscribe [:settings/pagination location])
+        overlay? (subscribe [:style/overlay? location])
+        modal-markup (subscribe [:modal location])]
     (reagent/create-class
       {
-       ;:component-will-mount
-       ;(fn [e]
-       ;  (if (and loc state)
-       ;    (dispatch [:im-tables.main/replace-all-state loc state])))
-       ;:component-will-update
-       ;(fn [this new-arg-v]
-       ;  (let [[_ l old-state] (reagent/argv this)
-       ;        [_ l new-state] new-arg-v]
-       ;    ;(.log js/console "O" (reagent/argv this))
-       ;    ;(.log js/console "N" new-arg-v)
-       ;    ;(.log js/console "old-state" old-state)
-       ;    ;(.log js/console "new-state" new-state)
-       ;    (if (not= old-state new-state)
-       ;      (do
-       ;        (.log js/console "UPDATING THIS" new-state)
-       ;        (dispatch [:im-tables.main/replace-all-state loc new-state])))))
+       :component-will-mount (fn [this]
+                               (dispatch [:im-tables/sync location (reagent/props this)]))
+
        :reagent-render
-       (fn [loc]
+       (fn [{:keys [location query]}]
          [:div.im-table.relative
           ; Cover the app whenever it's thinking
           [table-thinking @overlay?]
 
           ;[:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
           ; The dashboard above the table (controls
-          [dashboard/main loc @response @pagination]
+          [dashboard/main location @response @pagination]
           ; The actual table
 
           ;[:div.ontop "t"]
-          [table/main loc @response @pagination]
+          [table/main location @response @pagination]
           ; Use just one modal and change its contents dynamically
           [modal @modal-markup]])})))
