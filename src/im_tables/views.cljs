@@ -8,7 +8,8 @@
   (fn []
     [:div.container-fluid
      [main-view/main {:location [:test :location]
-                      :service {:root "beta.flymine.org/beta"}
+                      :service {:root "beta.flymine.org/beta"
+                                :model "m"}
                       :query {:from "Gene"
                               :select ["Gene.symbol"]
                               :where [{:path "Gene.symbol"

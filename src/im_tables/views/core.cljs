@@ -28,7 +28,8 @@
     (reagent/create-class
       {
        :component-will-mount (fn [this]
-                               (dispatch [:im-tables/sync location (reagent/props this)]))
+                               (dispatch [:im-tables/sync location (reagent/props this)])
+                               )
 
        :reagent-render
        (fn [{:keys [location query]}]

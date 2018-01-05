@@ -48,40 +48,42 @@
                  :where [{:path "Gene", :op "IN", :value "esyN demo list"}]})
 
 (def default-db
-  {
+  {:test {:location {
 
-   ;:service  {:root "www.flymine.org/query"}
-   ;:query    {:from   "Gene"
-   ;           :size   10
-   ;           :select ["secondaryIdentifier"
-   ;                    "symbol"
-   ;                    "primaryIdentifier"
-   ;                    "organism.name"
-   ;                    "homologues.homologue.symbol"]
-   ;           :where  [{:path  "Gene"
-   ;                     :op    "IN"
-   ;                     :value "esyN demo list"}
-   ;                    {:path  "Gene.symbol"
-   ;                     :op    "="
-   ;                     :value "*a*"
-   ;                     :code  "B"}]}
+                     ;:service  {:root "www.flymine.org/query"}
+                     ;:query    {:from   "Gene"
+                     ;           :size   10
+                     ;           :select ["secondaryIdentifier"
+                     ;                    "symbol"
+                     ;                    "primaryIdentifier"
+                     ;                    "organism.name"
+                     ;                    "homologues.homologue.symbol"]
+                     ;           :where  [{:path  "Gene"
+                     ;                     :op    "IN"
+                     ;                     :value "esyN demo list"}
+                     ;                    {:path  "Gene.symbol"
+                     ;                     :op    "="
+                     ;                     :value "*a*"
+                     ;                     :code  "B"}]}
 
-   :settings {:buffer 2
-              :pagination {:start 0
-                           :limit 20}
-              :data-out {:selected-format :tsv
-                         :accepted-formats {:tsv :all
-                                            :csv :all
-                                            :fasta [:Gene :Protein]}}
-              :links {:vocab {:mine "flymine"}
-                      :on-click nil
-                      :url (fn [vocab] (str "#/reportpage/"
-                                            (:mine vocab) "/"
-                                            (:class vocab) "/"
-                                            (:objectId vocab)))}}
-   :cache {:summaries {}
-           :summary {}
-           :selection {}
-           :overlay? false
-           :filters {}
-           :tree-view {:selection #{}}}})
+                     :service {:model "TESTMODEL"}
+
+                     :settings {:buffer 2
+                                :pagination {:start 0
+                                             :limit 20}
+                                :data-out {:selected-format :tsv
+                                           :accepted-formats {:tsv :all
+                                                              :csv :all
+                                                              :fasta [:Gene :Protein]}}
+                                :links {:vocab {:mine "flymine"}
+                                        :on-click nil
+                                        :url (fn [vocab] (str "#/reportpage/"
+                                                              (:mine vocab) "/"
+                                                              (:class vocab) "/"
+                                                              (:objectId vocab)))}}
+                     :cache {:summaries {}
+                             :summary {}
+                             :selection {}
+                             :overlay? false
+                             :filters {}
+                             :tree-view {:selection #{}}}}}})
