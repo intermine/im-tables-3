@@ -1,6 +1,6 @@
 (ns im-tables.events.boot
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [re-frame.core :refer [reg-event-fx reg-event-db]]
+  (:require [re-frame.core :refer [reg-event-fx reg-event-db reg-fx dispatch]]
             [cljs.core.async :refer [<! >! chan]]
             [im-tables.db :as db]
             [im-tables.interceptors :refer [sandbox]]
@@ -39,31 +39,38 @@
 
 ; TODO - WIP - If assets are missing when a component is mounted then
 ; fetch them and/or run necessary queries
-(reg-event-fx :im-tables/sync
+(reg-event-fx :im-tables/boot
               (sandbox)
-              (fn [{db :db} [_ loc {:keys [query service location]}]]
+              (fn [{db :db} [_ loc {:keys [query service location results] :as args}]]
+                {:db (or db db/default-db)
+                 :im-tables/setup [loc (or db db/default-db) args]}))
 
-                ; Fetch assets if they don't already exist in the database
-                ; Since <<! expects channels, we create channels for assets that already exist
-                ; and then immediately take from them
-                (go (<!
+(reg-fx :im-tables/setup
+        (fn [[loc db {:keys [query service location results] :as args}]]
+
+          ; Fetch assets if they don't already exist in the database
+          ; Since <<! expects channels, we create channels for assets that already exist
+          ; and then immediately take from them
+
+          (go (let [[model summary-fields]
+                    (<!
                       (<<!
                         (-> []
-                            ; Existing model or fetch...
-                            (conj (if-let [f (-> db :service :model)] (let [c (chan)] (go (>! c f)) c) (fetch/model service)))
-                            ; Existing summary fields or fetch...
-                            (conj (if-let [f (-> db :service :summary-fields)] (let [c (chan)] (go (>! c f)) c) (fetch/summary-fields service)))))))
+                            ; Get model from view arguments, or app-db, or remotely
+                            (conj (go (or (:model service) (-> db :service :model) (<! (fetch/model service)))))
+                            ; Get summary fields from view arguments, or app-db, or remotely
+                            (conj (go (or (:summary-fields service) (-> db :service :summary-fields) (<! (fetch/summary-fields service))))))))]
+                ; Now we have a service with all of the needed components
+                (let [complete-service (assoc service :model model :summary-fields summary-fields)
+                      ; Execute the query if the results were passed into the view or already in app-db
+                      query-results (or results (-> db :results) (<! (fetch/table-rows complete-service query)))]
+                  (dispatch [:im-tables/store-setup loc {:service complete-service
+                                                         :results query-results}]))))))
 
-
-
-
-
-
-
-
-
-
-                {:db db}))
+(reg-event-db :im-tables/store-setup
+              (sandbox)
+              (fn [db [_ loc {:keys [service results]}]]
+                (assoc db :service service :results results)))
 
 (reg-event-fx
   :initialize-db-old

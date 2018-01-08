@@ -2,13 +2,13 @@
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :as re-frame :refer [reg-sub subscribe]]))
 
-(defn glue [path remainder-vec]z
+(defn glue [path remainder-vec]
   (reduce conj (or path []) remainder-vec))
 
 (reg-sub
   :main/query-response
   (fn [db [_ prefix]]
-    (get-in db (glue prefix [:query-response]))))
+    (get-in db (glue prefix [:results]))))
 
 (reg-sub
   :main/query
@@ -130,7 +130,7 @@
 (reg-sub
   :query-response/views
   (fn [db [_ prefix]]
-    (get-in db (glue prefix [:query-response :views]))))
+    (get-in db (glue prefix [:results :views]))))
 
 (reg-sub
   :query/joins

@@ -27,10 +27,7 @@
         modal-markup (subscribe [:modal location])]
     (reagent/create-class
       {
-       :component-will-mount (fn [this]
-                               (dispatch [:im-tables/sync location (reagent/props this)])
-                               )
-
+       :component-will-mount (fn [this] (dispatch [:im-tables/boot location (reagent/props this)]))
        :reagent-render
        (fn [{:keys [location query]}]
          [:div.im-table.relative
