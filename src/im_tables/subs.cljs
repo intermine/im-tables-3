@@ -8,7 +8,7 @@
 (reg-sub
   :main/query-response
   (fn [db [_ prefix]]
-    (get-in db (glue prefix [:results]))))
+    (get-in db (glue prefix [:response]))))
 
 (reg-sub
   :main/query
@@ -130,7 +130,7 @@
 (reg-sub
   :query-response/views
   (fn [db [_ prefix]]
-    (get-in db (glue prefix [:results :views]))))
+    (get-in db (glue prefix [:response :views]))))
 
 (reg-sub
   :query/joins

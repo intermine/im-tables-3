@@ -10,28 +10,43 @@
     (fn []
       [:div.container-fluid
        [:button.btn.btn-default {:on-click (fn [] (swap! show? not))} "Toggle"]
-       (when @show? [main-view/main {:location [:test :location]
-                         :service {:root "beta.flymine.org/beta"}
-                         ;:query {:from "Gene"
-                         ;        :select ["Gene.symbol"]
-                         ;        :where [{:path "Gene.symbol"
-                         ;                 :op "LIKE"
-                         ;                 :value "M*"}]}
-                         :query {:from "Gene"
-                                 :select ["symbol"
-                                          "secondaryIdentifier"
-                                          "primaryIdentifier"
-                                          "organism.name"
-                                          "publications.firstAuthor"
-                                          "dataSets.name"]
-                                 :joins ["Gene.publications"]
-                                 :size 10
-                                 :sortOrder [{:path "symbol"
-                                              :direction "ASC"}]
-                                 :where [
-                                         {:path "secondaryIdentifier"
-                                          :op "="
-                                          :value "AC3.1*" ;AC3*
-                                          :code "A"}
-                                         ]}
-                         }])])))
+       (when @show?
+         [:div.row
+          [:div.col-xs-6 [main-view/main {:location [:test :location]
+                                          :service {:root "beta.flymine.org/beta"}
+                                          ;:query {:from "Gene"
+                                          ;        :select ["Gene.symbol"]
+                                          ;        :where [{:path "Gene.symbol"
+                                          ;                 :op "LIKE"
+                                          ;                 :value "M*"}]}
+                                          :query {:from "Gene"
+                                                  :select ["symbol"
+                                                           "secondaryIdentifier"
+                                                           "primaryIdentifier"
+                                                           "organism.name"
+                                                           "publications.firstAuthor"
+                                                           "dataSets.name"]
+                                                  :joins ["Gene.publications"]
+                                                  :size 10
+                                                  :sortOrder [{:path "symbol"
+                                                               :direction "ASC"}]
+                                                  :where [
+                                                          {:path "secondaryIdentifier"
+                                                           :op "="
+                                                           :value "AC3.1*" ;AC3*
+                                                           :code "A"}
+                                                          ]}
+                                          }]]
+          [:div.col-xs-6 [main-view/main {:location [:test :location2]
+                                          :service {:root "beta.flymine.org/beta"}
+                                          ;:query {:from "Gene"
+                                          ;        :select ["Gene.symbol"]
+                                          ;        :where [{:path "Gene.symbol"
+                                          ;                 :op "LIKE"
+                                          ;                 :value "M*"}]}
+                                          :query {:from "Gene"
+                                                  :select ["Gene.symbol"]
+                                                  :where [{:path "Gene.symbol"
+                                                           :op "="
+                                                           :value "AB*"}]}
+                                          }]]])])))

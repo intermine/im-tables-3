@@ -4,7 +4,8 @@
             [cljs.core.async :refer [<! >! chan]]
             [im-tables.db :as db]
             [im-tables.interceptors :refer [sandbox]]
-            [imcljs.fetch :as fetch]))
+            [imcljs.fetch :as fetch]
+            [imcljs.query :as im-query]))
 
 (defn deep-merge
   "Recursively merges maps. If keys are not maps, the last value wins."
@@ -41,12 +42,12 @@
 ; fetch them and/or run necessary queries
 (reg-event-fx :im-tables/boot
               (sandbox)
-              (fn [{db :db} [_ loc {:keys [query service location results] :as args}]]
+              (fn [{db :db} [_ loc {:keys [query service location response] :as args}]]
                 {:db (or db db/default-db)
                  :im-tables/setup [loc (or db db/default-db) args]}))
 
 (reg-fx :im-tables/setup
-        (fn [[loc db {:keys [query service location results] :as args}]]
+        (fn [[loc db {:keys [query service location response] :as args}]]
 
           ; Fetch assets if they don't already exist in the database
           ; Since <<! expects channels, we create channels for assets that already exist
@@ -61,16 +62,15 @@
                             ; Get summary fields from view arguments, or app-db, or remotely
                             (conj (go (or (:summary-fields service) (-> db :service :summary-fields) (<! (fetch/summary-fields service))))))))]
                 ; Now we have a service with all of the needed components
-                (let [complete-service (assoc service :model model :summary-fields summary-fields)
-                      ; Execute the query if the results were passed into the view or already in app-db
-                      query-results (or results (-> db :results) (<! (fetch/table-rows complete-service query)))]
+                (let [complete-service (assoc service :model model :summary-fields summary-fields)]
                   (dispatch [:im-tables/store-setup loc {:service complete-service
-                                                         :results query-results}]))))))
+                                                         :query (or (:query db) query)}]))))))
 
-(reg-event-db :im-tables/store-setup
+(reg-event-fx :im-tables/store-setup
               (sandbox)
-              (fn [db [_ loc {:keys [service results]}]]
-                (assoc db :service service :results results)))
+              (fn [{db :db} [_ loc {:keys [service response query]}]]
+                {:db (assoc db :service service :response response :query (im-query/sterilize-query query))
+                 :dispatch [:im-tables.main/run-query loc]}))
 
 (reg-event-fx
   :initialize-db-old

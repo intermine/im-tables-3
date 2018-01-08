@@ -7,7 +7,7 @@
   (sandbox)
   (fn [{db :db} [_ loc]]
     (let [{:keys [start limit] :as p} (get-in db [:settings :pagination])
-          fetch-more? (not-every? (fn [n] (contains? (get-in db [:query-response :results]) n)) (range start (+ start limit)))]
+          fetch-more? (not-every? (fn [n] (contains? (get-in db [:response :results]) n)) (range start (+ start limit)))]
       (cond-> {:db db}
               fetch-more? (assoc :dispatch [:im-tables.main/run-query loc true])))))
 
@@ -36,6 +36,6 @@
   :imt.settings/update-pagination-fullinc
   (sandbox)
   (fn [{db :db} [_ loc]]
-    (let [total (get-in db [:query-response :iTotalRecords])]
+    (let [total (get-in db [:response :iTotalRecords])]
       {:db       (assoc-in db [:settings :pagination :start] (- total (mod total 10)))
        :dispatch [:imt.pagination/check-for-results loc]})))

@@ -49,7 +49,7 @@
   (fn [{db :db} [_ loc name query options]]
     {:db db
      :im-tables/im-operation {:on-success [:imt.io/save-list-success]
-                              :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins ) options)}}))
+                              :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins) options)}}))
 
 (reg-event-fx
   :prep-modal
@@ -63,7 +63,7 @@
   (fn [{db :db} [_ loc]]
     (let [modal (ocall js/document :getElementById "testModal")]
       ;;feigning a click is easier than dismissing it programatically for some reason
-    (ocall modal "click"))
+      (ocall modal "click"))
     {:db (assoc-in db [:cache :modal] nil)}))
 
 (reg-event-db
@@ -249,6 +249,7 @@
 (defn move-nth
   "Shift an item from one index in a collection to another "
   [coll from-idx to-idx]
+  (js/console.log "WE" coll from-idx to-idx)
   (insert-nth (drop-nth from-idx coll) to-idx (nth coll from-idx)))
 
 (defn index
@@ -267,6 +268,7 @@
   (sandbox)
   (fn [db [_ loc view]]
     (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
+      (js/console.log "DR" outer-join? loc view)
       (if outer-join?
         ; If the column (view) being dragged is part of an outer join then get the idx of the first occurance
         (assoc-in db [:cache :dragging-item] (index (partial begins-with? view) (get-in db [:query :select])))
@@ -348,9 +350,9 @@
   :main/sort-by
   (sandbox)
   (fn [{db :db} [_ loc view]]
-    (let [view              (join "." (drop 1 (split view ".")))
+    (let [view (join "." (drop 1 (split view ".")))
           [current-sort-by] (get-in db [:query :orderBy])
-          update?           (= view (:path current-sort-by))
+          update? (= view (:path current-sort-by))
           current-direction (get-in db [:query :orderBy 0 :direction])]
       {:db (if update?
              (update-in db [:query :orderBy 0]
@@ -413,7 +415,7 @@
   (fn [{db :db} [_ loc {:keys [start size]} results]]
     (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
           updated-results (assoc results :results new-results-map)]
-      {:db (assoc db :query-response updated-results)
+      {:db (assoc db :response updated-results)
        ;:db         (assoc db :query-response results)
        :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
                          (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
@@ -423,8 +425,8 @@
   (sandbox)
   (fn [{db :db} [_ loc {:keys [start size]} results]]
     (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
-          updated-results (assoc results :results (merge (get-in db [:query-response :results]) new-results-map))]
-      {:db (assoc db :query-response updated-results)
+          updated-results (assoc results :results (merge (get-in db [:response :results]) new-results-map))]
+      {:db (assoc db :response updated-results)
        ;:db         (assoc db :query-response results)
        :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
                          (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
@@ -433,7 +435,6 @@
   :im-tables.main/run-query
   (sandbox)
   (fn [{db :db} [_ loc merge?]]
-    (.debug js/console "Running query" (get db :query))
     (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
       {:db (assoc-in db [:cache :column-summary] {})
        ;:undo                   "Undo ran query"
