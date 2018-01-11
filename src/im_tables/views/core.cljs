@@ -4,7 +4,8 @@
             [im-tables.views.dashboard.main :as dashboard]
             [im-tables.views.table.core :as table]
             [im-tables.components.bootstrap :refer [modal]]
-            [reagent.dom.server :as server]))
+            [reagent.dom.server :as server]
+            [oops.core :refer [ocall]]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/React.addons.CSSTransitionGroup))
@@ -19,7 +20,12 @@
        [:div.overlay
         [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
 
-
+(defn custom-modal []
+  (fn [loc content]
+    (js/console.log "C" (reagent/children (reagent/current-component)))
+    [:div.im-modal
+     {:on-click (fn [e] (ocall e :stopPropagation) (dispatch [:prep-modal loc nil]))}
+     [:div.im-modal-content content]]))
 
 (defn main [{:keys [location]} state]
   (let [response (subscribe [:main/query-response location])
@@ -41,6 +47,11 @@
            [:div.im-table.relative
             ; When the mouse touches the table, set the flag to render the actual React components
             {:on-mouse-over (fn [] (reset! static? false))}
+
+            (when @modal-markup
+              [custom-modal location @modal-markup]
+              ;[custom-modal location @modal-markup]
+              )
 
             (if @static?
               ; If static (optimised) then only show an HTML representations of the React components
@@ -71,5 +82,7 @@
 
 
             ; Use just one modal and change its contents dynamically
+            ;(js/console.log "MM" location @modal-markup)
             [modal @modal-markup]
+            [:pre (str @modal-markup)]
             ]))})))
