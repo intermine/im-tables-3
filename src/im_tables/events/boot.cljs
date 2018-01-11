@@ -42,8 +42,9 @@
 ; fetch them and/or run necessary queries
 (reg-event-fx :im-tables/boot
               (sandbox)
-              (fn [{db :db} [_ loc {:keys [query service location response] :as args}]]
-                {:db (or db db/default-db)
+              (fn [{db :db} [_ loc {:keys [query service location response settings] :as args}]]
+                {:db (or db (assoc-in db/default-db [:settings :pagination :limit]
+                                      (or (get-in settings [:settings :pagination :limit]) 10)))
                  :im-tables/setup [loc (or db db/default-db) args]}))
 
 (reg-fx :im-tables/setup

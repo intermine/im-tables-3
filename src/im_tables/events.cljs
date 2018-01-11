@@ -413,36 +413,41 @@
   :main/replace-query-response
   (sandbox)
   (fn [{db :db} [_ loc {:keys [start size]} results]]
+    (println "no effect replace")
     (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
           updated-results (assoc results :results new-results-map)]
       {:db (assoc db :response updated-results)
        ;:db         (assoc db :query-response results)
-       :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
-                         (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
+       ;:dispatch-n (into [^:flush-dom [:hide-overlay loc]]
+       ;                  (map (fn [view] [:main/summarize-column loc view]) (get results :views)))
+       })))
 
 (reg-event-fx
   :main/merge-query-response
   (sandbox)
   (fn [{db :db} [_ loc {:keys [start size]} results]]
+    (println "no effect merge")
     (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
           updated-results (assoc results :results (merge (get-in db [:response :results]) new-results-map))]
       {:db (assoc db :response updated-results)
        ;:db         (assoc db :query-response results)
-       :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
-                         (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
+       ;:dispatch-n (into [^:flush-dom [:hide-overlay loc]]
+       ;                  (map (fn [view] [:main/summarize-column loc view]) (get results :views)))
+       })))
 
 (reg-event-fx
   :im-tables.main/run-query
   (sandbox)
   (fn [{db :db} [_ loc merge?]]
     (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
+      (js/console.log "Running query: " loc (get db :query))
       {:db (assoc-in db [:cache :column-summary] {})
        ;:undo                   "Undo ran query"
        :dispatch-n [^:flush-dom [:show-overlay loc]
                     [:main/deconstruct loc]]
        :im-tables/im-operation {:on-success (if merge?
-                                              [:main/merge-query-response loc pagination]
-                                              [:main/replace-query-response loc pagination])
+                                              ^:flush-dom [:main/merge-query-response loc pagination]
+                                              ^:flush-dom [:main/replace-query-response loc pagination])
                                 :op (partial fetch/table-rows
                                              (get db :service)
                                              (get db :query)
