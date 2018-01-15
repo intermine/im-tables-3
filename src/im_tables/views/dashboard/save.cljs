@@ -30,7 +30,8 @@
   (fn [loc state details on-submit]
     [:div.btn-toolbar.pull-right
      [:button.btn.btn-default
-      {:data-dismiss "modal"}
+      {:data-dismiss "modal"
+       :on-click (fn [] (dispatch [:prep-modal loc nil]))}
       "Cancel"]
      [:button.btn.btn-success
       {:data-dismiss "modal"
@@ -59,8 +60,9 @@
         (into [:ul]
               (map (fn [[path query]]
                      [:li [:a
-                           {:data-toggle "modal"
-                            :data-target "#testModal"
+                           {
+                            ;:data-toggle "modal"
+                            ;:data-target "#testModal"
                             :on-click    (fn [] (dispatch [:prep-modal loc
                                                            (generate-dialog loc
                                                                             {:query query
@@ -70,8 +72,9 @@
 (defn save-menu []
   (fn [loc model path {:keys [query count]}]
     [:li
-     {:data-toggle "modal"
-      :data-target "#testModal"
+     {
+      ;:data-toggle "modal"
+      ;:data-target "#testModal"
       :on-click    (fn [] (dispatch [:prep-modal loc
                                      (generate-dialog loc
                                                       {:query query

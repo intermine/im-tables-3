@@ -21,11 +21,27 @@
         [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
 
 (defn custom-modal []
-  (fn [loc content]
-    (js/console.log "C" (reagent/children (reagent/current-component)))
+  (fn [loc {:keys [header body footer]}]
     [:div.im-modal
-     {:on-click (fn [e] (ocall e :stopPropagation) (dispatch [:prep-modal loc nil]))}
-     [:div.im-modal-content content]]))
+     {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
+     [:div.im-modal-content
+      {:on-click (fn [e] (ocall e :stopPropagation))}
+      [:div.modal-dialog
+       [:div.modal-content
+        [:div.modal-header header]
+        [:div.modal-body body]
+        [:div.modal-footer footer]]]]]))
+
+#_(defn custom-modal []
+  (fn [loc {:keys [header body footer]}]
+    (js/console.log "content" )
+    [:div.im-modal
+     {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
+     [:div.im-modal-content
+      {:on-click (fn [e] (ocall e :stopPropagation))}
+      [:div.im-modal-header header]
+      [:div.im-modal-body body]
+      [:div.im-modal-footer footer]]]))
 
 (defn main [{:keys [location]} state]
   (let [response (subscribe [:main/query-response location])
@@ -83,6 +99,6 @@
 
             ; Use just one modal and change its contents dynamically
             ;(js/console.log "MM" location @modal-markup)
-            [modal @modal-markup]
+            ;[modal @modal-markup]
             [:pre (str @modal-markup)]
             ]))})))

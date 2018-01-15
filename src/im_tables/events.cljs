@@ -181,6 +181,13 @@
               (if (= value "") nil value))))
 
 ;;;;; TREE VIEW
+
+(reg-event-db
+  :tree-view/clear-state
+  (sandbox)
+  (fn [db [_ loc path-vec]]
+    (update-in db [:cache] dissoc :tree-view)))
+
 (reg-event-db
   :tree-view/toggle-selection
   (sandbox)

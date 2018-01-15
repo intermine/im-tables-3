@@ -55,7 +55,12 @@
     (let [model    (subscribe [:assets/model loc])
           selected (subscribe [:tree-view/selection loc])
           query    (subscribe [:main/query loc])]
-      [:div#myModal.modal.fade {:role "dialog"}
+
+      {:header []
+       :body [:h1 "I am the body"]
+       :footer []}
+
+      #_[:div#myModal.modal.fade {:role "dialog"}
        [:div.modal-dialog
         [:div.modal-content
          [:div.modal-header [:h3 "Add Columns"]]
@@ -70,7 +75,43 @@
             {:data-dismiss "modal"
              :disabled (< (count @selected) 1)
              :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
-            (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]])))
+            (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]]
+      )))
+
+(defn modal-body []
+  (fn [loc]
+    (let [model    (subscribe [:assets/model loc])
+          selected (subscribe [:tree-view/selection loc])
+          query    (subscribe [:main/query loc])]
+
+      [tree-view loc @model @query @selected]
+      )))
+
+(defn modal-footer []
+  (fn [loc]
+    (let [model    (subscribe [:assets/model loc])
+          selected (subscribe [:tree-view/selection loc])
+          query    (subscribe [:main/query loc])]
+
+      [:div.btn-toolbar.pull-right
+       [:button.btn.btn-default
+        {:on-click (fn []
+                     (dispatch [:prep-modal loc nil])
+                     (dispatch [:tree-view/clear-state loc]))}
+        "Cancel"]
+       [:button.btn.btn-success
+        {:data-dismiss "modal"
+         :disabled (< (count @selected) 1)
+         :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
+        (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]
+      )))
+
+(defn make-modal [loc]
+  {:header [:h3 "Add Columns"]
+   :body [modal-body loc]
+   :footer [modal-footer loc]})
+
+
 
 
 (defn main []
