@@ -20,7 +20,9 @@
 
         [:div.btn-group
          [:button.btn.btn-default
-          {:on-click (fn [] (dispatch [:prep-modal loc (saver/make-modal loc)]))}
+          {:on-click (fn []
+                       (dispatch [:tree-view/clear-state loc])
+                       (dispatch [:prep-modal loc (saver/make-modal loc)]))}
           [:i.fa.fa-columns] " Add Columns"]]
 
         #_[:div.btn-group
