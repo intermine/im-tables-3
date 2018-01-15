@@ -5,7 +5,8 @@
             [im-tables.views.table.core :as table]
             [im-tables.components.bootstrap :refer [modal]]
             [reagent.dom.server :as server]
-            [oops.core :refer [ocall]]))
+            [oops.core :refer [ocall]]
+            [imcljs.path :as impath]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/React.addons.CSSTransitionGroup))
@@ -32,23 +33,14 @@
         [:div.modal-body body]
         [:div.modal-footer footer]]]]]))
 
-#_(defn custom-modal []
-    (fn [loc {:keys [header body footer]}]
-      (js/console.log "content")
-      [:div.im-modal
-       {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
-       [:div.im-modal-content
-        {:on-click (fn [e] (ocall e :stopPropagation))}
-        [:div.im-modal-header header]
-        [:div.im-modal-body body]
-        [:div.im-modal-footer footer]]]))
-
 (defn main [{:keys [location]} state]
   (let [response (subscribe [:main/query-response location])
         pagination (subscribe [:settings/pagination location])
         overlay? (subscribe [:style/overlay? location])
         modal-markup (subscribe [:modal location])
-        static? (reagent/atom true)]
+        static? (reagent/atom true)
+        model (subscribe [:assets/model location])
+        collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
     (reagent/create-class
       {
        :component-will-mount (fn [this] (dispatch [:im-tables/boot location (reagent/props this)]))
@@ -64,11 +56,6 @@
             ; When the mouse touches the table, set the flag to render the actual React components
             {:on-mouse-over (fn [] (reset! static? false))}
 
-            (when @modal-markup
-              [custom-modal location @modal-markup]
-              ;[custom-modal location @modal-markup]
-              )
-
             (if @static?
               ; If static (optimised) then only show an HTML representations of the React components
               [:div
@@ -76,6 +63,24 @@
                [:div {:dangerouslySetInnerHTML {"__html" (server/render-to-static-markup [dashboard/main location @response @pagination])}}]
                [:table.table.table-condensed.table-bordered.table-striped
                 ; Good old static (fast) html table:
+                [:thead
+                 (into [:tr]
+                       (->> @collapsed-views
+                            (map-indexed (fn [idx h]
+                                           (let [display-name (when (and @model h) (impath/display-name @model h))]
+                                             ; This is a simple HTML representation of
+                                             ; im-tables.views.table.head.controls/toolbar
+                                             ; If you modify this form or the one in the toolbar, please remember to modify both
+                                             ; or they won't look the same when the table is activated
+                                             [:th
+                                              [:div.summary-toolbar
+                                               [:i.fa.fa-sort.sort-icon]
+                                               [:i.fa.fa-times.remove-icon]
+                                               [:i.fa.fa-filter.dropdown-toggle.filter-icon]
+                                               [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]]
+                                              [:div
+                                               [:div (last (drop-last display-name))]
+                                               [:div (last display-name)]]])))))]
                 (into [:tbody] (map (fn [row]
                                       (into [:tr] (map (fn [cell]
                                                          [:td (:value cell)]) row))) preview-rows))]]
@@ -84,21 +89,9 @@
                [dashboard/main location @response @pagination]
                [table/main location @response @pagination]])
 
+            ; Only show the modal when the modal subscription has a value
+            (when @modal-markup [custom-modal location @modal-markup])
 
             ; Cover the app whenever it's thinking
             ;[table-thinking @overlay?]
-
-            ;[:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
-            ; The dashboard above the table (controls
-
-            ; The actual table
-            ;[dashboard/main location @response @pagination]
-
-            ;[:div.ontop "t"]
-
-
-            ; Use just one modal and change its contents dynamically
-            ;(js/console.log "MM" location @modal-markup)
-            ;[modal @modal-markup]
-            [:pre (str @modal-markup)]
             ]))})))
