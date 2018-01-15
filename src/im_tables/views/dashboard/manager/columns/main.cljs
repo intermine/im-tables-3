@@ -99,7 +99,11 @@
        [:button.btn.btn-success
         {:data-dismiss "modal"
          :disabled (< (count @selected) 1)
-         :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
+         :on-click (fn []
+                     ; Merge the new columns into the query
+                     (dispatch [:tree-view/merge-new-columns loc])
+                     ; Close the modal by clearing the modal value in app-db
+                     (dispatch [:prep-modal loc nil]))}
         (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]
       )))
 

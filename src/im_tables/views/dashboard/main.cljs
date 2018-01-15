@@ -21,14 +21,9 @@
         [:div.btn-group
          [:button.btn.btn-default
           {:on-click (fn []
+                       ; Clear the previous state of the column manager when (re)opening
                        (dispatch [:tree-view/clear-state loc])
                        (dispatch [:prep-modal loc (saver/make-modal loc)]))}
-          [:i.fa.fa-columns] " Add Columns"]]
-
-        #_[:div.btn-group
-         [:button.btn.btn-default
-          {:data-toggle "modal"
-           :data-target "#myModal"}
           [:i.fa.fa-columns] " Add Columns"]]
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]
