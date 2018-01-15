@@ -33,15 +33,15 @@
         [:div.modal-footer footer]]]]]))
 
 #_(defn custom-modal []
-  (fn [loc {:keys [header body footer]}]
-    (js/console.log "content" )
-    [:div.im-modal
-     {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
-     [:div.im-modal-content
-      {:on-click (fn [e] (ocall e :stopPropagation))}
-      [:div.im-modal-header header]
-      [:div.im-modal-body body]
-      [:div.im-modal-footer footer]]]))
+    (fn [loc {:keys [header body footer]}]
+      (js/console.log "content")
+      [:div.im-modal
+       {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
+       [:div.im-modal-content
+        {:on-click (fn [e] (ocall e :stopPropagation))}
+        [:div.im-modal-header header]
+        [:div.im-modal-body body]
+        [:div.im-modal-footer footer]]]))
 
 (defn main [{:keys [location]} state]
   (let [response (subscribe [:main/query-response location])
