@@ -4,10 +4,9 @@
             [reagent.core :as r]
             [reagent.dom.server :as server]))
 
-
-
 ; This function is used for testing purposes.
-; Real use cases should call [im-tables.views.core/main {settings-map}]
+; When using im-tables in real life, you could call the view like so:
+; [im-tables.views.core/main {:location ... :service ... :query ...}]
 (defn main-panel []
   (let [show? (r/atom true)]
     (fn []
@@ -18,7 +17,7 @@
          (into [:div]
                ; Increase these range to produce N number of tables on the same page
                ; (useful for stress testing)
-               (->> (range 0 30)
+               (->> (range 0 1)
                     (map (fn [n]
                        [main-view/main {:location [:test :location n]
                                         :service {:root "beta.flymine.org/beta"}
