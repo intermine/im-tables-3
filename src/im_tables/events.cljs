@@ -14,6 +14,10 @@
             [oops.core :refer [oapply ocall oget]]
             [clojure.string :refer [split join starts-with?]]))
 
+(day8.re-frame.undo/undo-config!
+  {:harvest-fn (fn [ratom] (select-keys (get-in @ratom [:test :location 0]) [:query :response]))
+   :reinstate-fn (fn [ratom value] (swap! ratom update-in [:test :location 0] merge value))})
+
 (reg-event-db
   :printdb
   (fn [db]
@@ -53,7 +57,7 @@
 
 (reg-event-fx
   :prep-modal
-  (sandbox)
+  [(sandbox)]
   (fn [{db :db} [_ loc contents]]
     {:db (assoc-in db [:cache :modal] contents)}))
 
@@ -71,6 +75,12 @@
   (sandbox)
   (fn [db [_ loc]]
     (assoc-in db [:cache :overlay?] true)))
+
+(reg-event-db
+  :show-overlay
+  (sandbox)
+  (fn [db [_ location value]]
+    (update-in db location assoc-in [:cache :overlay?] value)))
 
 (reg-event-db
   :hide-overlay
@@ -196,13 +206,15 @@
 
 (reg-event-fx
   :tree-view/merge-new-columns
-  (sandbox)
+  [(sandbox) (undoable)]
   (fn [{db :db} [_ loc]]
     (let [columns-to-add (map (partial clojure.string/join ".") (get-in db [:cache :tree-view :selection]))]
+      (println "MERGE")
       {:db (-> db
                (update-in [:query :select] #(apply conj % columns-to-add))
                (assoc-in [:cache :tree-view :selection] #{}))
        :dispatch [:im-tables.main/run-query loc]
+       :undo "Merging new columns"
        })))
 
 

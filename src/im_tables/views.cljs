@@ -19,15 +19,32 @@
                ; (useful for stress testing)
                (->> (range 0 2)
                     (map (fn [n]
-                       [main-view/main {:location [:test :location n]
-                                        :service {:root "beta.flymine.org/beta"}
-                                        :settings {:pagination {:limit 10}}
-                                        :query {:from "Gene"
-                                                :select ["symbol"
-                                                         "secondaryIdentifier"
-                                                         "primaryIdentifier"
-                                                         "organism.name"
-                                                         "dataSets.name"]
-                                                :where [{:path "Gene.symbol"
-                                                         :op "LIKE"
-                                                         :value "M*"}]}}])))))])))
+                           [main-view/main {:location [:test :location n]
+                                            :service {:root "beta.flymine.org/beta"}
+                                            :settings {:pagination {:limit 10}}
+                                            :query {:from "Gene"
+                                                    :select ["symbol"
+                                                             "secondaryIdentifier"
+                                                             "primaryIdentifier"
+                                                             "organism.name"
+                                                             "dataSets.name"]
+                                                    :where [{:path "Gene.symbol"
+                                                             :op "LIKE"
+                                                             :value "M*"}]}}])))))])))
+
+(comment [im-tables.views.core/main {:location [:some-location :within-app-db :to-store-values]
+                             :service {:root "beta.flymine.org/beta"
+                                       :model some-intermine-model ; Optional
+                                       :summary-fields some-summary-fields ; Optional
+                                       }
+                             :settings {:pagination {:limit 10}}
+                             :response some-response-of-tablerows ; Optional
+                             :query {:from "Gene"
+                                     :select ["symbol"
+                                              "secondaryIdentifier"
+                                              "primaryIdentifier"
+                                              "organism.name"
+                                              "dataSets.name"]
+                                     :where [{:path "Gene.symbol"
+                                              :op "LIKE"
+                                              :value "M*"}]}}])

@@ -28,7 +28,7 @@
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]
         [:div.btn-group [exporttable/exporttable loc]]
-
+        [:div.btn-group [undo/main loc]]
         ]
        ]
       [:div.col-xs-6
