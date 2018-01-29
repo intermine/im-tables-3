@@ -1,9 +1,9 @@
 (ns im-tables.events
   (:require [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx]]
             [day8.re-frame.async-flow-fx]
-            ;[day8.re-frame.undo :as undo :refer [undoable]]
+    ;[day8.re-frame.undo :as undo :refer [undoable]]
             [joshkh.undo :as undo :refer [undoable]]
-            ;[joshkh.re-frame.undo :as undo :refer [undoable]]
+    ;[joshkh.re-frame.undo :as undo :refer [undoable]]
             [im-tables.db :as db]
             [im-tables.effects]
             [im-tables.interceptors :refer [sandbox]]
@@ -18,7 +18,7 @@
 
 (joshkh.undo/undo-config!
   {:harvest-fn (fn [ratom location]
-                 (select-keys (get-in @ratom location) [:query :response :settings]))
+                 (select-keys (get-in @ratom location) [:query :response :settings :temp-query]))
    :reinstate-fn (fn [ratom value location]
                    (swap! ratom update-in location merge value))})
 
@@ -121,16 +121,22 @@
   (fn [db [_ loc]]
     (assoc db :temp-query (get db :query))))
 
-(reg-event-db
+(reg-event-fx
   :filters/update-constraint
-  (sandbox)
-  (fn [db [_ loc new-constraint]]
-    (update-in db [:temp-query :where]
-               (fn [constraints]
-                 (map (fn [constraint]
-                        (if (= (:code new-constraint) (:code constraint))
-                          new-constraint
-                          constraint)) constraints)))))
+  [(sandbox) (undoable)]
+  (fn [{db :db} [_ loc new-constraint]]
+    (js/console.log "new constrain" new-constraint)
+    {:db (update-in db [:temp-query :where]
+                    (fn [constraints]
+                      (map (fn [constraint]
+                             (if (= (:code new-constraint) (:code constraint))
+                               new-constraint
+                               constraint)) constraints)))
+     ;:undo {:message [:div
+     ;                 (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
+     ;                 (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
+     ;       :location loc}
+     }))
 
 
 
@@ -138,9 +144,7 @@
   :filters/add-constraint
   (sandbox)
   (fn [{db :db} [_ loc new-constraint]]
-    (.log js/console "ADDING CONSTRAINT" new-constraint)
-    {:dispatch [:filters/save-changes loc]
-     :db (update-in db [:temp-query :where]
+    {:db (update-in db [:temp-query :where]
                     (fn [constraints]
                       (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))
 
@@ -149,9 +153,7 @@
   :filters/remove-constraint
   (sandbox)
   (fn [{db :db} [_ loc new-constraint]]
-    (.log js/console "removing constraint" loc new-constraint)
-    {:dispatch [:filters/save-changes loc]
-     :db (update-in db [:temp-query :where]
+    {:db (update-in db [:temp-query :where]
                     (fn [constraints]
                       (remove nil? (map (fn [constraint]
                                           (if (= constraint new-constraint)
@@ -160,10 +162,11 @@
 
 (reg-event-fx
   :filters/save-changes
-  (sandbox)
+  [(sandbox) (undoable)]
   (fn [{db :db} [_ loc]]
     {:db (assoc db :query (get db :temp-query))
-     :dispatch [:im-tables.main/run-query loc]}))
+     :dispatch [:im-tables.main/run-query loc]
+     }))
 
 ;;;; TRANSIENT VALUES
 
@@ -213,7 +216,6 @@
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc]]
     (let [columns-to-add (map (partial clojure.string/join ".") (get-in db [:cache :tree-view :selection]))]
-      (println "MERGE")
       {:db (-> db
                (update-in [:query :select] #(apply conj % columns-to-add))
                (assoc-in [:cache :tree-view :selection] #{}))

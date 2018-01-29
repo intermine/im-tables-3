@@ -73,8 +73,8 @@
           {:type      "text"
            :value     (:value @state)
            :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
-           :on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
-                              (submit-constraint)))
+           ;:on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
+           ;                   (submit-constraint)))
            :on-key-press
              (fn [e]
                (let [keycode (.-charCode e)
