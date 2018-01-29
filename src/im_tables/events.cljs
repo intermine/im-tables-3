@@ -1,7 +1,9 @@
 (ns im-tables.events
   (:require [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx]]
             [day8.re-frame.async-flow-fx]
-            [day8.re-frame.undo :as undo :refer [undoable]]
+            ;[day8.re-frame.undo :as undo :refer [undoable]]
+            [joshkh.undo :as undo :refer [undoable]]
+            ;[joshkh.re-frame.undo :as undo :refer [undoable]]
             [im-tables.db :as db]
             [im-tables.effects]
             [im-tables.interceptors :refer [sandbox]]
@@ -14,9 +16,11 @@
             [oops.core :refer [oapply ocall oget]]
             [clojure.string :refer [split join starts-with?]]))
 
-(day8.re-frame.undo/undo-config!
-  {:harvest-fn (fn [ratom] (select-keys (get-in @ratom [:test :location 0]) [:query :response]))
-   :reinstate-fn (fn [ratom value] (swap! ratom update-in [:test :location 0] merge value))})
+(joshkh.undo/undo-config!
+  {:harvest-fn (fn [ratom location]
+                 (select-keys (get-in @ratom location) [:query :response :settings]))
+   :reinstate-fn (fn [ratom value location]
+                   (swap! ratom update-in location merge value))})
 
 (reg-event-db
   :printdb
@@ -214,7 +218,10 @@
                (update-in [:query :select] #(apply conj % columns-to-add))
                (assoc-in [:cache :tree-view :selection] #{}))
        :dispatch [:im-tables.main/run-query loc]
-       :undo "Merging new columns"
+       :undo {:message [:div
+                        (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
+                        (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
+              :location loc}
        })))
 
 
