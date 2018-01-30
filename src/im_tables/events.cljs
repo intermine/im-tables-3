@@ -164,6 +164,7 @@
   :filters/save-changes
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc]]
+    (js/console.log "DD" (clojure.data/diff (second (:where (:query db))) (second (:where (:temp-query db)))))
     {:db (assoc db :query (get db :temp-query))
      :dispatch [:im-tables.main/run-query loc]
      }))
