@@ -25,12 +25,13 @@
                               {:on-click (fn []
                                            (dispatch [:undo loc (inc idx)]))} explanation]))
               (reverse @explanations))]
-       [:div.btn-group
-        [:button.btn.btn-default
-         {
-          :disabled (not @redos)
-          :on-click (fn []
-                      (dispatch [:redo loc])
-                      ;(dispatch [:purge-redos loc])
-                      )}
-         [:i.fa.fa-repeat] " Redo"]]])))
+       (when @redos
+         [:div.btn-group
+          [:button.btn.btn-default
+           {
+            :disabled (not @redos)
+            :on-click (fn []
+                        (dispatch [:redo loc])
+                        ;(dispatch [:purge-redos loc])
+                        )}
+           [:i.fa.fa-repeat] " Redo"]])])))

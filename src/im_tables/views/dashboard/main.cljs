@@ -15,7 +15,7 @@
      [:div.row
       [column-manager/main loc]]
      [:div.row.im-table-toolbar
-      [:div.col-xs-6
+      [:div.col-xs-8
        [:div.btn-toolbar
 
         [:div.btn-group
@@ -28,10 +28,10 @@
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]
         [:div.btn-group [exporttable/exporttable loc]]
-        [:div.btn-group [undo/main loc]]
+        [undo/main loc]
         ]
        ]
-      [:div.col-xs-6
+      [:div.col-xs-4
        [:div.container-fluid
         [:div.row
          [:div.col-xs-offset-2
