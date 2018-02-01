@@ -8,7 +8,7 @@
                  [ring "1.6.3"]
                  [cljs-http "0.1.44"]
                  [day8.re-frame/async-flow-fx "0.0.8"]
-                 [joshkh/ctrlz "0.2.0"]
+                 [joshkh/ctrlz "0.3.0"]
                  [binaryage/oops "0.5.6"]
                  [inflections "0.13.0"]
                  [re-frisk "0.5.2"]

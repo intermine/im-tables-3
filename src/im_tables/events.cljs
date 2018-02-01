@@ -1,5 +1,5 @@
 (ns im-tables.events
-  (:require [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx]]
+  (:require [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx dispatch]]
             [day8.re-frame.async-flow-fx]
     ;[day8.re-frame.undo :as undo :refer [undoable]]
             [joshkh.undo :as undo :refer [undoable]]
@@ -12,15 +12,39 @@
             [im-tables.events.exporttable]
             [imcljs.save :as save]
             [imcljs.fetch :as fetch]
+            [imcljs.path :as im-path]
             [imcljs.query :as query]
             [oops.core :refer [oapply ocall oget]]
             [clojure.string :refer [split join starts-with?]]))
 
 (joshkh.undo/undo-config!
+  ; This function is used to only store certain parts
+  ; of our app-db. We're specifically ignoring anything
+  ; in the :cache or :response (query results) keys
   {:harvest-fn (fn [ratom location]
-                 (select-keys (get-in @ratom location) [:query :response :settings :temp-query]))
+                 (-> @ratom
+                     ; The ratom contains all undos for all tables;
+                     ; so only be sure to only look in THIS table's location
+                     (get-in location)
+                     ; These keys' values will be stored in the undo stack for this table's location.
+                     ; Query is kept because duh. Keeping :settings means restoring our pagination
+                     ; and temp-query is used by various controls as a staging area before merging the
+                     ; changes into the :query key and running it
+                     (select-keys [:query :settings :temp-query])))
+   ; This function is used to put some old state back into our app-db
    :reinstate-fn (fn [ratom value location]
-                   (swap! ratom update-in location merge value))})
+                   ; Ratom is our app-db
+                   (swap! ratom update-in location merge value))
+   ; This function fires after EITHER an :undo or a :redo takes place
+   ; We're not storing any "side effect" data, such as query results because we have no control over them.
+   ; Most undo events modify the underlying query so it makes sense re-run it when the query has been
+   ; reverted or restored.
+
+   ; If we ever need some undos to *not* re-run a query then consider modifying the :undo effect
+   ; to either accept an optional function to run (or at least a flag to run / not run this one.
+   ; I didn't do this because I'm lazy.
+   :post-reinstate-fn (fn [location]
+                        (dispatch [:im-tables.main/run-query location]))})
 
 (reg-event-db
   :printdb
@@ -41,8 +65,6 @@
   (fn [_ [_ loc state]]
     {:db (deep-merge db/default-db state)
      :dispatch [:im-tables.main/run-query loc]}))
-
-
 
 (reg-event-db
   :imt.io/save-list-success
@@ -164,10 +186,30 @@
   :filters/save-changes
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc]]
-    (js/console.log "DD" (clojure.data/diff (second (:where (:query db))) (second (:where (:temp-query db)))))
-    {:db (assoc db :query (get db :temp-query))
-     :dispatch [:im-tables.main/run-query loc]
-     }))
+    (let [added (not-empty (clojure.set/difference (set (:where (:temp-query db))) (set (:where (:query db)))))
+          removed (not-empty (clojure.set/difference (set (:where (:query db))) (set (:where (:temp-query db)))))
+          model (get-in db [:service :model])]
+      {:db (assoc db :query (get db :temp-query))
+       :dispatch [:im-tables.main/run-query loc]
+       :undo {:message [:div
+                        (when added
+                          [:div
+                           [:div "Added filters"]
+                           (into [:span]
+                                 (map (fn [{:keys [path op value]}]
+                                        [:div.table-history-detail
+                                         [:div (str (im-path/friendly model path))]
+                                         [:div (str op " " value)]]) added))])
+                        (when removed
+                          [:div
+                           [:div "Removed filters"]
+                           (into [:span]
+                                 (map (fn [{:keys [path op value]}]
+                                        [:div.table-history-detail
+                                         [:div (str (im-path/friendly model path))]
+                                         [:div (str op " " value)]]) removed))])]
+              :location loc}
+       })))
 
 ;;;; TRANSIENT VALUES
 
@@ -216,14 +258,15 @@
   :tree-view/merge-new-columns
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc]]
-    (let [columns-to-add (map (partial clojure.string/join ".") (get-in db [:cache :tree-view :selection]))]
+    (let [columns-to-add (map (partial clojure.string/join ".") (get-in db [:cache :tree-view :selection]))
+          model (get-in db [:service :model])]
       {:db (-> db
                (update-in [:query :select] #(apply conj % columns-to-add))
                (assoc-in [:cache :tree-view :selection] #{}))
        :dispatch [:im-tables.main/run-query loc]
        :undo {:message [:div
                         (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
-                        (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
+                        (into [:div.table-history-detail] (map (fn [s] [:div (im-path/friendly model s)]) columns-to-add))]
               :location loc}
        })))
 
@@ -244,10 +287,27 @@
 ; Copy the edited query from the cache back to the main query and run it
 (reg-event-fx
   :rel-manager/apply-changes
-  (sandbox)
+  [(sandbox) (undoable)]
   (fn [{db :db} [_ loc]]
-    {:db (assoc db :query (get-in db [:cache :rel-manager]))
-     :dispatch [:im-tables.main/run-query loc]}))
+    (let [pre-joins (set (get-in db [:query :joins]))
+          post-joins (set (get-in db [:cache :rel-manager :joins]))
+          added (not-empty (clojure.set/difference post-joins pre-joins))
+          removed (not-empty (clojure.set/difference pre-joins post-joins))
+          model (get-in db [:service :model])]
+      {:db (assoc db :query (get-in db [:cache :rel-manager]))
+       :dispatch [:im-tables.main/run-query loc]
+       :undo {:location loc
+              :message [:div
+                        (when added
+                          [:div
+                           [:div "Columns made mandatory"]
+                           (into [:div.table-history-detail]
+                                 (map (fn [c] [:div (im-path/friendly model c)]) added))])
+                        (when removed
+                          [:div
+                           [:div "Columns made optional"]
+                           (into [:div.table-history-detail]
+                                 (map (fn [c] [:div (im-path/friendly model c)]) removed))])]}})))
 
 (reg-event-db
   :rel-manager/toggle-relationship
@@ -350,29 +410,41 @@
 
 (reg-event-fx
   :main/apply-summary-filter
-  ;(undoable)
-  (sandbox)
+  [(sandbox) (undoable)]
   (fn [{db :db} [_ loc view]]
-    (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
-      {:db (update-in db [:query :where] conj {:path view
-                                               :op "ONE OF"
-                                               :values current-selection})
-       :dispatch [:im-tables.main/run-query loc]
-       ;:undo     "Applying column filter"
-       }
-      {:db db})))
+    (let [model (get-in db [:service :model])]
+      (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
+        {:db (update-in db [:query :where] conj {:path view
+                                                 :op "ONE OF"
+                                                 :values current-selection})
+         :dispatch [:im-tables.main/run-query loc]
+         :undo {:location loc
+                :message [:div
+                          [:div [:div
+                                 (str (im-path/friendly model view))
+                                 [:div "Must be one of:"]]]
+                          (into [:div.table-history-detail]
+                                (map (fn [v]
+                                       [:div v]) current-selection))
+                          ]}
+         }
+        {:db db}))))
 
 (reg-event-fx
   :main/remove-view
-  (sandbox)
-  ;(undoable)
+  [(sandbox) (undoable)]
   (fn [{db :db} [_ loc view]]
-    (let [path-is-join? (some? (some #{view} (get-in db [:query :joins])))]
+    (let [path-is-join? (some? (some #{view} (get-in db [:query :joins])))
+          model (get-in db [:service :model])]
       {:db (cond-> db
                    (not path-is-join?) (update-in [:query :select] (partial remove (fn [v] (= v view))))
                    path-is-join? (update-in [:query :select] (partial remove (fn [v] (starts-with? v view))))
                    path-is-join? (update-in [:query :joins] (partial remove (fn [v] (= v view)))))
-       :dispatch [:im-tables.main/run-query loc]})))
+       :dispatch [:im-tables.main/run-query loc]
+       :undo {:message [:div (str "Removed column")
+                        [:div.table-history-detail
+                         [:span (im-path/friendly model view)]]]
+              :location loc}})))
 
 
 (reg-event-fx
