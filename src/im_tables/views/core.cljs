@@ -43,7 +43,8 @@
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
     (reagent/create-class
       {
-       :component-will-mount (fn [this] (dispatch [:im-tables/boot location (reagent/props this)]))
+       :component-will-mount (fn [this]
+                               (dispatch [:im-tables/boot location (reagent/props this)]))
        :reagent-render
        (fn [{:keys [location query]}]
 

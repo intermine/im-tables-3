@@ -43,8 +43,15 @@
 (reg-event-fx :im-tables/boot
               (sandbox)
               (fn [{db :db} [_ loc {:keys [query service location response settings] :as args}]]
-                {:db (or db (assoc-in db/default-db [:settings :pagination :limit]
-                                      (or (get-in settings [:settings :pagination :limit]) 10)))
+                {:db
+                 (or
+                   ; If DB exists then just use the one that's there
+                   db
+                   ; Otherwise get the default and then merge any custom settings
+                   ; TODO - deep merge is expensive. Can this be optimised?
+                   (update db/default-db :settings deep-merge settings))
+
+                 ; Then fetch InterMine assets from the server
                  :im-tables/setup [loc (or db db/default-db) args]}))
 
 (reg-fx :im-tables/setup

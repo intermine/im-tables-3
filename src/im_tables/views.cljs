@@ -21,7 +21,12 @@
                     (map (fn [n]
                            [main-view/main {:location [:test :location n]
                                             :service {:root "beta.flymine.org/beta"}
-                                            :settings {:pagination {:limit 10}}
+                                            :settings {:pagination {:limit 10}
+                                                       :links {:vocab {:mine "BananaMine"}
+                                                               :url (fn [vocab] (str "#/reportpage/"
+                                                                                     (:mine vocab) "/"
+                                                                                     (:class vocab) "/"
+                                                                                     (:objectId vocab)))}}
                                             :query {:from "Gene"
                                                     :select ["symbol"
                                                              "secondaryIdentifier"
