@@ -4,7 +4,9 @@
             [im-tables.views.dashboard.manager.relationships.main :as rel-manager]
             [im-tables.views.dashboard.undo :as undo]
             [im-tables.views.dashboard.save :as save]
+            [im-tables.views.dashboard.manager.columns.main :as saver]
             [im-tables.views.dashboard.exporttable :as exporttable]
+            [re-frame.core :refer [dispatch]]
             [oops.core :refer [ocall]]))
 
 (defn main []
@@ -15,10 +17,13 @@
      [:div.row.im-table-toolbar
       [:div.col-xs-6
        [:div.btn-toolbar
+
         [:div.btn-group
          [:button.btn.btn-default
-          {:data-toggle "modal"
-           :data-target "#myModal"}
+          {:on-click (fn []
+                       ; Clear the previous state of the column manager when (re)opening
+                       (dispatch [:tree-view/clear-state loc])
+                       (dispatch [:prep-modal loc (saver/make-modal loc)]))}
           [:i.fa.fa-columns] " Add Columns"]]
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]

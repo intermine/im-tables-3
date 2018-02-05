@@ -3,7 +3,10 @@
             [reagent.core :as reagent]
             [im-tables.views.dashboard.main :as dashboard]
             [im-tables.views.table.core :as table]
-            [im-tables.components.bootstrap :refer [modal]]))
+            [im-tables.components.bootstrap :refer [modal]]
+            [reagent.dom.server :as server]
+            [oops.core :refer [ocall]]
+            [imcljs.path :as impath]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/React.addons.CSSTransitionGroup))
@@ -11,50 +14,84 @@
 (defn table-thinking []
   (fn [show?]
     [css-transition-group
-     {:transition-name          "fade"
+     {:transition-name "fade"
       :transition-enter-timeout 50
       :transition-leave-timeout 50}
      (if show?
        [:div.overlay
         [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
 
+(defn custom-modal []
+  (fn [loc {:keys [header body footer]}]
+    [:div.im-modal
+     {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
+     [:div.im-modal-content
+      {:on-click (fn [e] (ocall e :stopPropagation))}
+      [:div.modal-dialog
+       [:div.modal-content
+        [:div.modal-header header]
+        [:div.modal-body body]
+        [:div.modal-footer footer]]]]]))
 
-
-(defn main [loc state]
-  (let [response     (subscribe [:main/query-response loc])
-        pagination   (subscribe [:settings/pagination loc])
-        overlay?     (subscribe [:style/overlay? loc])
-        modal-markup (subscribe [:modal loc])]
+(defn main [{:keys [location]} state]
+  (let [response (subscribe [:main/query-response location])
+        pagination (subscribe [:settings/pagination location])
+        overlay? (subscribe [:style/overlay? location])
+        modal-markup (subscribe [:modal location])
+        static? (reagent/atom true)
+        model (subscribe [:assets/model location])
+        collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
     (reagent/create-class
       {
-       ;:component-will-mount
-       ;(fn [e]
-       ;  (if (and loc state)
-       ;    (dispatch [:im-tables.main/replace-all-state loc state])))
-       ;:component-will-update
-       ;(fn [this new-arg-v]
-       ;  (let [[_ l old-state] (reagent/argv this)
-       ;        [_ l new-state] new-arg-v]
-       ;    ;(.log js/console "O" (reagent/argv this))
-       ;    ;(.log js/console "N" new-arg-v)
-       ;    ;(.log js/console "old-state" old-state)
-       ;    ;(.log js/console "new-state" new-state)
-       ;    (if (not= old-state new-state)
-       ;      (do
-       ;        (.log js/console "UPDATING THIS" new-state)
-       ;        (dispatch [:im-tables.main/replace-all-state loc new-state])))))
+       :component-will-mount (fn [this] (dispatch [:im-tables/boot location (reagent/props this)]))
        :reagent-render
-       (fn [loc]
-         [:div.im-table.relative
-          ; Cover the app whenever it's thinking
-          [table-thinking @overlay?]
+       (fn [{:keys [location query]}]
 
-          ;[:button.btn.btn-default {:on-click (fn [] (dispatch [:printdb]))} "Log DB"]
-          ; The dashboard above the table (controls
-          [dashboard/main loc @response @pagination]
-          ; The actual table
+         ; The query results are stored in a map with the result index as the key.
+         ; In other words, we're not using a vector! To generate a speedy preview,
+         ; get the first n results to be shown as a simple table:
+         ; (get results 0), (get results 1), (get results 2) ... (get results limit)
+         (let [preview-rows (map (partial get (:results @response)) (range (:limit @pagination)))]
+           [:div.im-table.relative
+            ; When the mouse touches the table, set the flag to render the actual React components
+            {:on-mouse-over (fn [] (reset! static? false))}
 
-          ;[:div.ontop "t"]
-          [table/main loc @response @pagination]
-          ; Use just one modal and change its contents dynamically
-          [modal @modal-markup]])})))
+            (if @static?
+              ; If static (optimised) then only show an HTML representations of the React components
+              [:div
+               ; Force the dashboard buttons to be just HTML (their lights are on but no one is home)
+               [:div {:dangerouslySetInnerHTML {"__html" (server/render-to-static-markup [dashboard/main location @response @pagination])}}]
+               [:table.table.table-condensed.table-bordered.table-striped
+                ; Good old static (fast) html table:
+                [:thead
+                 (into [:tr]
+                       (->> @collapsed-views
+                            (map-indexed (fn [idx h]
+                                           (let [display-name (when (and @model h) (impath/display-name @model h))]
+                                             ; This is a simple HTML representation of
+                                             ; im-tables.views.table.head.controls/toolbar
+                                             ; If you modify this form or the one in the toolbar, please remember to modify both
+                                             ; or they won't look the same when the table is activated
+                                             [:th
+                                              [:div.summary-toolbar
+                                               [:i.fa.fa-sort.sort-icon]
+                                               [:i.fa.fa-times.remove-icon]
+                                               [:i.fa.fa-filter.dropdown-toggle.filter-icon]
+                                               [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]]
+                                              [:div
+                                               [:div (last (drop-last display-name))]
+                                               [:div (last display-name)]]])))))]
+                (into [:tbody] (map (fn [row]
+                                      (into [:tr] (map (fn [cell]
+                                                         [:td (:value cell)]) row))) preview-rows))]]
+              ; Otherwise show the interactive React components
+              [:div
+               [dashboard/main location @response @pagination]
+               [table/main location @response @pagination]])
+
+            ; Only show the modal when the modal subscription has a value
+            (when @modal-markup [custom-modal location @modal-markup])
+
+            ; Cover the app whenever it's thinking
+            ;[table-thinking @overlay?]
+            ]))})))

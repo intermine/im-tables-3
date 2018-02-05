@@ -66,6 +66,8 @@
    ;                     :value "*a*"
    ;                     :code  "B"}]}
 
+   ;:service {:model "TESTMODEL"}
+
    :settings {:buffer 2
               :pagination {:start 0
                            :limit 20}

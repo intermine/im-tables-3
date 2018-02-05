@@ -1,5 +1,6 @@
 (ns im-tables.components.bootstrap
   (:require [reagent.core :as reagent]
+            [reagent.dom.server :as server]
             [oops.core :refer [ocall oapply oget oset!]]))
 
 
@@ -40,7 +41,7 @@
        [element (-> attributes
                     (assoc :data-html true)
                     (assoc :data-container "body")
-                    (update :data-content reagent/render-to-static-markup)) rest])}))
+                    (update :data-content server/render-to-static-markup)) rest])}))
 
 
 (defn inner-tooltip []
@@ -105,6 +106,7 @@
 
 (defn modal []
   (fn [{:keys [header body footer]}]
+    (js/console.log "FOOTER" footer)
     [:div#testModal.modal.fade {:role "dialog"}
      [:div.modal-dialog
       [:div.modal-content

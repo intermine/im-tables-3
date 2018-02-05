@@ -13,35 +13,40 @@
 (defn save-dialog []
   (let [dom-node (reagent/atom nil)]
     (fn [state-atom details on-submit]
-     [:div.container-fluid
-      {:ref (fn [e] (when e (reset! dom-node e)))}
-      [:div.form
-       [:div.form-group
-        [:label "Name"]
-        [:input.form-control.input-lg
-         {:value (get @state-atom :name)
-          :on-change (fn [e] (swap! state-atom assoc :name (oget e :target :value)))
-          :on-key-up (fn [k] (when (= 13 (oget k :keyCode))
-                               (do
-                                 (on-submit)
-                                 (-> @dom-node js/$ (ocall :closest ".modal") (ocall :modal "hide")))))}]]]])))
+      [:div.container-fluid
+       {:ref (fn [e] (when e (reset! dom-node e)))}
+       [:div.form
+        [:div.form-group
+         [:label "Name"]
+         [:input.form-control.input-lg
+          {:value (get @state-atom :name)
+           :on-change (fn [e] (swap! state-atom assoc :name (oget e :target :value)))
+           :on-key-up (fn [k] (when (= 13 (oget k :keyCode))
+                                (do
+                                  (on-submit)
+                                  (-> @dom-node js/$ (ocall :closest ".modal") (ocall :modal "hide")))))}]]]])))
 
 (defn save-footer []
   (fn [loc state details on-submit]
     [:div.btn-toolbar.pull-right
      [:button.btn.btn-default
-      {:data-dismiss "modal"}
+      {:on-click (fn [] (dispatch [:prep-modal loc nil]))}
       "Cancel"]
      [:button.btn.btn-success
-      {:data-dismiss "modal"
-       :on-click     on-submit}
+      {:on-click on-submit}
       "Save"]]))
 
 (defn generate-dialog [loc {:keys [type count query] :as details}]
   (let [state (reagent/atom {:name (str (name type) " List (" (.toString (js/Date.)) ")")})
-        on-submit (fn [] (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state]))]
+        on-submit (fn []
+                    ; Save the list
+                    (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state])
+                    ; Close the modal by clearing the modal markup in app-db
+                    (dispatch [:prep-modal loc nil])
+
+                    )]
     {:header [:h4 (str "Save a list of " (:count details) " " (if (< count 2) (name type) (plural (name type))))]
-     :body   [save-dialog state details on-submit]
+     :body [save-dialog state details on-submit]
      :footer [save-footer loc state details on-submit]}))
 
 (defn serialize-path [model path]
@@ -59,29 +64,31 @@
         (into [:ul]
               (map (fn [[path query]]
                      [:li [:a
-                           {:data-toggle "modal"
-                            :data-target "#testModal"
-                            :on-click    (fn [] (dispatch [:prep-modal loc
-                                                           (generate-dialog loc
-                                                                            {:query query
-                                                                             :type  class})]))}
+                           {
+                            ;:data-toggle "modal"
+                            ;:data-target "#testModal"
+                            :on-click (fn [] (dispatch [:prep-modal loc
+                                                        (generate-dialog loc
+                                                                         {:query query
+                                                                          :type class})]))}
                            (serialize-path @model path)]]) details))]])))
 
 (defn save-menu []
   (fn [loc model path {:keys [query count]}]
     [:li
-     {:data-toggle "modal"
-      :data-target "#testModal"
-      :on-click    (fn [] (dispatch [:prep-modal loc
-                                     (generate-dialog loc
-                                                      {:query query
-                                                       :count count
-                                                       :type  (name (path/class model path))})]))}
+     {
+      ;:data-toggle "modal"
+      ;:data-target "#testModal"
+      :on-click (fn [] (dispatch [:prep-modal loc
+                                  (generate-dialog loc
+                                                   {:query query
+                                                    :count count
+                                                    :type (name (path/class model path))})]))}
      [:a (str (serialize-path model path) " (" count ")")]]))
 
 
 (defn main [loc]
-  (let [model       (subscribe [:assets/model loc])
+  (let [model (subscribe [:assets/model loc])
         query-parts (subscribe [:main/query-parts loc])]
     (fn [loc]
       [:div.dropdown

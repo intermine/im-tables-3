@@ -7,27 +7,34 @@
             [imcljs.query :as q]
             [clojure.string :refer [split starts-with?]]))
 
+(defn table-head [loc]
+  (let [dragging-item (subscribe [:style/dragging-item loc])
+        dragging-over (subscribe [:style/dragging-over loc])
+        collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
+    (fn [views]
+      [:thead
+       (into [:tr]
+             (->> @collapsed-views
+                  (map-indexed (fn [idx h]
+                                 ^{:key (get views idx)}
+                                 [table-head/header loc
+                                  {:header h
+                                   :dragging-over @dragging-over
+                                   :dragging-item @dragging-item
+                                   :loc loc
+                                   :idx idx
+                                   :subviews nil
+                                   :col-count (count @collapsed-views)
+                                   :view h}]))))])))
+
 (defn main [loc]
-  (let [dragging-item   (subscribe [:style/dragging-item loc])
-        dragging-over   (subscribe [:style/dragging-over loc])
+  (let [dragging-item (subscribe [:style/dragging-item loc])
+        dragging-over (subscribe [:style/dragging-over loc])
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
     (fn [loc {:keys [results views]} {:keys [limit start] :or {limit 10 start 0}}]
       [:div.relative
        [:table.table.table-condensed.table-bordered.table-striped
-        [:thead
-         (into [:tr]
-               (->> @collapsed-views
-                    (map-indexed (fn [idx h]
-                                   ^{:key (get views idx)}
-                                   [table-head/header loc
-                                    {:header h
-                                     :dragging-over @dragging-over
-                                     :dragging-item @dragging-item
-                                     :loc loc
-                                     :idx idx
-                                     :subviews nil
-                                     :col-count (count @collapsed-views)
-                                     :view h}]))))]
+        [table-head loc views]
         (into [:tbody]
               (->>
                 (map second (into (sorted-map) (select-keys results (range start (+ start limit)))))

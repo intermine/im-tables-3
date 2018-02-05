@@ -8,7 +8,7 @@
 
 (defn not-root? "String includes a dot?" [path] (includes? path "."))
 (defn coll-contains? "Haystack contains needle?" [needle haystack] (some? (some #{needle} haystack)))
-(defn without "Remove item froma collection" [coll item] (filter (partial not= item) coll))
+(defn without "Remove item from a collection" [coll item] (filter (partial not= item) coll))
 
 (defn join-with-arrows
   "Make a friendly HTML path name: Gene >> Data Sets >> Publications"
@@ -46,7 +46,7 @@
 (defn relationship-form [loc {:keys [query model]}]
   (fn [loc {:keys [query model]}]
     (let [relationships (distinct (filter not-root? (map (partial path/trim-to-last-class model) (:select query))))
-          joins         (:joins query)]
+          joins (:joins query)]
       (conj (into [:ul.list-group]
                   (when (and query model)
                     (->> relationships
@@ -55,24 +55,30 @@
                                                                 :joins joins
                                                                 :model model}])))))))))
 
-(defn modal [loc]
+(defn modal-body [loc]
+  (let [model (subscribe [:assets/model loc])
+        rel-query (subscribe [:rel-manager/query loc])]
+    (fn [loc]
+      [:div
+       (when @model [relationship-form loc {:query @rel-query :model @model}])])))
+
+(defn modal-footer [loc]
   (let [model (subscribe [:assets/model loc])]
-    (fn [loc query]
-      [:div#relModal.modal.fade {:role "dialog"}
-       [:div.modal-dialog
-        [:div.modal-content
-         [:div.modal-header [:h3 "Manage Relationships"]]
-         [:div.modal-body
-          (when @model [relationship-form loc {:query query :model @model}])]
-         [:div.modal-footer
-          [:div.btn-toolbar.pull-right
-           [:button.btn.btn-default
-            {:data-dismiss "modal"}
-            "Cancel"]
-           [:button.btn.btn-success
-            {:data-dismiss "modal"
-             :on-click (fn [] (dispatch [:rel-manager/apply-changes loc]))}
-            "Apply Changes"]]]]]])))
+    (fn [loc]
+      [:div.btn-toolbar.pull-right
+       [:button.btn.btn-default {:on-click (fn [] (dispatch [:prep-modal loc nil]))} "Cancel"]
+       [:button.btn.btn-success
+        {:on-click (fn []
+                     ; Apply the changes
+                     (dispatch [:rel-manager/apply-changes loc])
+                     ; Close the modal by clearing the markup from app-db
+                     (dispatch [:prep-modal loc nil]))}
+        "Apply Changes"]])))
+
+(defn build-modal [loc]
+  {:header [:h3 "Manage Relationships"]
+   :body [modal-body loc]
+   :footer [modal-footer loc]})
 
 (defn main [loc]
   (let [rel-query (subscribe [:rel-manager/query loc])]
@@ -80,8 +86,9 @@
       [:div
        [:div.btn-group
         [:button.btn.btn-default
-         {:on-click (fn [] (dispatch [:rel-manager/reset loc]))
-          :data-toggle "modal"
-          :data-target "#relModal"}
-         [:i.fa.fa-share-alt] " Manage Relationships"]]
-        [modal loc @rel-query]])))
+         {:on-click (fn []
+                      ; Reset the state of the modal
+                      (dispatch [:rel-manager/reset loc])
+                      ; Build the modal markup and send it to app-db
+                      (dispatch [:prep-modal loc (build-modal loc)]))}
+         [:i.fa.fa-share-alt] " Manage Relationships"]]])))

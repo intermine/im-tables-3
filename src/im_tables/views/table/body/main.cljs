@@ -100,6 +100,7 @@
       (let [{:keys [on-click url vocab]} (get-in @settings [:links])]
 
         [:td
+         ;(or value [no-value])
          (if rows
            ; rows means outer-join, so show outer-join table
            [outer-join-table loc data view]
@@ -122,9 +123,13 @@
                                       (ocall :popover "destroy")))))}
               (or value [no-value])]]])]))))
 
+
 (defn table-row [loc row]
   (into [:tr]
         (map-indexed
           (fn [idx c]
-            ^{:key (str idx (:id c) (:column c))} [cell loc c])
+            ;(reagent/flush)
+            ^{:key idx} [cell loc c]
+            ;[:td (:value c)]
+            )
           row)))

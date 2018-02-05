@@ -21,7 +21,7 @@
                   (.getElementById js/document "app")))
 
 (defn ^:export init []
-  (re-frame/dispatch-sync [:initialize-db
+  #_(re-frame/dispatch-sync [:initialize-db
                            [:test :location]
                            {
                             :service {:root "www.flymine.org/query"}

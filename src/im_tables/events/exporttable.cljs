@@ -43,7 +43,7 @@
  ;;the main action to download files. This gets called by the download modal button.
  (sandbox)
  (fn [{db :db} [_ loc]]
-   (let [query-results (get-in db [:query-response :results])
+   (let [query-results (get-in db [:response :results])
          file-type ((get-in db [:settings :data-out :selected-format]) xsv)
          query (get-in db [:query])]
      (if (= (:file-type file-type) "fasta")

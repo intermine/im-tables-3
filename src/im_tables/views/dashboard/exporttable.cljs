@@ -54,10 +54,15 @@
 
 (defn exporttable [loc]
   [:button.btn.btn-default
-   {:data-toggle "modal"
-    :data-target "#testModal"
+   {
+    ;:data-toggle "modal"
+    ;:data-target "#testModal"
     :type "button"
     :on-click
     (fn [e]
-      (dispatch [:prep-modal loc (export-menu loc)]))}
+      (dispatch [:prep-modal loc (export-menu loc)])
+      ;(dispatch [:prep-modal loc [:div [:h1 {:on-click (fn [] (println "TEST"))} "Test"] [:p "thanks"]]])
+
+      )}
    [:i.fa.fa-download] " Export"])
+
