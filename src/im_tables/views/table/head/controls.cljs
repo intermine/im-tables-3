@@ -210,6 +210,8 @@
         {:on-click (fn [] (dispatch [:main/remove-view loc view]))
          :title (str "Remove " view " column")}]
        [:span.dropdown
+        {:ref (fn [e]
+                (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:filters/save-changes loc])))))}
         [:i.fa.fa-filter.dropdown-toggle.filter-icon
          {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
           :data-toggle "dropdown"
