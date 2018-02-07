@@ -189,27 +189,30 @@
     (let [added (not-empty (clojure.set/difference (set (:where (:temp-query db))) (set (:where (:query db)))))
           removed (not-empty (clojure.set/difference (set (:where (:query db))) (set (:where (:temp-query db)))))
           model (get-in db [:service :model])]
-      {:db (assoc db :query (get db :temp-query))
-       :dispatch [:im-tables.main/run-query loc]
-       :undo {:message [:div
-                        (when added
-                          [:div
-                           [:div "Added filters"]
-                           (into [:span]
-                                 (map (fn [{:keys [path op value]}]
-                                        [:div.table-history-detail
-                                         [:div (str (im-path/friendly model path))]
-                                         [:div (str op " " value)]]) added))])
-                        (when removed
-                          [:div
-                           [:div "Removed filters"]
-                           (into [:span]
-                                 (map (fn [{:keys [path op value]}]
-                                        [:div.table-history-detail
-                                         [:div (str (im-path/friendly model path))]
-                                         [:div (str op " " value)]]) removed))])]
-              :location loc}
-       })))
+      ; This event is usually fired when the filter dropdown closed which means it's fired
+      ; a lot even when not necessary. To prevent multiple blank undos from piling up, we only
+      ; attach the :undo side effect when something was actually added or removed from the query
+      (cond->
+        {:db (assoc db :query (get db :temp-query))}
+        (or added removed) (assoc :undo {:message [:div
+                                                   (when added
+                                                     [:div
+                                                      [:div "Added filters"]
+                                                      (into [:span]
+                                                            (map (fn [{:keys [path op value]}]
+                                                                   [:div.table-history-detail
+                                                                    [:div (str (im-path/friendly model path))]
+                                                                    [:div (str op " " value)]]) added))])
+                                                   (when removed
+                                                     [:div
+                                                      [:div "Removed filters"]
+                                                      (into [:span]
+                                                            (map (fn [{:keys [path op value]}]
+                                                                   [:div.table-history-detail
+                                                                    [:div (str (im-path/friendly model path))]
+                                                                    [:div (str op " " value)]]) removed))])]
+                                         :location loc})
+        (or added removed) (assoc :dispatch [:im-tables.main/run-query loc])))))
 
 ;;;; TRANSIENT VALUES
 
