@@ -84,7 +84,7 @@
                                                [:div (last display-name)]]])))))]
                 (into [:tbody] (map (fn [row]
                                       (into [:tr] (map (fn [cell]
-                                                         [:td (:value cell)]) row))) preview-rows))]]
+                                                         [:td [:a (:value cell)]]) row))) preview-rows))]]
               ; Otherwise show the interactive React components
               [:div
                [dashboard/main location @response @pagination]
