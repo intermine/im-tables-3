@@ -84,7 +84,10 @@
                                                [:div (last display-name)]]])))))]
                 (into [:tbody] (map (fn [row]
                                       (into [:tr] (map (fn [cell]
-                                                         [:td [:a (:value cell)]]) row))) preview-rows))]]
+                                                         [:td
+                                                          (if-let [value (:value cell)]
+                                                            [:a value]
+                                                            [:a.no-value "NO VALUE"])]) row))) preview-rows))]]
               ; Otherwise show the interactive React components
               [:div
                [dashboard/main location @response @pagination]
