@@ -1,4 +1,4 @@
-(defproject org.intermine/im-tables "0.4.0"
+(defproject org.intermine/im-tables "0.5.0"
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.671"]
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
@@ -8,7 +8,7 @@
                  [ring "1.6.3"]
                  [cljs-http "0.1.44"]
                  [day8.re-frame/async-flow-fx "0.0.8"]
-                 [day8.re-frame/undo "0.3.2"]
+                 [joshkh/ctrlz "0.3.0"]
                  [binaryage/oops "0.5.6"]
                  [inflections "0.13.0"]
                  [re-frisk "0.5.2"]

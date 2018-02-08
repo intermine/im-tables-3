@@ -98,7 +98,6 @@
         settings (subscribe [:settings/settings loc])]
     (fn [loc {:keys [value id view rows] :as data}]
       (let [{:keys [on-click url vocab]} (get-in @settings [:links])]
-
         [:td
          ;(or value [no-value])
          (if rows
@@ -108,7 +107,10 @@
            [:span {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
             [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
                        :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
-             [:a {:on-click (fn []
+             [:a {:href (url (merge
+                               (:value @(subscribe [:summary/item-details loc id]))
+                               (get-in @settings [:links :vocab])))
+                  :on-click (fn []
                               (when (and on-click value)
                                 (do
                                   ; Call the provided on-click

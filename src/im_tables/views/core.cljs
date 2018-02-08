@@ -43,7 +43,8 @@
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
     (reagent/create-class
       {
-       :component-will-mount (fn [this] (dispatch [:im-tables/boot location (reagent/props this)]))
+       :component-will-mount (fn [this]
+                               (dispatch [:im-tables/boot location (reagent/props this)]))
        :reagent-render
        (fn [{:keys [location query]}]
 
@@ -83,7 +84,10 @@
                                                [:div (last display-name)]]])))))]
                 (into [:tbody] (map (fn [row]
                                       (into [:tr] (map (fn [cell]
-                                                         [:td (:value cell)]) row))) preview-rows))]]
+                                                         [:td
+                                                          (if-let [value (:value cell)]
+                                                            [:a value]
+                                                            [:a.no-value "NO VALUE"])]) row))) preview-rows))]]
               ; Otherwise show the interactive React components
               [:div
                [dashboard/main location @response @pagination]
