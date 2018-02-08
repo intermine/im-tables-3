@@ -82,11 +82,7 @@
                                     (when (and (= keycode 13) (not (clojure.string/blank? input)))
                                       (submit-constraint)
                                       )))}]]
-       [:button.btn.btn-success
-        {:on-click (fn [] (dispatch
-                            [:filters/add-constraint loc @state]
-                            (reset! state {:path path :op "=" :value nil})))
-         :type "button"} [:i.fa.fa-plus]]])))
+       ])))
 
 (defn constraint []
   (fn [loc {:keys [path op value values code] :as const}]
@@ -110,7 +106,8 @@
     (fn [loc view]
       (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
             dropdown (reagent/current-component)]
-        [:form.form.filter-view {:on-submit (fn [e]
+        [:form.form.filter-view {:style {:padding "5px"}
+                                 :on-submit (fn [e]
                                               (ocall e "preventDefault")
                                               (force-close dropdown)
                                               (dispatch [:filters/save-changes loc]))}
@@ -122,21 +119,26 @@
           [:h4 "Add a new filter:"]
           ; Note that we're storing the blank constraint's
           [blank-constraint loc view blank-constraint-atom]]
-         [:div.toolbar
-          [:button.btn.btn-default
-           {:type "button"
-            :data-toggle "dropdown"} "Cancel"]
-          [:input.btn.btn-primary.pull-right
-           {:type "submit"
-            :on-click (fn []
-                        (when (not (clojure.string/blank? (:value @blank-constraint-atom)))
-                          (dispatch
-                            [:filters/add-constraint loc @blank-constraint-atom]
-                            (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
-            ; don't put :data-toggle "dropdown" in here, it stops
-            ; the form submitting.... silently. Nice.
-            :value "Apply"
-            }]]]))))
+         [:div.btn-toolbar.pull-right
+          [:div.btn-group
+           [:button.btn.btn-default
+            {:on-click (fn [] (dispatch
+                                [:filters/add-constraint loc @blank-constraint-atom]
+                                (reset! blank-constraint-atom {:path view :op "=" :value nil})))
+             :type "button"} "Add More"]]
+
+          [:div.btn-group
+           [:input.btn.btn-primary.pull-right
+            {:type "submit"
+             :on-click (fn []
+                         (when (not (clojure.string/blank? (:value @blank-constraint-atom)))
+                           (dispatch
+                             [:filters/add-constraint loc @blank-constraint-atom]
+                             (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
+             ; don't put :data-toggle "dropdown" in here, it stops
+             ; the form submitting.... silently. Nice.
+             :value "Apply"
+             }]]]]))))
 
 (defn too-many-values []
   (fn []
