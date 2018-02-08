@@ -58,37 +58,35 @@
                           :on-change (fn [e] (on-change {:value (.. e -target -value)}))
                           :value value}]))
 
-(defn blank-constraint [loc path]
-  (let [state (reagent/atom {:path path :op "=" :value nil})]
-    (fn [loc path]
-      (let [submit-constraint (fn [] (dispatch
-                                       [:filters/add-constraint loc @state]
-                                       (reset! state {:path path :op "=" :value nil})))]
-        [:div.imtable-constraint
-         [:div.constraint-operator
-          [constraint-dropdown
-           {:value (:op @state)
-            :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
-         [:div.constraint-input [:input.form-control
-                                 {:type "text"
-                                  :value (:value @state)
-                                  :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
-                                  ;:on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
-                                  ;                   (submit-constraint)))
-                                  :on-key-press
-                                  (fn [e]
-                                    (let [keycode (.-charCode e)
-                                          input (.. e -target -value)]
-                                      ;; submit when pressing enter & not blank.
-                                      (when (and (= keycode 13) (not (clojure.string/blank? input)))
-                                        (submit-constraint)
-                                        )))
-                                  }]]
-         [:button.btn.btn-success
-          {:on-click (fn [] (dispatch
-                              [:filters/add-constraint loc @state]
-                              (reset! state {:path path :op "=" :value nil})))
-           :type "button"} [:i.fa.fa-plus]]]))))
+(defn blank-constraint [loc path state]
+  (fn [loc path]
+    (let [submit-constraint (fn [] (dispatch
+                                     [:filters/add-constraint loc @state]
+                                     (reset! state {:path path :op "=" :value nil})))]
+      [:div.imtable-constraint
+       [:div.constraint-operator
+        [constraint-dropdown
+         {:value (:op @state)
+          :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
+       [:div.constraint-input [:input.form-control
+                               {:type "text"
+                                :value (:value @state)
+                                :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
+                                ;:on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
+                                ;                   (submit-constraint)))
+                                :on-key-press
+                                (fn [e]
+                                  (let [keycode (.-charCode e)
+                                        input (.. e -target -value)]
+                                    ;; submit when pressing enter & not blank.
+                                    (when (and (= keycode 13) (not (clojure.string/blank? input)))
+                                      (submit-constraint)
+                                      )))}]]
+       [:button.btn.btn-success
+        {:on-click (fn [] (dispatch
+                            [:filters/add-constraint loc @state]
+                            (reset! state {:path path :op "=" :value nil})))
+         :type "button"} [:i.fa.fa-plus]]])))
 
 (defn constraint []
   (fn [loc {:keys [path op value values code] :as const}]
@@ -105,32 +103,36 @@
          :type "button"} [:i.fa.fa-times]]])))
 
 
-(defn filter-view [loc view]
+(defn filter-view [loc view blank-constraint-atom]
   (let [response (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
         query (subscribe [:main/temp-query loc view])]
     (fn [loc view]
       (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
             dropdown (reagent/current-component)]
-        [:form.form.filter-view {
-                                 :on-submit (fn [e]
+        [:form.form.filter-view {:on-submit (fn [e]
                                               (ocall e "preventDefault")
                                               (force-close dropdown)
-                                              (dispatch [:filters/save-changes loc])
-                                              )}
+                                              (dispatch [:filters/save-changes loc]))}
          [:div.alert.alert-success
           (if (seq active-filters)
             (into [:div [:h4 "Active filters:"]] active-filters)
             [:h4 "No active filters"])]
          [:div.alert.alert-default
           [:h4 "Add a new filter:"]
-          [blank-constraint loc view]]
+          ; Note that we're storing the blank constraint's
+          [blank-constraint loc view blank-constraint-atom]]
          [:div.toolbar
           [:button.btn.btn-default
            {:type "button"
             :data-toggle "dropdown"} "Cancel"]
           [:input.btn.btn-primary.pull-right
            {:type "submit"
+            :on-click (fn []
+                        (when (not (clojure.string/blank? (:value @blank-constraint-atom)))
+                          (dispatch
+                            [:filters/add-constraint loc @blank-constraint-atom]
+                            (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
             ; don't put :data-toggle "dropdown" in here, it stops
             ; the form submitting.... silently. Nice.
             :value "Apply"
@@ -175,11 +177,7 @@
                       (->> (filter (partial has-text? @text-filter) (:results @response))
                            (map (fn [{:keys [count item]}]
                                   [:tr.hoverable
-                                   {:on-click (fn [e]
-                                                ;(swap! local-state conj item)
-                                                ;(js/console.log "L" @local-state)
-                                                (dispatch [:select/toggle-selection loc view item])
-                                                )}
+                                   {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
                                    [:td
                                     [:input
                                      {:on-change (fn [])
@@ -197,6 +195,37 @@
                 [:i.fa.fa-filter]
                 (str " Filter")]]])))})))
 
+
+(defn filter-dropdown-menu [loc view idx col-count]
+  (let [query (subscribe [:main/temp-query loc view])
+        active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
+
+        blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})]
+    (fn []
+      [:span.dropdown
+       ; Bootstrap and ReactJS don't always mix well. Components that make up dropdown menus are only
+       ; mounted (reactjs) once and then their visibility is toggled (bootstrap). These means any local state
+       ; in the dropdown menu does NOT get reset when the dropdown menu disappears because its never really unmounts.
+       ; This was causing the new constraint textbox to retain its value if a user entered something but changed their
+       ; mind and closed the dropdown. Reopening it would show what they previously entered. Making it look like it had been applied.;
+       ; To fix this we've create the black constraint local atom all the way up here at the dropdown level so that we can reset
+       ; it manually, and then we pass the atom down to the black constraint component. Lame.
+       {:on-click (fn []
+                    ; Reset the blank constraint atom when the dropdown is opened
+                    (reset! blank-constraint-atom {:path view :op "=" :value nil}))
+        :ref (fn [e]
+               ; *Try* to save the changes every time the dropdown is closed, even by just clicking off it.
+               ; This means a user can remove a handful of filters without having to click Apply.
+               ; The event will do a diff to make sure something has actually changed before rerunning the query
+               (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:filters/save-changes loc])))))}
+       [:i.fa.fa-filter.dropdown-toggle.filter-icon
+        {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
+         :data-toggle "dropdown"
+         :class (cond active-filters? "active-filter")
+         :title (str "Filter " view " column")}]
+       ; Crudely try to draw the dropdown near the middle of the page
+       [:div.dropdown-menu {:class (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")} [filter-view loc view blank-constraint-atom]]])))
+
 (defn toolbar []
   (fn [loc view idx col-count]
     (let [query (subscribe [:main/temp-query loc view])
@@ -209,15 +238,7 @@
        [:i.fa.fa-times.remove-icon
         {:on-click (fn [] (dispatch [:main/remove-view loc view]))
          :title (str "Remove " view " column")}]
-       [:span.dropdown
-        {:ref (fn [e]
-                (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:filters/save-changes loc])))))}
-        [:i.fa.fa-filter.dropdown-toggle.filter-icon
-         {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
-          :data-toggle "dropdown"
-          :class (cond active-filters? "active-filter")
-          :title (str "Filter " view " column")}]
-        [:div.dropdown-menu {:class direction} [filter-view loc view]]]
+       [filter-dropdown-menu loc view idx col-count]
        [:span.dropdown
         {:ref (fn [e]
                 ; Bind an event to clear the selected items when the dropdown closes.
