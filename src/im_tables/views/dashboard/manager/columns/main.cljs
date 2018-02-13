@@ -10,7 +10,9 @@
   (let [expanded-map (reagent/atom {})]
     (fn [loc class details model current-path selected views]
       (let [attributes (get details :attributes)
-            collections (get details :collections)]
+            collections (get details :collections)
+            references (get details :references)
+            relationships (concat collections references)]
         [:ul.tree-view.list-unstyled.no-select
          (into [:ul.attributes.list-unstyled]
                (map (fn [{:keys [name type]}]
@@ -41,7 +43,7 @@
                             (plural (last (impath/display-name model (join "." (conj current-path name))))))]
                          (if (get @expanded-map name)
                            [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected views])]))
-                    (sort-by (comp clojure.string/upper-case :referencedType) (vals collections))))]))))
+                    (sort-by (comp clojure.string/upper-case :referencedType) (vals relationships))))]))))
 
 (defn tree-view []
   (fn [loc model query selected]
