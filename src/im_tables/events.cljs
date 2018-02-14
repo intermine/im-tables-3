@@ -147,7 +147,6 @@
   :filters/update-constraint
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc new-constraint]]
-    (js/console.log "new constrain" new-constraint)
     {:db (update-in db [:temp-query :where]
                     (fn [constraints]
                       (map (fn [constraint]
