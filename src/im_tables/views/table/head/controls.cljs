@@ -153,7 +153,7 @@
       [:h3 "Column summary not available"]
       [:p "Summaries can only be made on columns with 1,000 values or less."]]]))
 
-(defn column-summary [loc view]
+(defn column-summary [loc view selected-subview]
   (let [response    (subscribe [:selection/response loc view])
         selections  (subscribe [:selection/selections loc view])
         text-filter (subscribe [:selection/text-filter loc view])]
@@ -198,6 +198,7 @@
                 {:type     "button"
                  :on-click (fn []
                              (dispatch [:main/apply-summary-filter loc view])
+                             (reset! selected-subview nil)
                              (close-fn))}
                 [:i.fa.fa-filter]
                 (str " Filter")]]])))})))
@@ -281,7 +282,6 @@
 
          [filter-dropdown-menu loc view idx col-count subviews]
 
-
          [:span.dropdown
           {:ref (fn [e]
                   ; Bind an event to clear the selected items when the dropdown closes.
@@ -290,7 +290,7 @@
                   ; (for instance, highlighting the histogram).
                   ; Use some-> because e isn't guaranteed to hold a value
                   (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
-                                                                 (dispatch [:select/clear-selection loc view])
+                                                                 (dispatch [:select/clear-selection loc (or @selected-subview view)])
                                                                  ; This view might be part of a join and therefore
                                                                  ; nested in the column, so clear the local state
                                                                  ; just in case
@@ -300,7 +300,7 @@
            {:title (str "Summarise " view " column")
             :class direction}
            (if-not subviews
-             [column-summary loc view]
+             [column-summary loc view selected-subview]
              (if-not @selected-subview
                [:form.form
                 {:style {:padding "10px"}}
@@ -311,5 +311,5 @@
                                    (fn []
                                      (reset! selected-subview subview))}
                               [:a (string/join " > " (rest (im-path/display-name @model subview)))]]) subviews))]
-               [column-summary loc @selected-subview]
+               [column-summary loc @selected-subview selected-subview]
                ))]]]))))
