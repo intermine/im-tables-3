@@ -30,6 +30,7 @@
                                             :query {:from "Gene"
                                                     :select ["symbol"
                                                              "secondaryIdentifier"
+                                                             "dataSets.description"
                                                              "primaryIdentifier"
                                                              "organism.name"
                                                              "dataSets.name"]

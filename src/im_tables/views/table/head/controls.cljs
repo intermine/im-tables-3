@@ -3,6 +3,8 @@
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
             [im-tables.views.common :refer [no-value]]
+            [imcljs.path :as im-path]
+            [clojure.string :as string]
             [oops.core :refer [oget ocall ocall! oapply]]))
 
 
@@ -10,14 +12,14 @@
   (fn [loc view val]
     [:div.inline-filter [:i.fa.fa-filter]
      [:input.form-control
-      {:type "text"
-       :value val
+      {:type        "text"
+       :value       val
        :placeholder "Search for a value..."
-       :on-change (fn [e]
-                    (dispatch [:select/set-text-filter
-                               loc
-                               view
-                               (oget e :target :value)]))}]]))
+       :on-change   (fn [e]
+                      (dispatch [:select/set-text-filter
+                                 loc
+                                 view
+                                 (oget e :target :value)]))}]]))
 
 (defn force-close
   "Force a dropdown to close "
@@ -44,7 +46,7 @@
 (defn constraint-dropdown []
   (fn [{:keys [value on-change]}]
     [:select.form-control
-     {:value (if value value "=")
+     {:value     (if value value "=")
       :on-change (fn [e] (on-change {:op (.. e -target -value)}))}
      [:option {:value ">"} "greater than"]
      [:option {:value "<"} "less than"]
@@ -54,9 +56,9 @@
 
 (defn constraint-text []
   (fn [{:keys [value on-change]}]
-    [:input.form-control {:type "text"
+    [:input.form-control {:type      "text"
                           :on-change (fn [e] (on-change {:value (.. e -target -value)}))
-                          :value value}]))
+                          :value     value}]))
 
 (defn blank-constraint [loc path state]
   (fn [loc path]
@@ -66,22 +68,22 @@
       [:div.imtable-constraint
        [:div.constraint-operator
         [constraint-dropdown
-         {:value (:op @state)
+         {:value     (:op @state)
           :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
        [:div.constraint-input [:input.form-control
-                               {:type "text"
-                                :value (:value @state)
+                               {:type      "text"
+                                :value     (:value @state)
                                 :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
                                 ;:on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
                                 ;                   (submit-constraint)))
                                 :on-key-press
-                                (fn [e]
-                                  (let [keycode (.-charCode e)
-                                        input (.. e -target -value)]
-                                    ;; submit when pressing enter & not blank.
-                                    (when (and (= keycode 13) (not (clojure.string/blank? input)))
-                                      (submit-constraint)
-                                      )))}]]
+                                           (fn [e]
+                                             (let [keycode (.-charCode e)
+                                                   input   (.. e -target -value)]
+                                               ;; submit when pressing enter & not blank.
+                                               (when (and (= keycode 13) (not (clojure.string/blank? input)))
+                                                 (submit-constraint)
+                                                 )))}]]
        ])))
 
 (defn constraint []
@@ -89,26 +91,29 @@
     (letfn [(on-change [new-value] (dispatch [:filters/update-constraint loc (merge const new-value)]))]
       [:div.imtable-constraint
        [:div.constraint-operator
-        [constraint-dropdown {:value op
+        [constraint-dropdown {:value     op
                               :on-change on-change}]]
        [:div.constraint-input
-        [constraint-text {:value (or value values)
+        [constraint-text {:value     (or value values)
                           :on-change on-change}]]
        [:button.btn.btn-danger
         {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
-         :type "button"} [:i.fa.fa-times]]])))
+         :type     "button"} [:i.fa.fa-times]]])))
 
 
-(defn filter-view [loc view blank-constraint-atom]
-  (let [response (subscribe [:selection/response loc view])
+(defn filter-view [loc view blank-constraint-atom selected-subview]
+  (let [response   (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
-        query (subscribe [:main/temp-query loc view])]
+        query      (subscribe [:main/temp-query loc view])]
     (fn [loc view]
       (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
-            dropdown (reagent/current-component)]
-        [:form.form.filter-view {:style {:padding "5px"}
+            dropdown       (reagent/current-component)]
+        [:form.form.filter-view {:style     {:padding "5px"}
+                                 :on-click (fn [e]
+                                             (ocall e :stopPropagation))
                                  :on-submit (fn [e]
                                               (ocall e "preventDefault")
+                                              (reset! selected-subview nil)
                                               (force-close dropdown)
                                               (dispatch [:filters/save-changes loc]))}
          [:div.alert.alert-success
@@ -125,11 +130,11 @@
             {:on-click (fn [] (dispatch
                                 [:filters/add-constraint loc @blank-constraint-atom]
                                 (reset! blank-constraint-atom {:path view :op "=" :value nil})))
-             :type "button"} "Add More"]]
+             :type     "button"} "Add More"]]
 
           [:div.btn-group
            [:input.btn.btn-primary.pull-right
-            {:type "submit"
+            {:type     "submit"
              :on-click (fn []
                          (when (not (clojure.string/blank? (:value @blank-constraint-atom)))
                            (dispatch
@@ -137,7 +142,7 @@
                              (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
              ; don't put :data-toggle "dropdown" in here, it stops
              ; the form submitting.... silently. Nice.
-             :value "Apply"
+             :value    "Apply"
              }]]]]))))
 
 (defn too-many-values []
@@ -149,8 +154,8 @@
       [:p "Summaries can only be made on columns with 1,000 values or less."]]]))
 
 (defn column-summary [loc view]
-  (let [response (subscribe [:selection/response loc view])
-        selections (subscribe [:selection/selections loc view])
+  (let [response    (subscribe [:selection/response loc view])
+        selections  (subscribe [:selection/selections loc view])
         text-filter (subscribe [:selection/text-filter loc view])]
     (reagent/create-class
       {:component-will-mount
@@ -160,7 +165,7 @@
        :reagent-render
        (fn [loc view]
          (let [local-state (reagent/atom [])
-               close-fn (partial force-close (reagent/current-component))]
+               close-fn    (partial force-close (reagent/current-component))]
            (if (false? @response)
              [too-many-values]
              [:form.form.column-summary
@@ -170,9 +175,9 @@
                [:table.table.table-striped.table-condensed
                 [:thead [:tr [:th
                               (if (empty? @selections)
-                                [:span {:title "Select all"
+                                [:span {:title    "Select all"
                                         :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
-                                [:span {:title "Deselect all"
+                                [:span {:title    "Deselect all"
                                         :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
                               ] [:th "Item"] [:th "Count"]]]
                 (into [:tbody]
@@ -183,14 +188,14 @@
                                    [:td
                                     [:input
                                      {:on-change (fn [])
-                                      :checked (contains? @selections item)
-                                      :type "checkbox"}]]
+                                      :checked   (contains? @selections item)
+                                      :type      "checkbox"}]]
                                    [:td (if item item [no-value])]
                                    [:td
                                     [:div count]]]))))]]
               [:div.btn-toolbar.column-summary-toolbar
                [:button.btn.btn-primary
-                {:type "button"
+                {:type     "button"
                  :on-click (fn []
                              (dispatch [:main/apply-summary-filter loc view])
                              (close-fn))}
@@ -199,11 +204,12 @@
 
 
 (defn filter-dropdown-menu [loc view idx col-count]
-  (let [query (subscribe [:main/temp-query loc view])
-        active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
-
-        blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})]
-    (fn []
+  (let [query                 (subscribe [:main/temp-query loc view])
+        active-filters?       (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
+        blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})
+        selected-subview      (reagent/atom nil)
+        model                 (subscribe [:assets/model loc])]
+    (fn [loc view idx col-count subviews]
       [:span.dropdown
        ; Bootstrap and ReactJS don't always mix well. Components that make up dropdown menus are only
        ; mounted (reactjs) once and then their visibility is toggled (bootstrap). These means any local state
@@ -215,42 +221,95 @@
        {:on-click (fn []
                     ; Reset the blank constraint atom when the dropdown is opened
                     (reset! blank-constraint-atom {:path view :op "=" :value nil}))
-        :ref (fn [e]
-               ; *Try* to save the changes every time the dropdown is closed, even by just clicking off it.
-               ; This means a user can remove a handful of filters without having to click Apply.
-               ; The event will do a diff to make sure something has actually changed before rerunning the query
-               (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:filters/save-changes loc])))))}
+        :ref      (fn [e]
+                    ; *Try* to save the changes every time the dropdown is closed, even by just clicking off it.
+                    ; This means a user can remove a handful of filters without having to click Apply.
+                    ; The event will do a diff to make sure something has actually changed before rerunning the query
+                    (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
+                                                                   (dispatch [:filters/save-changes loc])
+                                                                   (reset! selected-subview nil)))))}
        [:i.fa.fa-filter.dropdown-toggle.filter-icon
-        {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
+        {:on-click    (fn [] (dispatch [:main/set-temp-query loc]))
          :data-toggle "dropdown"
-         :class (cond active-filters? "active-filter")
-         :title (str "Filter " view " column")}]
+         :class       (cond active-filters? "active-filter")
+         :title       (str "Filter " view " column")}]
        ; Crudely try to draw the dropdown near the middle of the page
-       [:div.dropdown-menu {:class (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")} [filter-view loc view blank-constraint-atom]]])))
+       [:div.dropdown-menu {:class (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")}
+        (if-not subviews
+          [filter-view loc view blank-constraint-atom selected-subview]
+          (if-not @selected-subview
+            [:form.form
+             {:style {:padding "10px"}}
+             [:p "Selected a nested column to filter"]
+             (into [:ul.list-unstyled]
+                   (map (fn [subview]
+                          [:li {:on-click
+                                (fn [e]
+                                  (ocall e :stopPropagation)
+                                  (reset! selected-subview subview)
+                                  (reset! blank-constraint-atom {:path subview :op "=" :value nil}))}
+                           [:a (string/join " > " (rest (im-path/display-name @model subview)))]]) subviews))]
+            [:div
+             [filter-view loc @selected-subview blank-constraint-atom selected-subview]]
+            ))
+
+
+
+
+
+
+        ;[filter-view loc view blank-constraint-atom]
+
+        ]])))
 
 (defn toolbar []
-  (fn [loc view idx col-count]
-    (let [query (subscribe [:main/temp-query loc view])
-          active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
-          direction (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")]
-      [:div.summary-toolbar
-       [:i.fa.fa-sort.sort-icon
-        {:on-click (fn [] (dispatch [:main/sort-by loc view]))
-         :title (str "Sort " view " column")}]
-       [:i.fa.fa-times.remove-icon
-        {:on-click (fn [] (dispatch [:main/remove-view loc view]))
-         :title (str "Remove " view " column")}]
-       [filter-dropdown-menu loc view idx col-count]
-       [:span.dropdown
-        {:ref (fn [e]
-                ; Bind an event to clear the selected items when the dropdown closes.
-                ; Why don't we just avoid state all together and pick up the checkbox values
-                ; when the user clicks "Filter"? Because we still want to know what's selected
-                ; (for instance, highlighting the histogram).
-                ; Use some-> because e isn't guaranteed to hold a value
-                (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:select/clear-selection loc view])))))}
-        [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
-        [:div.dropdown-menu
-         {:title (str "Summarise " view " column")
-          :class direction}
-         [column-summary loc view]]]])))
+  (let [selected-subview (reagent/atom nil)]
+    (fn [loc view idx col-count subviews]
+      (let [query           (subscribe [:main/temp-query loc view])
+            active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
+            direction       (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")
+            model           (subscribe [:assets/model loc])]
+        [:div.summary-toolbar
+         [:i.fa.fa-sort.sort-icon
+          {:on-click (fn [] (dispatch [:main/sort-by loc view]))
+           :title    (str "Sort " view " column")}]
+         [:i.fa.fa-times.remove-icon
+          {:on-click (fn []
+                       (dispatch [:main/remove-view loc (if subviews (im-path/trim-to-last-class @model (first subviews)) view)]))
+           :title    (str "Remove " view " column")}]
+
+
+         [filter-dropdown-menu loc view idx col-count subviews]
+
+
+         [:span.dropdown
+          {:ref (fn [e]
+                  ; Bind an event to clear the selected items when the dropdown closes.
+                  ; Why don't we just avoid state all together and pick up the checkbox values
+                  ; when the user clicks "Filter"? Because we still want to know what's selected
+                  ; (for instance, highlighting the histogram).
+                  ; Use some-> because e isn't guaranteed to hold a value
+                  (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
+                                                                 (dispatch [:select/clear-selection loc view])
+                                                                 ; This view might be part of a join and therefore
+                                                                 ; nested in the column, so clear the local state
+                                                                 ; just in case
+                                                                 (reset! selected-subview nil)))))}
+          [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
+          [:div.dropdown-menu
+           {:title (str "Summarise " view " column")
+            :class direction}
+           (if-not subviews
+             [column-summary loc view]
+             (if-not @selected-subview
+               [:form.form
+                {:style {:padding "10px"}}
+                [:p "Selected a nested column to summarize"]
+                (into [:ul.list-unstyled]
+                      (map (fn [subview]
+                             [:li {:on-click
+                                   (fn []
+                                     (reset! selected-subview subview))}
+                              [:a (string/join " > " (rest (im-path/display-name @model subview)))]]) subviews))]
+               [column-summary loc @selected-subview]
+               ))]]]))))

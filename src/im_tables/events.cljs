@@ -166,6 +166,7 @@
   :filters/add-constraint
   (sandbox)
   (fn [{db :db} [_ loc new-constraint]]
+    (js/console.log "NEW" new-constraint)
     {:db (update-in db [:temp-query :where]
                     (fn [constraints]
                       (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))

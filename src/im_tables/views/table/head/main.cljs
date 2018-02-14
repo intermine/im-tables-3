@@ -16,7 +16,7 @@
 (defn header [loc]
   (let [model (subscribe [:assets/model loc])
         draggable? (reagent/atom true)]
-    (fn [loc {:keys [idx header view dragging-over dragging-item col-count] :as data}]
+    (fn [loc {:keys [idx header view dragging-over dragging-item col-count subviews] :as data}]
       (let [drag-class (cond
                          (and (= idx dragging-over) (< idx dragging-item)) "drag-left"
                          (and (= idx dragging-over) (> idx dragging-item)) "drag-right")
@@ -41,7 +41,7 @@
                            (ocall e "dataTransfer.setData" "text" (str "dragging column" view))
                            (dispatch [:style/dragging-item loc view]))
           :on-drag-end (fn [] (dispatch ^:flush-dom [:style/dragging-finished loc]))}
-         [controls/toolbar loc view idx col-count]
+         [controls/toolbar loc view idx col-count subviews]
          [:div
           [:div (last (drop-last display-name))]
           [:div (last display-name)]]]))))

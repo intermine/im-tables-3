@@ -119,14 +119,18 @@
             (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
 
 (defn replace-join-views
-  "Remove all occurrences of strings in a collection that begin with a value while
+  "
+
+  ; TODO - update description. This now GROUPS rather than replaces.
+
+  Remove all occurrences of strings in a collection that begin with a value while
    replacing the first occurrences of the match with the value
    ex: (replace-join-views [orange apple applepie applejuice banana apricot] apple)
    => [orange apple banana apricot]"
   [string-coll starts-with]
   (let [leading (take-while (partial head-missing? starts-with) string-coll)]
     (concat leading
-            [starts-with]
+            [(filter (partial head-contains? starts-with) (drop (count leading) string-coll))]
             (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
 
 (defn collection?
@@ -158,6 +162,7 @@
 ; to the grouped views [:query-response/views-sorted-by-joins] is useful elsewhere
 
 ; First move any views that are part of outer joins next to eachother:
+
 (reg-sub
   :query-response/views-sorted-by-joins
   (fn [[_ loc]]
@@ -165,7 +170,6 @@
      (subscribe [:query/joins loc])
      (subscribe [:assets/model loc])])
   (fn [[views joins model]]
-    (when (and model (js/console.log "D" (map (partial collection? model) joins))))
     (reduce (fn [total next] (group-by-starts-with total next)) views (filter (partial collection? model) joins))))
 
 ; ...then replace all views that are part of outer joins with the name of the outer joins:

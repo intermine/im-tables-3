@@ -5,12 +5,14 @@
             [im-tables.views.table.body.main :as table-body]
             [im-tables.views.dashboard.main :as dashboard]
             [imcljs.query :as q]
+            [imcljs.path :as im-path]
             [clojure.string :refer [split starts-with?]]))
 
 (defn table-head [loc]
-  (let [dragging-item (subscribe [:style/dragging-item loc])
-        dragging-over (subscribe [:style/dragging-over loc])
-        collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
+  (let [dragging-item   (subscribe [:style/dragging-item loc])
+        dragging-over   (subscribe [:style/dragging-over loc])
+        collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])
+        model           (subscribe [:assets/model loc])]
     (fn [views]
       [:thead
        (into [:tr]
@@ -18,18 +20,18 @@
                   (map-indexed (fn [idx h]
                                  ^{:key (get views idx)}
                                  [table-head/header loc
-                                  {:header h
+                                  {:header        (if-not (seq? h) h (when (and @model (first h)) (im-path/trim-to-last-class @model (first h))))
                                    :dragging-over @dragging-over
                                    :dragging-item @dragging-item
-                                   :loc loc
-                                   :idx idx
-                                   :subviews nil
-                                   :col-count (count @collapsed-views)
-                                   :view h}]))))])))
+                                   :loc           loc
+                                   :idx           idx
+                                   :subviews      (when (seq? h) h)
+                                   :col-count     (count @collapsed-views)
+                                   :view          (if-not (seq? h) h (when (and @model (first h)) (im-path/trim-to-last-class @model (first h))))}]))))])))
 
 (defn main [loc]
-  (let [dragging-item (subscribe [:style/dragging-item loc])
-        dragging-over (subscribe [:style/dragging-over loc])
+  (let [dragging-item   (subscribe [:style/dragging-item loc])
+        dragging-over   (subscribe [:style/dragging-over loc])
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
     (fn [loc {:keys [results views]} {:keys [limit start] :or {limit 10 start 0}}]
       [:div.relative
