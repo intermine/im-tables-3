@@ -40,7 +40,7 @@
 
 ; TODO - WIP - If assets are missing when a component is mounted then
 ; fetch them and/or run necessary queries
-(reg-event-fx :im-tables/boot
+(reg-event-fx :im-tables/load
               (sandbox)
               (fn [{db :db} [_ loc {:keys [query service location response settings] :as args}]]
                 {:db
@@ -76,7 +76,8 @@
 
 (reg-event-fx :im-tables/store-setup
               (sandbox)
-              (fn [{db :db} [_ loc {:keys [service response query]}]]
+              (fn [{db :db} [_ loc {:keys [service response query] :as input}]]
+                (js/console.log "store setup" loc input)
                 {:db (assoc db :service service :response response :query (im-query/sterilize-query query))
                  :dispatch [:im-tables.main/run-query loc]}))
 

@@ -165,7 +165,6 @@
   :filters/add-constraint
   (sandbox)
   (fn [{db :db} [_ loc new-constraint]]
-    (js/console.log "NEW" new-constraint)
     {:db (update-in db [:temp-query :where]
                     (fn [constraints]
                       (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))
@@ -341,7 +340,6 @@
 (defn move-nth
   "Shift an item from one index in a collection to another "
   [coll from-idx to-idx]
-  (js/console.log "WE" coll from-idx to-idx)
   (insert-nth (drop-nth from-idx coll) to-idx (nth coll from-idx)))
 
 (defn index
@@ -360,7 +358,6 @@
   (sandbox)
   (fn [db [_ loc view]]
     (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
-      (js/console.log "DR" outer-join? loc view)
       (if outer-join?
         ; If the column (view) being dragged is part of an outer join then get the idx of the first occurance
         (assoc-in db [:cache :dragging-item] (index (partial begins-with? view) (get-in db [:query :select])))
@@ -544,19 +541,19 @@
   (sandbox)
   (fn [{db :db} [_ loc merge?]]
     (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
-      ;(js/console.log "Running query: " loc (get db :query))
-      {:db (assoc-in db [:cache :column-summary] {})
-       ;:undo                   "Undo ran query"
-       :dispatch-n [^:flush-dom [:show-overlay loc]
-                    [:main/deconstruct loc]]
-       :im-tables/im-operation {:on-success (if merge?
-                                              ^:flush-dom [:main/merge-query-response loc pagination]
-                                              ^:flush-dom [:main/replace-query-response loc pagination])
-                                :op (partial fetch/table-rows
-                                             (get db :service)
-                                             (get db :query)
-                                             {:start start
-                                              :size (* limit (get-in db [:settings :buffer]))})}})))
+      (when loc
+        {:db (assoc-in db [:cache :column-summary] {})
+         ;:undo                   "Undo ran query"
+         :dispatch-n [^:flush-dom [:show-overlay loc]
+                      [:main/deconstruct loc]]
+         :im-tables/im-operation {:on-success (if merge?
+                                                ^:flush-dom [:main/merge-query-response loc pagination]
+                                                ^:flush-dom [:main/replace-query-response loc pagination])
+                                  :op (partial fetch/table-rows
+                                               (get db :service)
+                                               (get db :query)
+                                               {:start start
+                                                :size (* limit (get-in db [:settings :buffer]))})}}))))
 
 
 
