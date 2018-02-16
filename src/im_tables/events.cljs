@@ -15,7 +15,8 @@
             [imcljs.path :as im-path]
             [imcljs.query :as query]
             [oops.core :refer [oapply ocall oget]]
-            [clojure.string :refer [split join starts-with?]]))
+            [clojure.string :refer [split join starts-with?]]
+            [cljs.core.async :refer [close!]]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -542,21 +543,30 @@
 (reg-event-fx
   :im-tables.main/run-query
   (sandbox)
-  (fn [{db :db} [_ loc merge?]]
-    (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
-      ;(js/console.log "Running query: " loc (get db :query))
-      {:db (assoc-in db [:cache :column-summary] {})
-       ;:undo                   "Undo ran query"
-       :dispatch-n [^:flush-dom [:show-overlay loc]
-                    [:main/deconstruct loc]]
-       :im-tables/im-operation {:on-success (if merge?
-                                              ^:flush-dom [:main/merge-query-response loc pagination]
-                                              ^:flush-dom [:main/replace-query-response loc pagination])
-                                :op (partial fetch/table-rows
+  (let [previous-requests (atom {})]
+    (fn [{db :db} [_ loc merge?]]
+      (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
+        ;(js/console.log "Running query: " loc (get db :query))
+
+        ; Previous requests are stored in an atom containing a map. This is to prevent
+        ; one table from cancelling a pending request belonging to another table.
+
+        ; Close a previous request if it exists for this table's "location"
+        (some-> @previous-requests (get loc) close!)
+        ; Make a new request and replace the old request with the new one
+        (swap! previous-requests assoc loc (fetch/table-rows
                                              (get db :service)
                                              (get db :query)
                                              {:start start
-                                              :size (* limit (get-in db [:settings :buffer]))})}})))
+                                              :size (* limit (get-in db [:settings :buffer]))}))
+        {:db (assoc-in db [:cache :column-summary] {})
+         :dispatch-n [^:flush-dom [:show-overlay loc]
+                      [:main/deconstruct loc]]
+         :im-tables/im-operation-chan {:on-success (if merge?
+                                                     ^:flush-dom [:main/merge-query-response loc pagination]
+                                                     ^:flush-dom [:main/replace-query-response loc pagination])
+                                       ; Hand the request atom off to the effect that takes from it
+                                       :channel (get @previous-requests loc)}}))))
 
 
 
