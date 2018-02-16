@@ -20,7 +20,9 @@
                   (map-indexed (fn [idx h]
                                  ^{:key (get views idx)}
                                  [table-head/header loc
-                                  {:header        (if-not (seq? h) h (when (and @model (first h)) (im-path/trim-to-last-class @model (first h))))
+                                  {:header        (if-not (seq? h) h (when (and @model (first h))
+                                                                       (js/console.log "TRYING"  @model (first h))
+                                                                       (im-path/trim-to-last-class @model (first h))))
                                    :dragging-over @dragging-over
                                    :dragging-item @dragging-item
                                    :loc           loc
