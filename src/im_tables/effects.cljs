@@ -7,3 +7,8 @@
   :im-tables/im-operation
   (fn [{:keys [on-success on-failure response-format op params]}]
     (go (dispatch (conj on-success (<! (op)))))))
+
+(reg-fx
+  :im-tables/im-operation-channel
+  (fn [{:keys [on-success on-failure response-format channel params]}]
+    (go (dispatch (conj on-success (<! channel))))))

@@ -15,7 +15,8 @@
             [imcljs.path :as im-path]
             [imcljs.query :as query]
             [oops.core :refer [oapply ocall oget]]
-            [clojure.string :refer [split join starts-with?]]))
+            [clojure.string :refer [split join starts-with?]]
+            [cljs.core.async :refer [close!]]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -539,21 +540,25 @@
 (reg-event-fx
   :im-tables.main/run-query
   (sandbox)
-  (fn [{db :db} [_ loc merge?]]
-    (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
-      (when loc
-        {:db (assoc-in db [:cache :column-summary] {})
-         ;:undo                   "Undo ran query"
-         :dispatch-n [^:flush-dom [:show-overlay loc]
-                      [:main/deconstruct loc]]
-         :im-tables/im-operation {:on-success (if merge?
-                                                ^:flush-dom [:main/merge-query-response loc pagination]
-                                                ^:flush-dom [:main/replace-query-response loc pagination])
-                                  :op (partial fetch/table-rows
-                                               (get db :service)
-                                               (get db :query)
-                                               {:start start
-                                                :size (* limit (get-in db [:settings :buffer]))})}}))))
+  (let [previous-requests (atom {})]
+    (fn [{db :db} [_ loc merge?]]
+      (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
+        (when loc
+          (let [new-request (fetch/table-rows
+                              (get db :service)
+                              (get db :query)
+                              {:start start
+                               :size (* limit (get-in db [:settings :buffer]))})]
+            (some-> @previous-requests (get loc) close!)
+            (swap! previous-requests assoc loc new-request)
+            {:db (assoc-in db [:cache :column-summary] {})
+             ;:undo                   "Undo ran query"
+             :dispatch-n [^:flush-dom [:show-overlay loc]
+                          [:main/deconstruct loc]]
+             :im-tables/im-operation-channel {:on-success (if merge?
+                                                            ^:flush-dom [:main/merge-query-response loc pagination]
+                                                            ^:flush-dom [:main/replace-query-response loc pagination])
+                                              :channel new-request}}))))))
 
 
 
