@@ -3,8 +3,18 @@
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
             [im-tables.views.common :refer [no-value]]
-            [oops.core :refer [oget ocall ocall! oapply]]))
+            [goog.i18n.NumberFormat.Format]
+            [oops.core :refer [oget ocall ocall! oapply]])
+  (:import
+    (goog.i18n NumberFormat)
+    (goog.i18n.NumberFormat Format)))
 
+(def nff
+  (NumberFormat. Format/DECIMAL))
+
+(defn- nf
+  [num]
+  (.format nff (str num)))
 
 (defn filter-input []
   (fn [loc view val]
@@ -148,6 +158,46 @@
       [:h3 "Column summary not available"]
       [:p "Summaries can only be made on columns with 1,000 values or less."]]]))
 
+(def clj-min min)
+(def clj-max max)
+
+(defn numerical-column-summary []
+  (let [trimmer (reagent/atom {})]
+    (fn [loc view results]
+      (let [{:keys [min max average stdev]} (first results)]
+        [:form.form.column-summary
+         [:h5 (str "Showing numerical distribution")]
+         [histogram/numerical-histogram results @trimmer]
+         [:div.main-view
+          [:div.numerical-content-wrapper
+           [:table.table.table-condensed
+            [:thead
+             [:tr [:th "Min"] [:th "Max"] [:th "Average"] [:th "Std Deviation"]]]
+            [:tbody
+             [:tr [:td (nf min)] [:td (nf max)] [:td (nf average)] [:td (nf stdev)]]]]
+           [:div
+            [:label (str "Trim from " (nf (or (:from @trimmer) min)))]
+            [:input {:type "range"
+                     :min min
+                     :value (or (:from @trimmer) min)
+                     :max max
+                     :on-change (fn [e] (swap! trimmer assoc :from
+                                               (clj-min (or (:to @trimmer) max) (oget e :target :value))))}]
+            [:label (str "Trim to " (nf (or (:to @trimmer) max)))]
+            [:input {:type "range"
+                     :min min
+                     :value (or (:to @trimmer) max)
+                     :max max
+                     :on-change (fn [e] (swap! trimmer assoc :to
+                                               (clj-max (or (:from @trimmer) min) (oget e :target :value))))}]]
+           [:div.btn-toolbar.column-summary-toolbar
+            [:button.btn.btn-primary
+             {:type "button"
+              :on-click (fn []
+                          (dispatch [:main/apply-numerical-filter loc view @trimmer]))}
+             [:i.fa.fa-filter]
+             (str " Filter")]]]]]))))
+
 (defn column-summary [loc view]
   (let [response (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
@@ -163,39 +213,41 @@
                close-fn (partial force-close (reagent/current-component))]
            (if (false? @response)
              [too-many-values]
-             [:form.form.column-summary
-              [:div.main-view
-               [histogram/main (:results @response)]
-               [filter-input loc view @text-filter]
-               [:table.table.table-striped.table-condensed
-                [:thead [:tr [:th
-                              (if (empty? @selections)
-                                [:span {:title "Select all"
-                                        :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
-                                [:span {:title "Deselect all"
-                                        :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
-                              ] [:th "Item"] [:th "Count"]]]
-                (into [:tbody]
-                      (->> (filter (partial has-text? @text-filter) (:results @response))
-                           (map (fn [{:keys [count item]}]
-                                  [:tr.hoverable
-                                   {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                                   [:td
-                                    [:input
-                                     {:on-change (fn [])
-                                      :checked (contains? @selections item)
-                                      :type "checkbox"}]]
-                                   [:td (if item item [no-value])]
-                                   [:td
-                                    [:div count]]]))))]]
-              [:div.btn-toolbar.column-summary-toolbar
-               [:button.btn.btn-primary
-                {:type "button"
-                 :on-click (fn []
-                             (dispatch [:main/apply-summary-filter loc view])
-                             (close-fn))}
-                [:i.fa.fa-filter]
-                (str " Filter")]]])))})))
+             (if (contains? (first (:results @response)) :min)
+               [numerical-column-summary loc view (:results @response)]
+               [:form.form.column-summary
+                [:div.main-view
+                 [histogram/main (:results @response)]
+                 [filter-input loc view @text-filter]
+                 [:table.table.table-striped.table-condensed
+                  [:thead [:tr [:th
+                                (if (empty? @selections)
+                                  [:span {:title "Select all"
+                                          :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
+                                  [:span {:title "Deselect all"
+                                          :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
+                                ] [:th "Item"] [:th "Count"]]]
+                  (into [:tbody]
+                        (->> (filter (partial has-text? @text-filter) (:results @response))
+                             (map (fn [{:keys [count item]}]
+                                    [:tr.hoverable
+                                     {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
+                                     [:td
+                                      [:input
+                                       {:on-change (fn [])
+                                        :checked (contains? @selections item)
+                                        :type "checkbox"}]]
+                                     [:td (if item item [no-value])]
+                                     [:td
+                                      [:div count]]]))))]]
+                [:div.btn-toolbar.column-summary-toolbar
+                 [:button.btn.btn-primary
+                  {:type "button"
+                   :on-click (fn []
+                               (dispatch [:main/apply-summary-filter loc view])
+                               (close-fn))}
+                  [:i.fa.fa-filter]
+                  (str " Filter")]]]))))})))
 
 
 (defn filter-dropdown-menu [loc view idx col-count]

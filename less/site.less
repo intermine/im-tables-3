@@ -521,4 +521,35 @@
         background-color: #e7e7e7;
         padding: 5px;
     }
+
+    .histo {
+        background-color: @histogram-bg;
+        display: flex;
+        height: 75px;
+        box-sizing: border-box;
+        position: relative;
+        border-bottom: 1px solid black;
+        .histo-bucket {
+            flex: 1 0;
+            &.full {
+                background-color: @histogram-bars;
+                border-left: 1px solid white;
+                border-right: 1px solid white;
+            }
+        }
+        .trimmer {
+            position: absolute;
+            top: 0;
+            // left: 0;
+            bottom: 0;
+            // width: 100%;
+            background-color: orange;
+            opacity: 0.3;
+        }
+    }
+    .numerical-content-wrapper {
+        padding: 10px;
+    }
 }
+
+
