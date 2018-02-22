@@ -42,6 +42,7 @@
 
 (defn numerical-histogram []
   (fn [data-points trim]
+    (js/console.log "DP" data-points)
     (let [{:keys [buckets min max]} (first data-points)
           {:keys [from to]} trim
           by-bucket (group-by :bucket data-points)]

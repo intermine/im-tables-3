@@ -29,9 +29,13 @@
                                                                                      (:objectId vocab)))}}
                                             :query {:from "Protein"
                                                     :select ["primaryAccession" "molecularWeight"]
-                                                    :where [{:path "Protein.primaryAccession"
-                                                             :op "LIKE"
-                                                             :value "A0A021*"}]}
+                                                    :where [
+                                                            ;{:path "Protein.primaryAccession"
+                                                            ; :op "LIKE"
+                                                            ; :value "A0A021*"}
+                                                            {:path "Protein.molecularWeight"
+                                                             :op ">="
+                                                             :value "20000"}]}
                                             #_#_:query {:from "Gene"
                                                     :select ["symbol"
                                                              "secondaryIdentifier"

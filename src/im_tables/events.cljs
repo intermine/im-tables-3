@@ -438,24 +438,34 @@
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc view {:keys [from to]}]]
     (let [model (get-in db [:service :model])]
-      (js/console.log "got" loc view from to)
-      {:db db}
+      (js/console.log "from to" from to)
+
+      (let [existing-constraints (get-in db [:query :where])
+            existing-from? (not-empty (filter (comp (partial = [view ">="]) (juxt :path :op)) existing-constraints))
+            existing-to? (not-empty (filter (comp (partial = [view "<="]) (juxt :path :op)) existing-constraints))]
+        (js/console.log "e" existing-from?)
+        {:db (update-in db [:query :where] #(cond->> %
+                                                     (and from existing-from?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op ">=")) (assoc c :value from) c)))
+                                                     (and from (not existing-from?)) (cons {:path view :op ">=" :value from})
+                                                     (and to existing-to?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op "<=")) (assoc c :value to) c)))
+                                                     (and to (not existing-to?)) (cons {:path view :op "<=" :value to})))
+         :dispatch [:im-tables.main/run-query loc]})
       #_(if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
-        {:db (update-in db [:query :where] conj {:path view
-                                                 :op "ONE OF"
-                                                 :values current-selection})
-         :dispatch [:im-tables.main/run-query loc]
-         :undo {:location loc
-                :message [:div
-                          [:div [:div
-                                 (str (im-path/friendly model view))
-                                 [:div "Must be one of:"]]]
-                          (into [:div.table-history-detail]
-                                (map (fn [v]
-                                       [:div v]) current-selection))
-                          ]}
-         }
-        {:db db}))))
+          {:db (update-in db [:query :where] conj {:path view
+                                                   :op "ONE OF"
+                                                   :values current-selection})
+           :dispatch [:im-tables.main/run-query loc]
+           :undo {:location loc
+                  :message [:div
+                            [:div [:div
+                                   (str (im-path/friendly model view))
+                                   [:div "Must be one of:"]]]
+                            (into [:div.table-history-detail]
+                                  (map (fn [v]
+                                         [:div v]) current-selection))
+                            ]}
+           }
+          {:db db}))))
 
 (reg-event-fx
   :main/remove-view
