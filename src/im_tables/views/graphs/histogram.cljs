@@ -40,16 +40,18 @@
 (defn percent-of [min max number]
   (* 100 (/ (- number min) (- max min))))
 
+(def clj-min min)
+(def clj-max max)
+
 (defn numerical-histogram []
   (fn [data-points trim]
-    (js/console.log "DP" data-points)
     (let [{:keys [buckets min max]} (first data-points)
           {:keys [from to]} trim
           by-bucket (group-by :bucket data-points)]
       [:div.histo
        (when (or from to)
          [:div.trimmer
-          {:style {:left (str (percent-of min max (or from min)) "%")
-                   :right (str (- 100 (percent-of min max (or to max))) "%")}}])
+          {:style {:left (str (clj-max 0 (percent-of min max (or from min))) "%")
+                   :right (str (clj-min 100 (- 100 (percent-of min max (or to max)))) "%")}}])
        (map (fn [bucket-number]
               ^{:key bucket-number} [bucket bucket-number (get by-bucket bucket-number)]) (range 1 (inc buckets)))])))

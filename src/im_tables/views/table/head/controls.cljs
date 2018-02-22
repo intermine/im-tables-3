@@ -4,6 +4,8 @@
             [im-tables.views.graphs.histogram :as histogram]
             [im-tables.views.common :refer [no-value]]
             [goog.i18n.NumberFormat.Format]
+            [imcljs.path :as path]
+            [clojure.string :as string]
             [oops.core :refer [oget ocall ocall! oapply]])
   (:import
     (goog.i18n NumberFormat)
@@ -162,11 +164,14 @@
 (def clj-max max)
 
 (defn numerical-column-summary []
-  (let [trimmer (reagent/atom {})]
-    (fn [loc view results]
-      (let [{:keys [min max average stdev]} (first results)]
+  (let []
+    (fn [loc view results trimmer]
+      (let [model (subscribe [:assets/model loc])
+            {:keys [min max average stdev]} (first results)
+            close-fn (partial force-close (reagent/current-component))
+            display-name (str (string/join " " (take-last 2 (string/split (path/friendly @model view) " > "))) "s")]
         [:form.form.column-summary
-         [:h5 (str "Showing numerical distribution")]
+         [:h4 (str "Showing numerical distribution for " (count results) " " display-name)]
          [histogram/numerical-histogram results @trimmer]
          [:div.main-view
           [:div.numerical-content-wrapper
@@ -176,29 +181,40 @@
             [:tbody
              [:tr [:td (nf min)] [:td (nf max)] [:td (nf average)] [:td (nf stdev)]]]]
            [:div
-            [:label (str "Trim from " (nf (or (:from @trimmer) min)))]
+            [:label "Trim from " [:input {:type "text"
+                                          :value (or (:from @trimmer) min)
+                                          :on-change (fn [e]
+                                                       (swap! trimmer assoc :from (oget e :target :value)))}]]
             [:input {:type "range"
                      :min min
                      :value (or (:from @trimmer) min)
                      :max max
                      :on-change (fn [e] (swap! trimmer assoc :from
-                                               (clj-min (or (:to @trimmer) max) (oget e :target :value))))}]
-            [:label (str "Trim to " (nf (or (:to @trimmer) max)))]
+                                               (let [new-value (js/parseInt (clj-min (or (:to @trimmer) max) (oget e :target :value)))]
+                                                 (if (= new-value min) nil new-value))))}]
+            [:label "Trim to " [:input {:type "text"
+                                        :value (or (:to @trimmer) max)
+                                        :placeholder max
+                                        :on-change (fn [e]
+                                                     (swap! trimmer assoc :to (oget e :target :value)))}]]
             [:input {:type "range"
                      :min min
                      :value (or (:to @trimmer) max)
                      :max max
                      :on-change (fn [e] (swap! trimmer assoc :to
-                                               (clj-max (or (:from @trimmer) min) (oget e :target :value))))}]]
+                                               (let [new-value (js/parseInt (clj-max (or (:from @trimmer) min) (oget e :target :value)))]
+                                                 (if (= new-value max) nil new-value))))}]]
            [:div.btn-toolbar.column-summary-toolbar
             [:button.btn.btn-primary
              {:type "button"
               :on-click (fn []
-                          (dispatch [:main/apply-numerical-filter loc view @trimmer]))}
+                          (dispatch [:main/apply-numerical-filter loc view @trimmer])
+                          (close-fn)
+                          (reset! trimmer {}))}
              [:i.fa.fa-filter]
              (str " Filter")]]]]]))))
 
-(defn column-summary [loc view]
+(defn column-summary [loc view local-state]
   (let [response (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
         text-filter (subscribe [:selection/text-filter loc view])]
@@ -209,12 +225,11 @@
        (fn [])
        :reagent-render
        (fn [loc view]
-         (let [local-state (reagent/atom [])
-               close-fn (partial force-close (reagent/current-component))]
+         (let [ close-fn (partial force-close (reagent/current-component))]
            (if (false? @response)
              [too-many-values]
              (if (contains? (first (:results @response)) :min)
-               [numerical-column-summary loc view (:results @response)]
+               [numerical-column-summary loc view (:results @response) local-state]
                [:form.form.column-summary
                 [:div.main-view
                  [histogram/main (:results @response)]
@@ -284,7 +299,8 @@
   (fn [loc view idx col-count]
     (let [query (subscribe [:main/temp-query loc view])
           active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
-          direction (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")]
+          direction (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")
+          local-state (reagent/atom {})]
       [:div.summary-toolbar
        [:i.fa.fa-sort.sort-icon
         {:on-click (fn [] (dispatch [:main/sort-by loc view]))
@@ -300,9 +316,11 @@
                 ; when the user clicks "Filter"? Because we still want to know what's selected
                 ; (for instance, highlighting the histogram).
                 ; Use some-> because e isn't guaranteed to hold a value
-                (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:select/clear-selection loc view])))))}
+                (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
+                                                               (reset! local-state {})
+                                                               (dispatch [:select/clear-selection loc view])))))}
         [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
         [:div.dropdown-menu
          {:title (str "Summarise " view " column")
           :class direction}
-         [column-summary loc view]]]])))
+         [column-summary loc view local-state]]]])))

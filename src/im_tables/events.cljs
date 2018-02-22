@@ -147,7 +147,6 @@
   :filters/update-constraint
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc new-constraint]]
-    (js/console.log "new constrain" new-constraint)
     {:db (update-in db [:temp-query :where]
                     (fn [constraints]
                       (map (fn [constraint]
@@ -341,7 +340,6 @@
 (defn move-nth
   "Shift an item from one index in a collection to another "
   [coll from-idx to-idx]
-  (js/console.log "WE" coll from-idx to-idx)
   (insert-nth (drop-nth from-idx coll) to-idx (nth coll from-idx)))
 
 (defn index
@@ -360,7 +358,6 @@
   (sandbox)
   (fn [db [_ loc view]]
     (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
-      (js/console.log "DR" outer-join? loc view)
       (if outer-join?
         ; If the column (view) being dragged is part of an outer join then get the idx of the first occurance
         (assoc-in db [:cache :dragging-item] (index (partial begins-with? view) (get-in db [:query :select])))
@@ -433,39 +430,27 @@
          }
         {:db db}))))
 
+
 (reg-event-fx
   :main/apply-numerical-filter
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc view {:keys [from to]}]]
     (let [model (get-in db [:service :model])]
-      (js/console.log "from to" from to)
-
       (let [existing-constraints (get-in db [:query :where])
             existing-from? (not-empty (filter (comp (partial = [view ">="]) (juxt :path :op)) existing-constraints))
             existing-to? (not-empty (filter (comp (partial = [view "<="]) (juxt :path :op)) existing-constraints))]
-        (js/console.log "e" existing-from?)
         {:db (update-in db [:query :where] #(cond->> %
                                                      (and from existing-from?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op ">=")) (assoc c :value from) c)))
                                                      (and from (not existing-from?)) (cons {:path view :op ">=" :value from})
                                                      (and to existing-to?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op "<=")) (assoc c :value to) c)))
                                                      (and to (not existing-to?)) (cons {:path view :op "<=" :value to})))
-         :dispatch [:im-tables.main/run-query loc]})
-      #_(if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
-          {:db (update-in db [:query :where] conj {:path view
-                                                   :op "ONE OF"
-                                                   :values current-selection})
-           :dispatch [:im-tables.main/run-query loc]
-           :undo {:location loc
-                  :message [:div
-                            [:div [:div
-                                   (str (im-path/friendly model view))
-                                   [:div "Must be one of:"]]]
-                            (into [:div.table-history-detail]
-                                  (map (fn [v]
-                                         [:div v]) current-selection))
-                            ]}
-           }
-          {:db db}))))
+         :dispatch [:im-tables.main/run-query loc]
+         :undo {:location loc
+                :message [:div
+                          (str (im-path/friendly model view))
+                          (cond-> [:div "Must be:"]
+                                  from (conj [:div.table-history-detail ">= " from])
+                                  to (conj [:div.table-history-detail "<= " to]))]}}))))
 
 (reg-event-fx
   :main/remove-view
