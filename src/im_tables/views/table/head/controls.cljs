@@ -199,39 +199,37 @@
 
 
 (defn filter-dropdown-menu [loc view idx col-count]
-  (let [query (subscribe [:main/temp-query loc view])
-        active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
-
+  (let [query (subscribe [:main/query loc view])
         blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})]
     (fn []
-      [:span.dropdown
-       ; Bootstrap and ReactJS don't always mix well. Components that make up dropdown menus are only
-       ; mounted (reactjs) once and then their visibility is toggled (bootstrap). These means any local state
-       ; in the dropdown menu does NOT get reset when the dropdown menu disappears because its never really unmounts.
-       ; This was causing the new constraint textbox to retain its value if a user entered something but changed their
-       ; mind and closed the dropdown. Reopening it would show what they previously entered. Making it look like it had been applied.;
-       ; To fix this we've create the black constraint local atom all the way up here at the dropdown level so that we can reset
-       ; it manually, and then we pass the atom down to the black constraint component. Lame.
-       {:on-click (fn []
-                    ; Reset the blank constraint atom when the dropdown is opened
-                    (reset! blank-constraint-atom {:path view :op "=" :value nil}))
-        :ref (fn [e]
-               ; *Try* to save the changes every time the dropdown is closed, even by just clicking off it.
-               ; This means a user can remove a handful of filters without having to click Apply.
-               ; The event will do a diff to make sure something has actually changed before rerunning the query
-               (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:filters/save-changes loc])))))}
-       [:i.fa.fa-filter.dropdown-toggle.filter-icon
-        {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
-         :data-toggle "dropdown"
-         :class (cond active-filters? "active-filter")
-         :title (str "Filter " view " column")}]
-       ; Crudely try to draw the dropdown near the middle of the page
-       [:div.dropdown-menu [filter-view loc view blank-constraint-atom]]])))
+      (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
+        [:span.dropdown
+         ; Bootstrap and ReactJS don't always mix well. Components that make up dropdown menus are only
+         ; mounted (reactjs) once and then their visibility is toggled (bootstrap). These means any local state
+         ; in the dropdown menu does NOT get reset when the dropdown menu disappears because its never really unmounts.
+         ; This was causing the new constraint textbox to retain its value if a user entered something but changed their
+         ; mind and closed the dropdown. Reopening it would show what they previously entered. Making it look like it had been applied.;
+         ; To fix this we've create the black constraint local atom all the way up here at the dropdown level so that we can reset
+         ; it manually, and then we pass the atom down to the black constraint component. Lame.
+         {:on-click (fn []
+                      ; Reset the blank constraint atom when the dropdown is opened
+                      (reset! blank-constraint-atom {:path view :op "=" :value nil}))
+          :ref (fn [e]
+                 ; *Try* to save the changes every time the dropdown is closed, even by just clicking off it.
+                 ; This means a user can remove a handful of filters without having to click Apply.
+                 ; The event will do a diff to make sure something has actually changed before rerunning the query
+                 (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn [] (dispatch [:filters/save-changes loc])))))}
+         [:i.fa.fa-filter.dropdown-toggle.filter-icon
+          {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
+           :data-toggle "dropdown"
+           :class (cond active-filters? "active-filter")
+           :title (str "Filter " view " column")}]
+         ; Crudely try to draw the dropdown near the middle of the page
+         [:div.dropdown-menu [filter-view loc view blank-constraint-atom]]]))))
 
 (defn toolbar []
   (fn [loc view idx col-count]
     (let [query (subscribe [:main/temp-query loc view])
-          active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
           direction (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")]
       [:div.summary-toolbar
        [:i.fa.fa-sort.sort-icon

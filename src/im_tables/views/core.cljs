@@ -33,6 +33,9 @@
         [:div.modal-body body]
         [:div.modal-footer footer]]]]]))
 
+(defn constraint-has-path? [view constraint]
+  (= view (:path constraint)))
+
 (defn main [{:keys [location]} state]
   (let [response (subscribe [:main/query-response location])
         pagination (subscribe [:settings/pagination location])
@@ -68,7 +71,8 @@
                  (into [:tr]
                        (->> @collapsed-views
                             (map-indexed (fn [idx h]
-                                           (let [display-name (when (and @model h) (impath/display-name @model h))]
+                                           (let [display-name (when (and @model h) (impath/display-name @model h))
+                                                 active-filters (not-empty (filter (partial constraint-has-path? h) (:where query)))]
                                              ; This is a simple HTML representation of
                                              ; im-tables.views.table.head.controls/toolbar
                                              ; If you modify this form or the one in the toolbar, please remember to modify both
@@ -77,7 +81,8 @@
                                               [:div.summary-toolbar
                                                [:i.fa.fa-sort.sort-icon]
                                                [:i.fa.fa-times.remove-icon]
-                                               [:i.fa.fa-filter.dropdown-toggle.filter-icon]
+                                               [:i.fa.fa-filter.dropdown-toggle.filter-icon
+                                                {:class (when active-filters "active-filter")}]
                                                [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]]
                                               [:div
                                                [:div (last (drop-last display-name))]
