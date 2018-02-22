@@ -203,16 +203,16 @@
                      :max max
                      :on-change (fn [e] (swap! trimmer assoc :to
                                                (let [new-value (js/parseInt (clj-max (or (:from @trimmer) min) (oget e :target :value)))]
-                                                 (if (= new-value max) nil new-value))))}]]
-           [:div.btn-toolbar.column-summary-toolbar
-            [:button.btn.btn-primary
-             {:type "button"
-              :on-click (fn []
-                          (dispatch [:main/apply-numerical-filter loc view @trimmer])
-                          (close-fn)
-                          (reset! trimmer {}))}
-             [:i.fa.fa-filter]
-             (str " Filter")]]]]]))))
+                                                 (if (= new-value max) nil new-value))))}]]]
+          [:div.btn-toolbar.column-summary-toolbar
+           [:button.btn.btn-primary
+            {:type "button"
+             :on-click (fn []
+                         (dispatch [:main/apply-numerical-filter loc view @trimmer])
+                         (close-fn)
+                         (reset! trimmer {}))}
+            [:i.fa.fa-filter]
+            (str " Filter")]]]]))))
 
 (defn column-summary [loc view local-state]
   (let [response (subscribe [:selection/response loc view])
