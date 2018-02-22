@@ -226,7 +226,7 @@
          :class (cond active-filters? "active-filter")
          :title (str "Filter " view " column")}]
        ; Crudely try to draw the dropdown near the middle of the page
-       [:div.dropdown-menu {:class (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")} [filter-view loc view blank-constraint-atom]]])))
+       [:div.dropdown-menu [filter-view loc view blank-constraint-atom]]])))
 
 (defn toolbar []
   (fn [loc view idx col-count]
