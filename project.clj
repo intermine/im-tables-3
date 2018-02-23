@@ -1,4 +1,4 @@
-(defproject org.intermine/im-tables "0.5.0"
+(defproject org.intermine/im-tables "0.6.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.671"]
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
