@@ -308,9 +308,9 @@
 
 
 (defn align-right? [dom-node]
-  (let [{x :x} (obj->clj (ocall dom-node :getBoundingClientRect))
+  (let [{left :left} (obj->clj (ocall dom-node :getBoundingClientRect))
         screen-width (oget js/window :innerWidth)]
-    (> x (/ screen-width 2))))
+    (> left (/ screen-width 2))))
 
 
 (defn toolbar []
