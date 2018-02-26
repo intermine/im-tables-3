@@ -58,11 +58,17 @@
     [:select.form-control
      {:value (if value value "=")
       :on-change (fn [e] (on-change {:op (.. e -target -value)}))}
-     [:option {:value ">"} "greater than"]
-     [:option {:value "<"} "less than"]
-     [:option {:value "="} "equal to"]
-     [:option {:value "CONTAINS"} "contains"]
-     [:option {:value "ONE OF"} "one of"]]))
+     [:option {:value ">"} ">"]
+     [:option {:value ">="} ">="]
+     [:option {:value "<"} "<"]
+     [:option {:value "<="} "<="]
+     [:option {:value "="} "="]
+     [:option {:value "!="} "!="]
+     [:option {:value "LIKE"} "LIKE"]
+     [:option {:value "NOT LIKE"} "NOT LIKE"]
+     [:option {:value "CONTAINS"} "CONTAINS"]
+     [:option {:value "ONE OF"} "ONE OF"]
+     [:option {:value "NONE OF"} "NONE OF"]]))
 
 (defn constraint-text []
   (fn [{:keys [value on-change]}]
