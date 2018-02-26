@@ -40,19 +40,14 @@
 
 ; TODO - WIP - If assets are missing when a component is mounted then
 ; fetch them and/or run necessary queries
-(reg-event-fx :im-tables/boot
+(reg-event-fx :im-tables/load
               (sandbox)
               (fn [{db :db} [_ loc {:keys [query service location response settings] :as args}]]
-                {:db
-                 (or
-                   ; If DB exists then just use the one that's there
-                   db
-                   ; Otherwise get the default and then merge any custom settings
-                   ; TODO - deep merge is expensive. Can this be optimised?
-                   (update db/default-db :settings deep-merge settings))
+                (let [new-db (assoc args :settings (deep-merge (:settings db/default-db) settings))]
+                  {:db new-db
 
-                 ; Then fetch InterMine assets from the server
-                 :im-tables/setup [loc (or db db/default-db) args]}))
+                   ; Then fetch InterMine assets from the server
+                   :im-tables/setup [loc new-db args]})))
 
 (reg-fx :im-tables/setup
         (fn [[loc db {:keys [query service location response] :as args}]]
@@ -76,19 +71,9 @@
 
 (reg-event-fx :im-tables/store-setup
               (sandbox)
-              (fn [{db :db} [_ loc {:keys [service response query]}]]
+              (fn [{db :db} [_ loc {:keys [service response query] :as input}]]
                 {:db (assoc db :service service :response response :query (im-query/sterilize-query query))
                  :dispatch [:im-tables.main/run-query loc]}))
-
-(reg-event-fx
-  :initialize-db-old
-  (fn [_ [_ loc initial-state]]
-    (println "old")
-    (let [new-db (deep-merge db/default-db initial-state)]
-      {:db (if loc (assoc-in {} loc new-db) new-db)
-       :async-flow (boot-flow loc (get new-db :service))}
-      (js/console.log "R" db/default-db)
-      db/default-db)))
 
 (reg-event-db
   :initialize-db

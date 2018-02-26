@@ -21,7 +21,7 @@
             [lein-less "1.7.5"]
             [lein-ancient "0.6.10"]]
 
-  :deploy-repositories {"clojars" {:sign-releases false}}
+  :repositories {"clojars" {:sign-releases false}}
 
   :min-lein-version "2.5.3"
 
