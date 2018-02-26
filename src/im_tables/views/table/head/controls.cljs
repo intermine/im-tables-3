@@ -6,7 +6,7 @@
             [goog.i18n.NumberFormat.Format]
             [imcljs.path :as path]
             [clojure.string :as string]
-            [oops.core :refer [oget ocall ocall! oapply]])
+            [oops.core :refer [oget ocall ocall! oapply oget+]])
   (:import
     (goog.i18n NumberFormat)
     (goog.i18n.NumberFormat Format)))
@@ -231,7 +231,7 @@
        (fn [])
        :reagent-render
        (fn [loc view]
-         (let [ close-fn (partial force-close (reagent/current-component))]
+         (let [close-fn (partial force-close (reagent/current-component))]
            (if (false? @response)
              [too-many-values]
              (if (contains? (first (:results @response)) :min)
@@ -274,7 +274,7 @@
 (defn filter-dropdown-menu [loc view idx col-count]
   (let [query (subscribe [:main/query loc view])
         blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})]
-    (fn []
+    (fn [loc view idx col-count right?]
       (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
         [:span.dropdown
          ; Bootstrap and ReactJS don't always mix well. Components that make up dropdown menus are only
@@ -298,34 +298,49 @@
            :class (cond active-filters? "active-filter")
            :title (str "Filter " view " column")}]
          ; Crudely try to draw the dropdown near the middle of the page
-         [:div.dropdown-menu [filter-view loc view blank-constraint-atom]]]))))
+         [:div.dropdown-menu
+          {:class (when right? "dropdown-right")} [filter-view loc view blank-constraint-atom]]]))))
+
+
+(defn obj->clj [obj]
+  (reduce (fn [total next-key]
+            (assoc total (keyword next-key) (oget+ obj next-key))) {} (js-keys obj)))
+
+
+(defn align-right? [dom-node]
+  (let [{left :left} (obj->clj (ocall dom-node :getBoundingClientRect))
+        screen-width (oget js/window :innerWidth)]
+    (> left (/ screen-width 2))))
+
 
 (defn toolbar []
-  (fn [loc view idx col-count]
-    (let [query (subscribe [:main/temp-query loc view])
-          active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
-          direction (if (> idx (/ col-count 2)) "dropdown-right" "dropdown-left")
-          local-state (reagent/atom {})]
-      [:div.summary-toolbar
-       [:i.fa.fa-sort.sort-icon
-        {:on-click (fn [] (dispatch [:main/sort-by loc view]))
-         :title (str "Sort " view " column")}]
-       [:i.fa.fa-times.remove-icon
-        {:on-click (fn [] (dispatch [:main/remove-view loc view]))
-         :title (str "Remove " view " column")}]
-       [filter-dropdown-menu loc view idx col-count]
-       [:span.dropdown
-        {:ref (fn [e]
-                ; Bind an event to clear the selected items when the dropdown closes.
-                ; Why don't we just avoid state all together and pick up the checkbox values
-                ; when the user clicks "Filter"? Because we still want to know what's selected
-                ; (for instance, highlighting the histogram).
-                ; Use some-> because e isn't guaranteed to hold a value
-                (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
-                                                               (reset! local-state {})
-                                                               (dispatch [:select/clear-selection loc view])))))}
-        [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
-        [:div.dropdown-menu
-         {:title (str "Summarise " view " column")
-          :class direction}
-         [column-summary loc view local-state]]]])))
+  (let [right? (reagent/atom false)]
+    (fn [loc view idx col-count]
+      (let [query (subscribe [:main/temp-query loc view])
+            active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
+            local-state (reagent/atom {})]
+        [:div.summary-toolbar
+         {:ref (fn [e]
+                 (when e (reset! right? (align-right? e))))}
+         [:i.fa.fa-sort.sort-icon
+          {:on-click (fn [] (dispatch [:main/sort-by loc view]))
+           :title (str "Sort " view " column")}]
+         [:i.fa.fa-times.remove-icon
+          {:on-click (fn [] (dispatch [:main/remove-view loc view]))
+           :title (str "Remove " view " column")}]
+         [filter-dropdown-menu loc view idx col-count @right?]
+         [:span.dropdown
+          {:ref (fn [e]
+                  ; Bind an event to clear the selected items when the dropdown closes.
+                  ; Why don't we just avoid state all together and pick up the checkbox values
+                  ; when the user clicks "Filter"? Because we still want to know what's selected
+                  ; (for instance, highlighting the histogram).
+                  ; Use some-> because e isn't guaranteed to hold a value
+                  (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
+                                                                 (reset! local-state {})
+                                                                 (dispatch [:select/clear-selection loc view])))))}
+          [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
+          [:div.dropdown-menu
+           {:title (str "Summarise " view " column")
+            :class (when @right? "dropdown-right")}
+           [column-summary loc view local-state]]]]))))
