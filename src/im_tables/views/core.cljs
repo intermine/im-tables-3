@@ -14,7 +14,7 @@
 (defn table-thinking []
   (fn [show?]
     [css-transition-group
-     {:transition-name "fade"
+     {:transition-name          "fade"
       :transition-enter-timeout 50
       :transition-leave-timeout 50}
      (if show?
@@ -33,6 +33,7 @@
         [:div.modal-body body]
         [:div.modal-footer footer]]]]]))
 
+
 (defn constraint-has-path? [view constraint]
   (= view (:path constraint)))
 
@@ -46,10 +47,18 @@
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
     (reagent/create-class
       {
-       :component-will-mount (fn [this]
-                               (dispatch [:im-tables/boot location (reagent/props this)]))
+       ;:component-will-mount
+       ;(fn [this] (dispatch [:im-tables/boot location (reagent/props this)]))
+       ;:component-will-update
+       ;(fn [this [_ new-props]]
+       ;
+       ;  (js/console.log "ARGV" new-props)
+       ;  (js/console.log "CPROP" (reagent/props this))
+       ;
+       ;  (dispatch [:im-tables/boot location new-props])
+       ;  )
        :reagent-render
-       (fn [{:keys [location query]}]
+       (fn [location]
 
          ; The query results are stored in a map with the result index as the key.
          ; In other words, we're not using a vector! To generate a speedy preview,

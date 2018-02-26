@@ -148,7 +148,6 @@
   :filters/update-constraint
   [(sandbox) (undoable)]
   (fn [{db :db} [_ loc new-constraint]]
-    (js/console.log "new constrain" new-constraint)
     {:db (update-in db [:temp-query :where]
                     (fn [constraints]
                       (map (fn [constraint]
@@ -342,7 +341,6 @@
 (defn move-nth
   "Shift an item from one index in a collection to another "
   [coll from-idx to-idx]
-  (js/console.log "WE" coll from-idx to-idx)
   (insert-nth (drop-nth from-idx coll) to-idx (nth coll from-idx)))
 
 (defn index
@@ -361,7 +359,6 @@
   (sandbox)
   (fn [db [_ loc view]]
     (let [outer-join? (some? (some #{view} (get-in db [:query :joins])))]
-      (js/console.log "DR" outer-join? loc view)
       (if outer-join?
         ; If the column (view) being dragged is part of an outer join then get the idx of the first occurance
         (assoc-in db [:cache :dragging-item] (index (partial begins-with? view) (get-in db [:query :select])))
@@ -546,6 +543,7 @@
   (let [previous-requests (atom {})]
     (fn [{db :db} [_ loc merge?]]
       (let [{:keys [start limit] :as pagination} (get-in db [:settings :pagination])]
+                                    :channel new-request}}))))))
         ;(js/console.log "Running query: " loc (get db :query))
 
         ; Previous requests are stored in an atom containing a map. This is to prevent
@@ -567,6 +565,7 @@
                                                      ^:flush-dom [:main/replace-query-response loc pagination])
                                        ; Hand the request atom off to the effect that takes from it
                                        :channel (get @previous-requests loc)}}))))
+
 
 
 
