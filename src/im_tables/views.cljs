@@ -17,7 +17,7 @@
          (into [:div]
                ; Increase these range to produce N number of tables on the same page
                ; (useful for stress testing)
-               (->> (range 0 2)
+               (->> (range 0 1)
                     (map (fn [n]
                            [main-view/main {:location [:test :location n]
                                             :service {:root "beta.flymine.org/beta"}
