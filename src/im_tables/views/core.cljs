@@ -14,7 +14,7 @@
 (defn table-thinking []
   (fn [show?]
     [css-transition-group
-     {:transition-name "fade"
+     {:transition-name          "fade"
       :transition-enter-timeout 50
       :transition-leave-timeout 50}
      (if show?
@@ -33,24 +33,22 @@
         [:div.modal-body body]
         [:div.modal-footer footer]]]]]))
 
+
 (defn constraint-has-path? [view constraint]
   (= view (:path constraint)))
 
-(defn main [{:keys [location]} state]
+(defn main [location]
   (let [response (subscribe [:main/query-response location])
         pagination (subscribe [:settings/pagination location])
         overlay? (subscribe [:style/overlay? location])
         modal-markup (subscribe [:modal location])
         static? (reagent/atom true)
         model (subscribe [:assets/model location])
+        query (subscribe [:main/query location])
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
     (reagent/create-class
-      {
-       :component-will-mount (fn [this]
-                               (dispatch [:im-tables/boot location (reagent/props this)]))
-       :reagent-render
-       (fn [{:keys [location query]}]
-
+      {:reagent-render
+       (fn [location]
          ; The query results are stored in a map with the result index as the key.
          ; In other words, we're not using a vector! To generate a speedy preview,
          ; get the first n results to be shown as a simple table:
@@ -72,7 +70,7 @@
                        (->> @collapsed-views
                             (map-indexed (fn [idx h]
                                            (let [display-name (when (and @model h) (impath/display-name @model h))
-                                                 active-filters (not-empty (filter (partial constraint-has-path? h) (:where query)))]
+                                                 active-filters (not-empty (filter (partial constraint-has-path? h) (:where @query)))]
                                              ; This is a simple HTML representation of
                                              ; im-tables.views.table.head.controls/toolbar
                                              ; If you modify this form or the one in the toolbar, please remember to modify both
