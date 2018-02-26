@@ -9,6 +9,6 @@
     (go (dispatch (conj on-success (<! (op)))))))
 
 (reg-fx
-  :im-tables/im-operation-channel
+  :im-tables/im-operation-chan
   (fn [{:keys [on-success on-failure response-format channel params]}]
     (go (dispatch (conj on-success (<! channel))))))

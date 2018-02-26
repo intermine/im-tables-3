@@ -51,8 +51,12 @@
      [:option {:value ">"} "greater than"]
      [:option {:value "<"} "less than"]
      [:option {:value "="} "equal to"]
+     [:option {:value "!="} "not equal to"]
+     [:option {:value "LIKE"} "like"]
+     [:option {:value "NOT LIKE"} "not like"]
      [:option {:value "CONTAINS"} "contains"]
-     [:option {:value "ONE OF"} "one of"]]))
+     [:option {:value "ONE OF"} "one of"]
+     [:option {:value "NONE OF"} "none of"]]))
 
 (defn constraint-text []
   (fn [{:keys [value on-change]}]
