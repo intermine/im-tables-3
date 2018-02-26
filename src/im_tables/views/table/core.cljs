@@ -11,7 +11,7 @@
   (let [dragging-item (subscribe [:style/dragging-item loc])
         dragging-over (subscribe [:style/dragging-over loc])
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
-    (fn [views]
+    (fn [loc views]
       [:thead
        (into [:tr]
              (->> @collapsed-views
