@@ -1,11 +1,28 @@
 (ns im-tables.views.dashboard.pagination
   (:require [re-frame.core :refer [subscribe dispatch]]
-            [clojure.string :refer [split]]))
+            [clojure.string :refer [split]]
+            [oops.core :refer [oget]]))
+
+(def show-amounts (list 10 20 50))
+
+
 
 (defn main []
   (fn [loc {:keys [start limit total]}]
     [:span.pagination-bar
      [:div.btn-toolbar
+      [:div.btn-group
+       [:label "Show"]]
+      [:div.btn-group
+       (into [:select.form-control
+              {:value limit
+               :on-change (fn [e]
+                            (dispatch [:imt.settings/update-pagination-limit loc (js/parseInt (oget e :target :value))]))}]
+             (concat
+               (map (fn [a]
+                     [:option {:value a} a])
+                    (take-while (partial > total) show-amounts))
+               (list [:option {:value total} (str "All (" total ")")])))]
       [:div.btn-group
        [:button.btn.btn-default
         {:disabled (< start 1)
