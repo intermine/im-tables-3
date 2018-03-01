@@ -15,7 +15,7 @@
      [:div.row
       [column-manager/main loc]]
      [:div.row.im-table-toolbar
-      [:div.col-xs-8
+      [:div.col-md-8
        [:div.btn-toolbar
 
         [:div.btn-group
@@ -31,7 +31,7 @@
         [undo/main loc]
         ]
        ]
-      [:div.col-xs-4
+      [:div.col-md-4
        [:div.container-fluid
         [:div.row.pagination-bar
          [:div.col-xs-12
