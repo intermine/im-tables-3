@@ -11,17 +11,14 @@
   (fn [loc {:keys [start limit total]}]
     [:div.btn-toolbar
      [:div.btn-group
-      [:label "Show"]]
+      [:label "Rows per page"]]
      [:div.btn-group
       (into [:select.form-control
-             {:value limit
+             {:value     (or limit "")
               :on-change (fn [e]
                            (dispatch [:imt.settings/update-pagination-limit loc (js/parseInt (oget e :target :value))]))}]
-            (concat
-              (map (fn [a]
-                     [:option {:value a} a])
-                   (take-while (partial > total) show-amounts))
-              (list [:option {:value total} (str "All (" total ")")])))]
+            (cond-> (map (fn [a] [:option {:value a} a]) (take-while (partial > total) show-amounts))
+                    total (concat (list [:option {:value total} (str "All (" total ")")]))))]
      [:div.btn-group
       [:button.btn.btn-default
        {:disabled (< start 1)
