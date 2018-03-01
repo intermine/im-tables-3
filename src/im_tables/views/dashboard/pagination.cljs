@@ -3,7 +3,7 @@
             [clojure.string :refer [split]]
             [oops.core :refer [oget]]))
 
-(def show-amounts (list 10 20 50))
+(def show-amounts (list 10 20 50 100 250))
 
 
 
@@ -18,7 +18,7 @@
               :on-change (fn [e]
                            (dispatch [:imt.settings/update-pagination-limit loc (js/parseInt (oget e :target :value))]))}]
             (cond-> (map (fn [a] [:option {:value a} a]) (take-while (partial > total) show-amounts))
-                    total (concat (list [:option {:value total} (str "All (" total ")")]))))]
+                    (and total (< total 250)) (concat (list [:option {:value total} (str "All (" total ")")]))))]
      [:div.btn-group
       [:button.btn.btn-default
        {:disabled (< start 1)
