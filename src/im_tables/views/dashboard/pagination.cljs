@@ -32,11 +32,11 @@
       [:label (str "Page " (inc (/ start limit)))]]
      [:div.btn-group
       [:button.btn.btn-default
-       {:disabled (< (- total start) limit)
+       {:disabled (<= (- total start) limit)
         :on-click (fn [] (dispatch ^:flush-dom [:imt.settings/update-pagination-inc loc]))}
        [:span.glyphicon.glyphicon-triangle-right]]
       [:button.btn.btn-default
-       {:disabled (< (- total start) limit)
+       {:disabled (<= (- total start) limit)
         :on-click (fn [] (dispatch [:imt.settings/update-pagination-fullinc loc]))}
        [:span.glyphicon.glyphicon-step-forward]]]]))
 
