@@ -86,6 +86,11 @@
     (get-in db (glue prefix [:service :model]))))
 
 (reg-sub
+  :assets/service
+  (fn [db [_ prefix]]
+    (get-in db (glue prefix [:service]))))
+
+(reg-sub
   :tree-view/selection
   (fn [db [_ prefix]]
     (get-in db (glue prefix [:cache :tree-view :selection]))))
@@ -168,3 +173,8 @@
   :rel-manager/query
   (fn [db [_ loc]]
     (get-in db (glue loc [:cache :rel-manager]))))
+
+(reg-sub
+  :codegen/code
+  (fn [db [_ loc]]
+    (get-in db (glue loc [:codegen :code]))))
