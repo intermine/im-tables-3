@@ -14,6 +14,7 @@
             [imcljs.fetch :as fetch]
             [imcljs.path :as im-path]
             [imcljs.query :as query]
+            [imcljs.internal.utils :refer [scrub-url]]
             [oops.core :refer [oapply ocall oget]]
             [clojure.string :as string :refer [split join starts-with?]]
             [cljs.core.async :refer [close!]]))
@@ -634,10 +635,13 @@
   (string/join "\n"
                [
                 "<script>"
-                "var selector = '#some-elem#';"
-                (str "var service = " (js/JSON.stringify (clj->js (dissoc service :model)) nil 2))
+                "var selector = \"#some-elem#\";"
+                (str "var service = " (js/JSON.stringify
+                                        (clj->js (-> service
+                                                     (select-keys [:root :token])
+                                                     (update :root scrub-url))) nil 2))
                 (str "var query = " (js/JSON.stringify (clj->js query) nil 2))
-                (str "imtables.loadTable(\n  selector, // Can also be an element, or a jQuery object.\n  {\"start\":0,\"size\":25}, // May be null\n  {service: service, query: query} // May be an imjs.Query\n).then(\n  function (table) { console.log('Table loaded', table); },\n  function (error) { console.error('Could not load table', error); }\n);\n")
+                (str "imtables.loadTable(\n  selector, // Can also be an element, or a jQuery object.\n  {\"start\":0,\"size\":25}, // May be null\n  {service: service, query: query} // May be an imjs.Query\n).then(\n  function (table) { console.log('Table loaded', table); },\n  function (error) { console.error('Could not load table', error); }\n);")
                 "</script>"
                 ]))
 
