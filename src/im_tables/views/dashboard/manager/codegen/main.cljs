@@ -19,7 +19,6 @@
     (fn [loc]
       (let [{:keys [html? comments? lang]} @options]
         [:div
-         [:pre (str @options)]
          [:select.form-control
           {:value lang
            :on-change (fn [e]
