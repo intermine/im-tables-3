@@ -69,7 +69,7 @@
    ;:service {:model "TESTMODEL"}
 
    :settings {:buffer 2
-              :cdn "www.intermine.org/cdn2"
+              :cdn "http://cdn.intermine.org"
               :pagination {:start 0
                            :limit 20}
               :codegen {:lang "js"}

@@ -31,6 +31,8 @@
                                                                (:class vocab) "/"
                                                                (:objectId vocab)))}}})
 
+
+
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:
 ; [im-tables.views.core/main {:location ... :service ... :query ...}]

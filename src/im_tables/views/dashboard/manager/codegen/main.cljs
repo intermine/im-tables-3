@@ -4,8 +4,7 @@
             ["highlight.js" :as hljs]
             [clojure.string :as string]
             [imcljs.internal.utils :refer [scrub-url]]
-            [oops.core :refer [ocall oget]]))
-
+            [oops.core :refer [ocall oget oset!]]))
 
 (def languages {"js"   {:label "JavaScript"}
                 "pl"   {:label "Perl"}
@@ -62,7 +61,6 @@
                   :on-change (fn [e] (swap! options-atom update :comments? not))
                   :checked   comments?}] "Include comments"]]])))
 
-(def doesnt-start-with (complement clojure.string/starts-with?))
 
 (defn remove-java-comments [s]
   (clojure.string/replace s #"/\*([\S\s]*?)\*/" ""))
@@ -76,9 +74,24 @@
 
 (defn remove-octothorpe-comments [s]
   (let [lines (clojure.string/split-lines s)]
-    (->> lines
-         (filter not-octo-comment?)
-         (clojure.string/join "\n"))))
+    (clojure.string/replace
+      (->> lines
+          (map (fn [line] (if (octo-comment? line) "\n" line)))
+          (clojure.string/join "\n"))
+      #"\n\n\n+"
+      "\n\n")))
+
+(defn save-to-disk [filename text lang]
+  (let [blob (js/Blob. [text] #js {:type "text/plain;charset=utf8"})
+        url (-> (ocall js/window :URL.createObjectURL blob))]
+    (let [element (ocall js/document :createElement "a")]
+      (ocall element :setAttribute "href" url)
+      (ocall element :setAttribute "download" (str filename "." lang))
+      (oset! element :style :display "none")
+      (ocall (oget js/document :body) :appendChild element)
+      (ocall element :click)
+      (ocall (oget js/document :body) :removeChild element)
+      )))
 
 (defn modal-body [loc]
   (let [code           (subscribe [:codegen/code loc])
@@ -87,7 +100,7 @@
         service        (subscribe [:assets/service loc])
         query          (subscribe [:main/query loc])
         settings       (subscribe [:settings/settings loc])
-        options-atom   (r/atom {:lang "js" :comments? true})
+        options-atom   (r/atom {:lang "js" :comments? false})
         on-change-lang (fn [lang]
                          (dispatch [:main/generate-code loc @service (:model @service) @query lang]))]
     (r/create-class
@@ -123,17 +136,15 @@
                                 ])})))
 
 (defn modal-footer [loc]
-  (let [model (subscribe [:assets/model loc])]
+  (let [model (subscribe [:assets/model loc])
+        code (subscribe [:codegen/code loc])
+        lang (subscribe [:codegen/lang loc])]
     (fn [loc]
       [:div.btn-toolbar.pull-right
-       [:button.btn.btn-default {:on-click (fn [] (dispatch [:prep-modal loc nil]))} "Cancel"]
-       [:button.btn.btn-success
-        {:on-click (fn []
-                     ; Apply the changes
-                     (dispatch [:rel-manager/apply-changes loc])
-                     ; Close the modal by clearing the markup from app-db
-                     (dispatch [:prep-modal loc nil]))}
-        "Apply Changes"]])))
+       [:button.btn.btn-default {:on-click (fn [] (dispatch [:prep-modal loc nil]))} "Close"]
+       [:button.btn.btn-primary
+        {:on-click (fn [] (save-to-disk "query" @code @lang))}
+        [:i.fa.fa-save] " Download"]])))
 
 (defn build-modal [loc]
   {:header [:h3 "Generate Code"]
