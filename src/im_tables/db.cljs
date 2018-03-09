@@ -72,7 +72,10 @@
               :cdn "http://cdn.intermine.org"
               :pagination {:start 0
                            :limit 20}
-              :codegen {:lang "js"}
+              :codegen {:lang "js"
+                        :comments? true
+                        :html? true
+                        :highlight? true}
               :data-out {:selected-format :tsv
                          :accepted-formats {:tsv :all
                                             :csv :all

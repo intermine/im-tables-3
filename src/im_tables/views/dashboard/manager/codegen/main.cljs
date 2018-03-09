@@ -17,7 +17,7 @@
 (defn options [loc]
   (let [options (subscribe [:codegen/options loc])]
     (fn [loc]
-      (let [{:keys [html? comments? lang]} @options]
+      (let [{:keys [html? comments? lang highlight?]} @options]
         [:div
          [:select.form-control
           {:value lang
@@ -36,7 +36,14 @@
                    {:type "checkbox"
                     :value ""
                     :on-change (fn [e] (dispatch [:main/set-codegen-option loc :comments? (not comments?)]))
-                    :checked comments?}] "Include comments"]]]))))
+                    :checked comments?}] "Include comments"]]
+         [:div.checkbox
+          [:label [:input
+                   {:type "checkbox"
+                    :value ""
+                    :on-change (fn [e] (dispatch [:main/set-codegen-option loc :highlight? (not highlight?)]))
+                    :checked highlight?}] "Highlight syntax"]]
+         ]))))
 
 
 (defn save-to-disk [filename text lang]
@@ -51,7 +58,8 @@
       (ocall (oget js/document :body) :removeChild element))))
 
 (defn modal-body [loc]
-  (let [code (subscribe [:codegen/formatted-code loc])]
+  (let [code (subscribe [:codegen/formatted-code loc])
+        codegen-settings (subscribe [:codegen/options loc])]
     (r/create-class
       {:component-did-mount (fn [this]
                               (ocall (js/$ "pre code") :each
@@ -62,13 +70,16 @@
                                       (fn [i block]
                                         (ocall hljs :highlightBlock block))))
        :reagent-render (fn [loc]
-                         [:div.container-fluid
-                          [:div.row
-                           [:div.col-xs-3 [options loc]]
-                           [:div.col-xs-9
-                            (if (nil? @code)
-                              [:pre [:code.nohighlight "Generating code... " [:i.fa.fa-fw.fa-spinner.fa-spin]]]
-                              [:pre [:code @code]])]]])})))
+                         (let [highlight? (:highlight? @codegen-settings)]
+                           [:div.container-fluid
+                            [:div.row
+                             [:div.col-xs-3 [options loc]]
+                             [:div.col-xs-9
+                              (if (nil? @code)
+                                [:pre [:code.nohighlight "Generating code... " [:i.fa.fa-fw.fa-spinner.fa-spin]]]
+                                (if highlight?
+                                  [:pre [:code @code]]
+                                  [:pre @code]))]]]))})))
 
 (defn modal-footer [loc]
   (let [code (subscribe [:codegen/formatted-code loc])
