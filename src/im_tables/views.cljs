@@ -14,7 +14,7 @@
                                              "dataSets.name"]
                                     :where [{:path "Gene.symbol"
                                              :op "LIKE"
-                                             :value "M01A1**"}]}
+                                             :value "M01*"}]}
                             :settings {:pagination {:limit 10}
                                        :links {:vocab {:mine "BananaMine"}
                                                :url (fn [vocab] (str "#/reportpage/"
