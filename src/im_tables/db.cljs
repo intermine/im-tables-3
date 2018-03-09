@@ -69,8 +69,10 @@
    ;:service {:model "TESTMODEL"}
 
    :settings {:buffer 2
+              :cdn "www.intermine.org/cdn2"
               :pagination {:start 0
                            :limit 20}
+              :codegen {:lang "js"}
               :data-out {:selected-format :tsv
                          :accepted-formats {:tsv :all
                                             :csv :all

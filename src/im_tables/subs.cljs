@@ -178,3 +178,8 @@
   :codegen/code
   (fn [db [_ loc]]
     (get-in db (glue loc [:codegen :code]))))
+
+(reg-sub
+  :codegen/lang
+  (fn [db [_ loc]]
+    (get-in db (glue loc [:settings :codegen :lang]))))

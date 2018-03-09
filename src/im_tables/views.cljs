@@ -3,8 +3,7 @@
             [im-tables.views.core :as main-view]
             [reagent.core :as r]
             [reagent.dom.server :as server]
-            [oops.core :refer [ocall]]
-            ["highlight.js" :as hljs]))
+            [oops.core :refer [ocall]]))
 
 (def some-im-tables-config {:service {:root "beta.humanmine.org/beta"}
                             :query {:from "Gene"
@@ -31,7 +30,6 @@
                                                                (:mine vocab) "/"
                                                                (:class vocab) "/"
                                                                (:objectId vocab)))}}})
-
 
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:
