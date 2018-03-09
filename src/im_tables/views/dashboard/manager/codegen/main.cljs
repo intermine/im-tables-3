@@ -162,7 +162,7 @@
          {:on-click (fn []
                       (dispatch [:prep-modal loc (build-modal loc)])
                       (dispatch [:main/generate-code loc @service (:model @service) @query @lang]))}
-         [:i.fa.fa-share-alt] (str " " (get-in languages [@lang :label]))]
+         [:i.fa.fa-code] (str " " (get-in languages [@lang :label]))]
         [:button.btn.btn-default.dropdown-toggle
          {:data-toggle "dropdown"} [:span.caret]]
         (into [:ul.dropdown-menu]
