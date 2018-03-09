@@ -1,6 +1,8 @@
 (ns im-tables.subs
   (:require-macros [reagent.ratom :refer [reaction]])
-  (:require [re-frame.core :as re-frame :refer [reg-sub subscribe]]))
+  (:require [re-frame.core :as re-frame :refer [reg-sub subscribe]]
+            [clojure.string :as string]
+            [imcljs.internal.utils :refer [scrub-url]]))
 
 (defn glue [path remainder-vec]
   (reduce conj (or path []) remainder-vec))
@@ -174,12 +176,82 @@
   (fn [db [_ loc]]
     (get-in db (glue loc [:cache :rel-manager]))))
 
+;;;;;;;;;;;;;;;; Code generation
+
+(defn generate-javascript [{:keys [cdn query service html? comments?]}]
+  (string/join "\n"
+               (-> []
+                   (cond->
+                     (and html? comments?) (conj "<!-- The Element we will target -->")
+                     html? (conj "<div id=\"some-elem\"></div>\n")
+                     (and html? comments?) (conj "<!-- The imtables source -->")
+                     html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/2.0.0-beta/imtables.js\" charset=\"UTF8\"></script>"))
+                     html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/2.0.0-beta/main.sandboxed.css\" rel=\"stylesheet\">\n"))
+                     html? (conj "<script>")
+                     html? (conj "var selector = \"#some-elem\";\n")
+                     (and (not html?) comments?) (conj "/* Install from npm: npm install imtables\n * This snippet assumes the presence on the page of an element like:\n * <div id=\"some-elem\"></div>\n */")
+                     (not html?) (conj "var imtables = require(\"imtables\");\n"))
+                   (conj (str "var service = " (js/JSON.stringify
+                                                 (clj->js (-> service
+                                                              (select-keys [:root :token])
+                                                              (update :root scrub-url))) nil 2) "\n"))
+                   (conj (str "var query = " (js/JSON.stringify (clj->js query) nil 2) "\n"))
+                   (conj (str "imtables.loadTable(\n  selector, // Can also be an element, or a jQuery object.\n  {\"start\":0,\"size\":25}, // May be null\n  {service: service, query: query} // May be an imjs.Query\n).then(\n  function (table) { console.log('Table loaded', table); },\n  function (error) { console.error('Could not load table', error); }\n);"))
+                   (cond->
+                     html? (conj "</script>")))))
+
+(defn remove-java-comments [s]
+  (clojure.string/replace s #"/\*([\S\s]*?)\*/" ""))
+
+(defn octo-comment? [s]
+  (or
+    (clojure.string/starts-with? s "# ")
+    (every? true? (map (partial = "#") s))))
+
+(def not-octo-comment? (complement octo-comment?))
+
+(defn remove-octothorpe-comments [s]
+  (let [lines (clojure.string/split-lines s)]
+    (clojure.string/replace
+      (->> lines
+           (map (fn [line] (if (octo-comment? line) "\n" line)))
+           (clojure.string/join "\n"))
+      #"\n\n\n+"
+      "\n\n")))
+
+(defn format-code [{:keys [lang code comments? html? query service cdn] :as options}]
+  (cond
+    (= "js" lang) (when (and query service) (generate-javascript options))
+    (= "java" lang) (cond-> code (not comments?) remove-java-comments)
+    (or
+      (= "rb" lang)
+      (= "py" lang)
+      (= "pl" lang)) (cond-> code (not comments?) remove-octothorpe-comments)
+    :else ""))
+
 (reg-sub
   :codegen/code
   (fn [db [_ loc]]
     (get-in db (glue loc [:codegen :code]))))
 
 (reg-sub
-  :codegen/lang
+  :codegen/options
   (fn [db [_ loc]]
-    (get-in db (glue loc [:settings :codegen :lang]))))
+    (get-in db (glue loc [:settings :codegen]))))
+
+(reg-sub
+  :codegen/formatted-code
+  (fn [db [_ loc]]
+    (let [{:keys [html? comments? lang]} (get-in db (glue loc [:settings :codegen]))
+          code (get-in db (glue loc [:codegen :code]))
+          cdn (get-in db (glue loc [:settings :cdn]))
+          {:keys [query service]} (get-in db (glue loc nil))]
+      (when code
+        (format-code {:lang lang
+                      :code code
+                      :comments? comments?
+                      :html? html?
+                      :query query
+                      :service service
+                      :cdn cdn})))))
+
