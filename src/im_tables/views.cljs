@@ -20,7 +20,7 @@
                                                :url (fn [vocab] (str "#/reportpage/"
                                                                      (:mine vocab) "/"
                                                                      (:class vocab) "/"
-                                                                     (:objectId vocab)))}}})
+                                                                     (:id vocab)))}}})
 
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:
