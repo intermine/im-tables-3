@@ -24,9 +24,11 @@
 (defn custom-modal []
   (fn [loc {:keys [header body footer]}]
     [:div.im-modal
-     {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
+     {:on-mouse-down (fn [e]
+                  (dispatch [:prep-modal loc nil]))}
      [:div.im-modal-content
-      {:on-click (fn [e] (ocall e :stopPropagation))}
+      {:on-mouse-down (fn [e]
+                   (ocall e :stopPropagation))}
       [:div.modal-dialog
        [:div.modal-content
         [:div.modal-header header]
