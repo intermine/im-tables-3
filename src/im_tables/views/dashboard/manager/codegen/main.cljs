@@ -59,9 +59,13 @@
 
 (defn modal-body [loc]
   (let [code (subscribe [:codegen/formatted-code loc])
-        codegen-settings (subscribe [:codegen/options loc])]
+        codegen-settings (subscribe [:codegen/options loc])
+        max-height (r/atom nil)]
     (r/create-class
       {:component-did-mount (fn [this]
+                              ; Store the max height of the viewport later used to
+                              ; set a maximum height on the [:code] block below
+                              (reset! max-height (-> js/window js/$ (ocall :height)))
                               (ocall (js/$ "pre code") :each
                                      (fn [i block]
                                        (ocall hljs :highlightBlock block))))
@@ -77,9 +81,11 @@
                              [:div.col-xs-9
                               (if (nil? @code)
                                 [:pre [:code.nohighlight "Generating code... " [:i.fa.fa-fw.fa-spinner.fa-spin]]]
+                                ; Show the code and fix the height of the code container
+                                ; to prevent expanding over the viewport
                                 (if highlight?
-                                  [:pre [:code @code]]
-                                  [:pre @code]))]]]))})))
+                                  [:pre [:code {:style {:max-height (str (/ @max-height 2) "px")}} @code]]
+                                  [:pre {:style {:max-height (str (/ @max-height 2) "px")}} @code]))]]]))})))
 
 (defn modal-footer [loc]
   (let [code (subscribe [:codegen/formatted-code loc])
