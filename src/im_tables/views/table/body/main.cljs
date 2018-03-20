@@ -105,9 +105,12 @@
            [outer-join-table loc data view]
            ; otherwise a regular cell
            [:span {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
+
             [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
                        :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
+
              [:a {:href (url (merge
+                               data
                                (:value @(subscribe [:summary/item-details loc id]))
                                (get-in @settings [:links :vocab])))
                   :on-click (fn []
@@ -115,6 +118,7 @@
                                 (do
                                   ; Call the provided on-click
                                   (on-click (url (merge
+                                                   data
                                                    (:value @(subscribe [:summary/item-details loc id]))
                                                    (get-in @settings [:links :vocab]))))
                                   ; Side effect!!

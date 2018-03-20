@@ -18,7 +18,7 @@
                                                :url (fn [vocab] (str "#/reportpage/"
                                                                      (:mine vocab) "/"
                                                                      (:class vocab) "/"
-                                                                     (:objectId vocab)))}}})
+                                                                     (:id vocab)))}}})
 
 (def testmine-config {:service {:root "localhost:8080/intermine-demo"}
                       :query {:from "Employee"
