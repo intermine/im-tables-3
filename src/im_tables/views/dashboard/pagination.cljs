@@ -5,8 +5,6 @@
 
 (def show-amounts (list 10 20 50 100 250))
 
-
-
 (defn main []
   (fn [loc {:keys [start limit total]}]
     [:div.btn-toolbar

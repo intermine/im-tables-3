@@ -16,9 +16,8 @@
      [:div.row
       [column-manager/main loc]]
      [:div.row.im-table-toolbar
-      [:div.col-md-8
-       [:div.btn-toolbar
-
+      [:div.col-sm-12
+       [:div.btn-toolbar.pull-left.dashboard-buttons
         [:div.btn-group
          [:button.btn.btn-default
           {:on-click (fn []
@@ -30,24 +29,21 @@
         [:div.btn-group [save/main loc]]
         [:div.btn-group [exporttable/exporttable loc]]
         [:div.btn-group [codegen/main loc]]
-        [undo/main loc]
-        ]
-       ]
-      [:div.col-md-4
-       [:div.container-fluid
-        [:div.row.pagination-bar
-         [:div.col-xs-12
-          [:div.pull-right
-           [:div.pull-right [pager/main loc
-                             (merge pagination
-                                    {:total (get response :iTotalRecords)})]]
-           [:label.pull-right
-            {:style {:padding-right "20px"}}
-            (when (:iTotalRecords response)
-              (str "Showing "
-                   (inc (:start pagination)) " to "
-                   (min
-                     (+ (:start pagination) (:limit pagination))
-                     (:iTotalRecords response))
-                   " of "
-                   (.toLocaleString (:iTotalRecords response)) " rows"))]]]]]]]]))
+        [undo/main loc]]
+       [:div.row.pagination-bar.pull-left
+        [:div.pull-left
+         [pager/main loc
+          (merge pagination
+                 {:total (get response :iTotalRecords)})]]
+        [:label.pull-left
+         {:style {:padding-left "10px"}}
+         (when (:iTotalRecords response)
+           (str "Showing "
+                (inc (:start pagination)) " to "
+                (min
+                  (+ (:start pagination) (:limit pagination))
+                  (:iTotalRecords response))
+                " of "
+                (.toLocaleString (:iTotalRecords response)) " rows"))]
+
+        ]]]]))
