@@ -188,9 +188,10 @@
                      html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/2.0.0-beta/imtables.js\" charset=\"UTF8\"></script>"))
                      html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/2.0.0-beta/main.sandboxed.css\" rel=\"stylesheet\">\n"))
                      html? (conj "<script>")
-                     html? (conj "var selector = \"#some-elem\";\n")
+                     
                      (and (not html?) comments?) (conj "/* Install from npm: npm install imtables\n * This snippet assumes the presence on the page of an element like:\n * <div id=\"some-elem\"></div>\n */")
                      (not html?) (conj "var imtables = require(\"imtables\");\n"))
+                   (conj "var selector = \"#some-elem\";\n")
                    (conj (str "var service = " (js/JSON.stringify
                                                  (clj->js (-> service
                                                               (select-keys [:root :token])
