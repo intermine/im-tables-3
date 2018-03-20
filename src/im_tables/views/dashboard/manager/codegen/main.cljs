@@ -100,7 +100,8 @@
 (defn build-modal [loc]
   {:header [:h3 "Generate Code"]
    :body [modal-body loc]
-   :footer [modal-footer loc]})
+   :footer [modal-footer loc]
+   :extra-class "codegen-modal"})
 
 (defn main [loc]
   (let [query (subscribe [:main/query loc])
