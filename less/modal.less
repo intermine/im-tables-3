@@ -25,7 +25,8 @@
     .im-modal-content {
         flex: 0 0 auto;
         animation: slidein 150ms;
-
+        margin-left: 20px;
+        margin-right: 20px;
 
     }
 }
@@ -40,5 +41,27 @@
 @keyframes slidein {
     from { transform: translate(0%, -50%); }
     to   { transform: translate(0%, 0%); }
+}
+
+/*
+    This override is necessary to allow modals to expand to the width of their content rather
+    than be fixed to 600px as found in bootstrap. For example, code generation modal.
+*/
+
+
+.codegen-modal {
+    // min-width: 100% !important;
+    width: 100% !important;
+    padding-left: 30px;
+    padding-right: 30px;
+    max-width: 1200px !important;
+}
+
+@media (min-width: 768px) {
+    .codegen-modal {
+        .modal-dialog {
+            width: auto;
+        }
+    }
 }
 

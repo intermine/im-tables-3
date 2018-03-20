@@ -2,25 +2,36 @@
   (:require [re-frame.core :as re-frame :refer [dispatch]]
             [im-tables.views.core :as main-view]
             [reagent.core :as r]
-            [reagent.dom.server :as server]))
+            [reagent.dom.server :as server]
+            [oops.core :refer [ocall]]))
 
-(def some-im-tables-config {:service {:root "beta.flymine.org/beta"}
+(def some-im-tables-config {:service {:root "beta.humanmine.org/beta"}
                             :query {:from "Gene"
                                     :select ["symbol"
                                              "secondaryIdentifier"
                                              "dataSets.description"
                                              "primaryIdentifier"
                                              "organism.name"
-                                             "dataSets.name"]
-                                    :where [{:path "Gene.symbol"
-                                             :op "LIKE"
-                                             :value "M01*"}]}
+                                             "dataSets.name"]}
                             :settings {:pagination {:limit 10}
                                        :links {:vocab {:mine "BananaMine"}
                                                :url (fn [vocab] (str "#/reportpage/"
                                                                      (:mine vocab) "/"
                                                                      (:class vocab) "/"
                                                                      (:id vocab)))}}})
+
+(def testmine-config {:service {:root "localhost:8080/intermine-demo"}
+                      :query {:from "Employee"
+                              :select ["name"
+                                       "department.name"]}
+                      :settings {:pagination {:limit 10}
+                                 :links {:vocab {:mine "BananaMine"}
+                                         :url (fn [vocab] (str "#/reportpage/"
+                                                               (:mine vocab) "/"
+                                                               (:class vocab) "/"
+                                                               (:objectId vocab)))}}})
+
+
 
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:

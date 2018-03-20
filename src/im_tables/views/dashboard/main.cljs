@@ -5,6 +5,7 @@
             [im-tables.views.dashboard.undo :as undo]
             [im-tables.views.dashboard.save :as save]
             [im-tables.views.dashboard.manager.columns.main :as saver]
+            [im-tables.views.dashboard.manager.codegen.main :as codegen]
             [im-tables.views.dashboard.exporttable :as exporttable]
             [re-frame.core :refer [dispatch]]
             [oops.core :refer [ocall]]))
@@ -28,6 +29,7 @@
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]
         [:div.btn-group [exporttable/exporttable loc]]
+        [:div.btn-group [codegen/main loc]]
         [undo/main loc]
         ]
        ]

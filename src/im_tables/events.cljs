@@ -14,9 +14,11 @@
             [imcljs.fetch :as fetch]
             [imcljs.path :as im-path]
             [imcljs.query :as query]
+            [imcljs.internal.utils :refer [scrub-url]]
             [oops.core :refer [oapply ocall oget]]
-            [clojure.string :refer [split join starts-with?]]
-            [cljs.core.async :refer [close!]]))
+            [clojure.string :as string :refer [split join starts-with?]]
+            [cljs.core.async :refer [close! <! chan]]
+            [reagent.core :as r]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -609,7 +611,6 @@
   :main/deconstruct
   (sandbox)
   (fn [{db :db} [_ loc]]
-
     (let [deconstructed-query (into {} (map vec (sort-by
                                                   (fn [[p _]] (count (clojure.string/split p ".")))
                                                   (partition 2
@@ -619,3 +620,36 @@
 
       {:db (assoc db :query-parts deconstructed-query)
        :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction loc part details]) deconstructed-query))})))
+
+
+(reg-event-fx
+  :main/set-codegen-option
+  (sandbox)
+  (fn [{db :db} [_ loc option value run?]]
+    (cond-> {:db (assoc-in db [:settings :codegen option] value)}
+            run? (assoc :dispatch [:main/generate-code loc])
+            )))
+
+(reg-event-fx
+  :main/generate-code
+  (sandbox)
+  (let [fetch-atom (r/atom (chan))]
+    (fn [{db :db} [_ loc]]
+      ; Close any previous code generation requests
+      (swap! fetch-atom close!)
+      (let [{:keys [query service]} db
+            lang (get-in db [:settings :codegen :lang])
+            new-request (fetch/code service (:model service) {:query query :lang lang})]
+        ; Store the new request
+        (reset! fetch-atom new-request)
+        ; Clear the old code
+        {:db (-> db (assoc-in [:codegen :code] nil))
+         :im-tables/im-operation-chan
+         {:on-success [:main/save-codegen loc lang]
+          :channel new-request}}))))
+
+(reg-event-db
+  :main/save-codegen
+  (sandbox)
+  (fn [db [_ loc lang response]]
+    (update db :codegen assoc :code response :lang lang)))

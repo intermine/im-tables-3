@@ -1,6 +1,7 @@
 @import "overrides";
 @import "tooltip";
 @import "modal";
+@import "highlight";
 
 .force-wrap {
 
@@ -20,7 +21,6 @@
       -webkit-hyphens: auto;
       hyphens: auto;
 
-
 }
 
 .truncate-text {
@@ -38,6 +38,10 @@
     @histogram-bg: aliceblue;
     min-height: 200px;
     padding-bottom: 40px;
+
+    .hljs {
+        white-space: pre;
+    }
 
 
     .popover {

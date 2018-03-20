@@ -22,12 +22,15 @@
         [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
 
 (defn custom-modal []
-  (fn [loc {:keys [header body footer]}]
+  (fn [loc {:keys [header body footer extra-class]}]
     [:div.im-modal
-     {:on-click (fn [e] (dispatch [:prep-modal loc nil]))}
+     {:on-mouse-down (fn [e]
+                  (dispatch [:prep-modal loc nil]))}
      [:div.im-modal-content
-      {:on-click (fn [e] (ocall e :stopPropagation))}
-      [:div.modal-dialog
+      {:class extra-class
+       :on-mouse-down (fn [e]
+                   (ocall e :stopPropagation))}
+      [:div.modal-dialog.
        [:div.modal-content
         [:div.modal-header header]
         [:div.modal-body body]
