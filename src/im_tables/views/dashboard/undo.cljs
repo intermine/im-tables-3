@@ -7,7 +7,7 @@
         explanations (subscribe [:undo-explanations loc])
         redo-explanations (subscribe [:redo-explanations loc])]
     (fn []
-      [:div.btn-toolbar
+      [:div.btn-group
        [:div.btn-group
         [:button.btn.btn-default
          {:disabled (not @undos)
