@@ -24,25 +24,23 @@
            :on-change (fn [e]
                         (dispatch [:main/set-codegen-option loc :lang (oget e :target :value) true]))}
           (map (fn [[value {:keys [label]}]] ^{:key value} [:option {:value value} label]) languages)]
-         (when (= "js" lang)
-           [:div.checkbox
-            [:label [:input
-                     {:type "checkbox"
-                      :value ""
-                      :on-change (fn [e] (dispatch [:main/set-codegen-option loc :html? (not html?)]))
-                      :checked html?}] "Include HTML"]])
-         [:div.checkbox
-          [:label [:input
-                   {:type "checkbox"
-                    :value ""
-                    :on-change (fn [e] (dispatch [:main/set-codegen-option loc :comments? (not comments?)]))
-                    :checked comments?}] "Include comments"]]
-         [:div.checkbox
-          [:label [:input
-                   {:type "checkbox"
-                    :value ""
-                    :on-change (fn [e] (dispatch [:main/set-codegen-option loc :highlight? (not highlight?)]))
-                    :checked highlight?}] "Highlight syntax"]]
+         [:div.codegen-checkbox-container
+          (when (= "js" lang)
+            [:div [:label [:input
+                           {:type "checkbox"
+                            :value ""
+                            :on-change (fn [e] (dispatch [:main/set-codegen-option loc :html? (not html?)]))
+                            :checked html?}] " Include HTML"]])
+          [:div [:label [:input
+                         {:type "checkbox"
+                          :value ""
+                          :on-change (fn [e] (dispatch [:main/set-codegen-option loc :comments? (not comments?)]))
+                          :checked comments?}] " Include comments"]]
+          [:div [:label [:input
+                         {:type "checkbox"
+                          :value ""
+                          :on-change (fn [e] (dispatch [:main/set-codegen-option loc :highlight? (not highlight?)]))
+                          :checked highlight?}] " Highlight syntax"]]]
          ]))))
 
 
