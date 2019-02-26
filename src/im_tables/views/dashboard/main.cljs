@@ -5,6 +5,7 @@
             [im-tables.views.dashboard.undo :as undo]
             [im-tables.views.dashboard.save :as save]
             [im-tables.views.dashboard.manager.columns.main :as saver]
+            [im-tables.views.dashboard.manager.codegen.main :as codegen]
             [im-tables.views.dashboard.exporttable :as exporttable]
             [re-frame.core :refer [dispatch]]
             [oops.core :refer [ocall]]))
@@ -15,9 +16,8 @@
      [:div.row
       [column-manager/main loc]]
      [:div.row.im-table-toolbar
-      [:div.col-xs-8
-       [:div.btn-toolbar
-
+      [:div.col-sm-12
+       [:div.btn-toolbar.pull-left.dashboard-buttons
         [:div.btn-group
          [:button.btn.btn-default
           {:on-click (fn []
@@ -28,24 +28,22 @@
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]
         [:div.btn-group [exporttable/exporttable loc]]
-        [undo/main loc]
-        ]
-       ]
-      [:div.col-xs-4
-       [:div.container-fluid
-        [:div.row
-         [:div.col-xs-offset-2
-          [:div.pull-right
-           [:div.pull-right [pager/main loc
-                             (merge pagination
-                                    {:total (get response :iTotalRecords)})]]
-           [:span.pull-right
-            {:style {:padding-right "20px"}}
-            (when (:iTotalRecords response)
-              (str "Showing "
-                   (inc (:start pagination)) " to "
-                   (min
-                     (+ (:start pagination) (:limit pagination))
-                     (:iTotalRecords response))
-                   " of "
-                   (.toLocaleString (:iTotalRecords response)) " rows"))]]]]]]]]))
+        [:div.btn-group [codegen/main loc]]
+        [undo/main loc]]
+       [:div.row.pagination-bar.pull-left
+        [:div.pull-left
+         [pager/main loc
+          (merge pagination
+                 {:total (get response :iTotalRecords)})]]
+        [:label.pull-left
+         {:style {:padding-left "10px"}}
+         (when (:iTotalRecords response)
+           (str "Showing "
+                (inc (:start pagination)) " to "
+                (min
+                  (+ (:start pagination) (:limit pagination))
+                  (:iTotalRecords response))
+                " of "
+                (.toLocaleString (:iTotalRecords response)) " rows"))]
+
+        ]]]]))

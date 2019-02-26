@@ -11,6 +11,8 @@
       (cond-> {:db db}
               fetch-more? (assoc :dispatch [:im-tables.main/run-query loc true])))))
 
+
+
 (reg-event-fx
   :imt.settings/update-pagination-inc
   (sandbox)
@@ -22,7 +24,9 @@
   :imt.settings/update-pagination-dec
   (sandbox)
   (fn [{db :db} [_ loc]]
-    {:db       (update-in db [:settings :pagination :start] - (get-in db [:settings :pagination :limit]))
+    ; Make sure that never dec to a negative number
+    ; (This could happen if a user goes to page 2 with a limit of 10, changes limit to 20, then decs (-10)
+    {:db (update-in db [:settings :pagination :start] (comp (partial max 0) #(- % %2)) (get-in db [:settings :pagination :limit]))
      :dispatch [:imt.pagination/check-for-results loc]}))
 
 (reg-event-fx
@@ -39,3 +43,10 @@
     (let [total (get-in db [:response :iTotalRecords])]
       {:db       (assoc-in db [:settings :pagination :start] (- total (mod total 10)))
        :dispatch [:imt.pagination/check-for-results loc]})))
+
+(reg-event-fx
+  :imt.settings/update-pagination-limit
+  (sandbox)
+  (fn [{db :db} [_ loc limit]]
+    {:db       (assoc-in db [:settings :pagination :limit] limit)
+     :dispatch [:imt.pagination/check-for-results loc]}))
