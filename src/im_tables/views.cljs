@@ -4,17 +4,11 @@
             [reagent.core :as r]
             [reagent.dom.server :as server]))
 
-(def some-im-tables-config {:service {:root "beta.flymine.org/beta"}
-                            :query {:from "Gene"
+(def some-im-tables-config {:service {:root "https://yeastmine.yeastgenome.org/yeastmine"}
+                            :query {:from "Protein"
                                     :select ["symbol"
                                              "secondaryIdentifier"
-                                             "dataSets.description"
-                                             "primaryIdentifier"
-                                             "organism.name"
-                                             "dataSets.name"]
-                                    :where [{:path "Gene.symbol"
-                                             :op "LIKE"
-                                             :value "M01A1**"}]}
+                                             "primaryIdentifier"]}
                             :settings {:pagination {:limit 10}
                                        :links {:vocab {:mine "BananaMine"}
                                                :url (fn [vocab] (str "#/reportpage/"
