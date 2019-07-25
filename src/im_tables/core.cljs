@@ -7,7 +7,8 @@
             [im-tables.views :as views]
             [im-tables.config :as config]
             [imcljs.query :as query]
-            [re-frisk.core :refer [enable-re-frisk!]]))
+            [re-frisk.core :refer [enable-re-frisk!]]
+            [cljsjs.react-transition-group]))
 
 
 (defn dev-setup []
