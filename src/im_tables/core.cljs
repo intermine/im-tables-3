@@ -8,7 +8,13 @@
             [im-tables.config :as config]
             [imcljs.query :as query]
             [re-frisk.core :refer [enable-re-frisk!]]
-            [cljsjs.react-transition-group]))
+            [cljsjs.react-transition-group]
+            [cljsjs.highlight]
+            [cljsjs.highlight.langs.javascript]
+            [cljsjs.highlight.langs.perl]
+            [cljsjs.highlight.langs.python]
+            [cljsjs.highlight.langs.ruby]
+            [cljsjs.highlight.langs.java]))
 
 
 (defn dev-setup []

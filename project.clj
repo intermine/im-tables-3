@@ -1,4 +1,4 @@
-(defproject org.intermine/im-tables "0.8.2"
+(defproject org.intermine/im-tables "0.8.3"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.520"]
                  [org.clojure/core.async "0.4.500"]
@@ -8,6 +8,7 @@
                  [reagent "0.8.1"]
                  [cljsjs/react-transition-group "1.2.0-0"
                   :exclusions [cljsjs/react cljsjs/react-dom]]
+                 [cljsjs/highlight "9.12.0-2"]
                  [compojure "1.6.1"]
                  [ring "1.7.1"]
                  [cljs-http "0.1.46"]
@@ -57,8 +58,6 @@
                 :source-map-timestamp true
                 :preloads [devtools.preload]
                 :parallel-build true
-                :npm-deps {:highlight.js "9.12.0"}
-                :install-deps true
                 :external-config {:devtools/config {:features-to-install :all}}}}
 
 
@@ -69,8 +68,6 @@
                 :output-to "resources/public/js/compiled/app.js"
                 :optimizations :advanced
                 :closure-defines {goog.DEBUG false}
-                :npm-deps {:highlight.js "9.12.0"}
-                :install-deps true
                 :pretty-print false}}
 
     {:id "test"
