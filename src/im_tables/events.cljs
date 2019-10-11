@@ -533,7 +533,13 @@
 
 ;;;;;;;;;;;;;;
 
-
+(reg-event-db
+  :main/initial-query-response
+  (sandbox)
+  (fn [db [_ loc {:keys [start]} results]]
+    (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
+          updated-results (assoc results :results new-results-map)]
+      (assoc db :response updated-results))))
 
 (reg-event-fx
   :main/replace-query-response

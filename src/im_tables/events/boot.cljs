@@ -71,9 +71,18 @@
 
 (reg-event-fx :im-tables/store-setup
               (sandbox)
-              (fn [{db :db} [_ loc {:keys [service response query] :as input}]]
-                {:db (assoc db :service service :response response :query (im-query/sterilize-query query))
-                 :dispatch [:im-tables.main/run-query loc]}))
+              (fn [{db :db} [_ loc {:keys [service response query]}]]
+                (let [{:keys [pagination buffer]} (:settings db)
+                      {:keys [start limit]}       pagination
+                      query (im-query/sterilize-query query)]
+                  {:db (assoc db
+                              :service service
+                              :response response
+                              :query query)
+                   :im-tables/im-operation-chan {:on-success ^:flush-dom [:main/initial-query-response loc pagination]
+                                                 :channel (fetch/table-rows service query {:start start
+                                                                                           :size (* limit buffer)})}})))
+
 
 (reg-event-db
   :initialize-db

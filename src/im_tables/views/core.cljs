@@ -48,7 +48,8 @@
         static? (reagent/atom true)
         model (subscribe [:assets/model location])
         query (subscribe [:main/query location])
-        collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
+        collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])
+        views (subscribe [:query-response/views])]
     (reagent/create-class
       {:reagent-render
        (fn [location]
@@ -59,7 +60,12 @@
          (let [preview-rows (map (partial get (:results @response)) (range (:limit @pagination)))]
            [:div.im-table.relative
             ; When the mouse touches the table, set the flag to render the actual React components
-            {:on-mouse-over (fn [] (reset! static? false))}
+            {:on-mouse-over (fn []
+                              (when @static?
+                                (dispatch [:main/deconstruct location])
+                                (doseq [event (map (fn [view] [:main/summarize-column location view]) @views)]
+                                  (dispatch event))
+                                (reset! static? false)))}
 
             (if @static?
               ; If static (optimised) then only show an HTML representations of the React components
