@@ -1,7 +1,6 @@
 (ns im-tables.views.dashboard.manager.codegen.main
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as r]
-            ["highlight.js" :as hljs]
             [clojure.string :as string]
             [imcljs.internal.utils :refer [scrub-url]]
             [oops.core :refer [ocall oget oset!]]))
@@ -66,11 +65,11 @@
                               (reset! max-height (-> js/window js/$ (ocall :height)))
                               (ocall (js/$ "pre code") :each
                                      (fn [i block]
-                                       (ocall hljs :highlightBlock block))))
+                                       (ocall js/hljs :highlightBlock block))))
        :component-did-update (fn [this]
                                (ocall (js/$ "pre code") :each
                                       (fn [i block]
-                                        (ocall hljs :highlightBlock block))))
+                                        (ocall js/hljs :highlightBlock block))))
        :reagent-render (fn [loc]
                          (let [highlight? (:highlight? @codegen-settings)]
                            [:div.container-fluid
