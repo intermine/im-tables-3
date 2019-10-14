@@ -15,17 +15,28 @@
                  [joshkh/ctrlz "0.3.0"]
                  [binaryage/oops "0.7.0"]
                  [inflections "0.13.2"]
-                 [re-frisk "0.5.4.1"]
                  [criterium "0.4.5"]
-                 [org.intermine/imcljs "0.7.0"]]
+                 [org.intermine/imcljs "1.0.1"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-less "1.7.5"]
-            [lein-ancient "0.6.15"]]
+            [lein-ancient "0.6.15"]
+            [lein-pdo "0.1.1"]
+            [lein-cljfmt "0.6.1"]]
+
+  :aliases {"dev" ["do" "clean"
+                   ["pdo"
+                    ["trampoline" "less" "auto"]
+                    ["with-profile" "+repl" "run"]]]
+            "build" ["do" "clean"
+                     ["less" "once"]
+                     ["cljsbuild" "once" "min"]]
+            "deploy" ["with-profile" "+uberjar" "deploy" "clojars"]
+            "format" ["cljfmt" "fix"]}
 
   :repositories {"clojars" {:sign-releases false}}
 
-  :min-lein-version "2.5.3"
+  :min-lein-version "2.8.1"
 
   :source-paths ["src"]
 
@@ -35,48 +46,52 @@
   :figwheel {:css-dirs ["resources/public/css"]
              :server-port 3448}
 
+  :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]
+                 :timeout 120000}
+
   :less {:source-paths ["less"]
          :target-path "resources/public/css"}
 
-  :profiles
-  {:dev
-   {:dependencies [[binaryage/devtools "0.9.10"]]
+  :main im-tables.core
 
-    :plugins [[lein-figwheel "0.5.15"]
-              [lein-doo "0.1.7"]]}}
+  :profiles {:dev {:dependencies [[binaryage/devtools "0.9.10"]
+                                  [day8.re-frame/re-frame-10x "0.4.3"]
+                                  [day8.re-frame/tracing "0.5.1"]
+                                  [figwheel-sidecar "0.5.19"]
+                                  [cider/piggieback "0.4.1"]]
+                   :plugins [[lein-figwheel "0.5.19"]
+                             [lein-doo "0.1.8"]]}
+             :repl {:source-paths ["dev"]}
+             :uberjar {:prep-tasks ["build"]}}
 
-
-  :cljsbuild
-  {:builds
-   [{:id "dev"
-     :source-paths ["src"]
-     :figwheel {:on-jsload "im-tables.core/mount-root"}
-     :compiler {:main im-tables.core
-                :output-to "resources/public/js/compiled/app.js"
-                :output-dir "resources/public/js/compiled/out"
-                :asset-path "js/compiled/out"
-                :source-map-timestamp true
-                :preloads [devtools.preload]
-                :parallel-build true
-                :external-config {:devtools/config {:features-to-install :all}}}}
-
-
-    {:id "min"
-     :source-paths ["src"]
-     :jar true
-     :compiler {:main im-tables.core
-                :output-to "resources/public/js/compiled/app.js"
-                :optimizations :advanced
-                :closure-defines {goog.DEBUG false}
-                :pretty-print false}}
-
-    {:id "test"
-     :source-paths ["src" "test/cljs"]
-     :compiler {:main im-tables.runner
-                :output-to "resources/public/js/compiled/test.js"
-                :output-dir "resources/public/js/compiled/test/out"
-                :optimizations :none}}]})
+  :cljsbuild {:builds [{:id "dev"
+                        :source-paths ["src"]
+                        :figwheel {:on-jsload "im-tables.core/mount-root"}
+                        :compiler {:main im-tables.core
+                                   :output-to "resources/public/js/compiled/app.js"
+                                   :output-dir "resources/public/js/compiled/out"
+                                   :asset-path "js/compiled/out"
+                                   :source-map-timestamp true
+                                   :parallel-build true
+                                   :closure-defines {"re_frame.trace.trace_enabled_QMARK_" true
+                                                     "day8.re_frame.tracing.trace_enabled_QMARK_" true}
+                                   :preloads [devtools.preload
+                                              day8.re-frame-10x.preload]
+                                   :external-config {:devtools/config {:features-to-install :all}}}}
 
 
-  ;:prep-tasks [["cljsbuild" "once" "min"] ["less" "once"] "compile"]
+                       {:id "min"
+                        :source-paths ["src"]
+                        :jar true
+                        :compiler {:main im-tables.core
+                                   :output-to "resources/public/js/compiled/app.js"
+                                   :optimizations :advanced
+                                   :closure-defines {goog.DEBUG false}
+                                   :pretty-print false}}
 
+                       {:id "test"
+                        :source-paths ["src" "test/cljs"]
+                        :compiler {:main im-tables.runner
+                                   :output-to "resources/public/js/compiled/test.js"
+                                   :output-dir "resources/public/js/compiled/test/out"
+                                   :optimizations :none}}]})
