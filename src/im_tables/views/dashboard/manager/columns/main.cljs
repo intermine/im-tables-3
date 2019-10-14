@@ -29,8 +29,7 @@
                                     selected? "label label-success disabled")}
                           [:i.fa.fa-tag]
                           (when (and model current-path name)
-                            (last (impath/display-name model (join "." (conj current-path name)))))
-                          ]])) (vals attributes)))
+                            (last (impath/display-name model (join "." (conj current-path name)))))]])) (vals attributes)))
          (into [:ul.collections.list-unstyled]
                (map (fn [{:keys [name referencedType name] :as collection}]
                       (let [referenced-class (get-in model [:classes (keyword referencedType)])]
@@ -75,8 +74,7 @@
               {:data-dismiss "modal"
                :disabled (< (count @selected) 1)
                :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
-              (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]]
-      )))
+              (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]])))
 
 (defn modal-body []
   (fn [loc]
@@ -84,8 +82,7 @@
           selected (subscribe [:tree-view/selection loc])
           query (subscribe [:main/query loc])]
 
-      [tree-view loc @model @query @selected]
-      )))
+      [tree-view loc @model @query @selected])))
 
 (defn modal-footer []
   (fn [loc]
@@ -104,16 +101,12 @@
                      (dispatch [:tree-view/merge-new-columns loc])
                      ; Close the modal by clearing the modal value in app-db
                      (dispatch [:prep-modal loc nil]))}
-        (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]
-      )))
+        (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]])))
 
 (defn make-modal [loc]
   {:header [:h3 "Add Columns"]
    :body [modal-body loc]
    :footer [modal-footer loc]})
-
-
-
 
 (defn main []
   (fn [loc]

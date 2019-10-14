@@ -8,8 +8,8 @@
             [clojure.string :as string]
             [oops.core :refer [oget ocall ocall! oapply oget+]])
   (:import
-    (goog.i18n NumberFormat)
-    (goog.i18n.NumberFormat Format)))
+   (goog.i18n NumberFormat)
+   (goog.i18n.NumberFormat Format)))
 
 (def nff
   (NumberFormat. Format/DECIMAL))
@@ -39,7 +39,6 @@
       (ocall! "parent")
       (ocall! "removeClass" "open")))
 
-
 (defn has-text?
   "Return true if a label contains a string"
   [needle haystack]
@@ -51,7 +50,6 @@
 
 (defn constraint-has-path? [view constraint]
   (= view (:path constraint)))
-
 
 (defn constraint-dropdown []
   (fn [{:keys [value on-change]}]
@@ -79,8 +77,8 @@
 (defn blank-constraint [loc path state]
   (fn [loc path]
     (let [submit-constraint (fn [] (dispatch
-                                     [:filters/add-constraint loc @state]
-                                     (reset! state {:path path :op "=" :value nil})))]
+                                    [:filters/add-constraint loc @state]
+                                    (reset! state {:path path :op "=" :value nil})))]
       [:div.imtable-constraint
        [:div.constraint-operator
         [constraint-dropdown
@@ -98,9 +96,7 @@
                                         input (.. e -target -value)]
                                     ;; submit when pressing enter & not blank.
                                     (when (and (= keycode 13) (not (clojure.string/blank? input)))
-                                      (submit-constraint)
-                                      )))}]]
-       ])))
+                                      (submit-constraint))))}]]])))
 
 (defn constraint []
   (fn [loc {:keys [path op value values code] :as const}]
@@ -115,7 +111,6 @@
        [:button.btn.btn-danger
         {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
          :type "button"} [:i.fa.fa-times]]])))
-
 
 (defn filter-view [loc view blank-constraint-atom]
   (let [response (subscribe [:selection/response loc view])
@@ -141,8 +136,8 @@
           [:div.btn-group
            [:button.btn.btn-default
             {:on-click (fn [] (dispatch
-                                [:filters/add-constraint loc @blank-constraint-atom]
-                                (reset! blank-constraint-atom {:path view :op "=" :value nil})))
+                               [:filters/add-constraint loc @blank-constraint-atom]
+                               (reset! blank-constraint-atom {:path view :op "=" :value nil})))
              :type "button"} "Add More"]]
 
           [:div.btn-group
@@ -151,12 +146,11 @@
              :on-click (fn []
                          (when (not (clojure.string/blank? (:value @blank-constraint-atom)))
                            (dispatch
-                             [:filters/add-constraint loc @blank-constraint-atom]
-                             (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
+                            [:filters/add-constraint loc @blank-constraint-atom]
+                            (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
              ; don't put :data-toggle "dropdown" in here, it stops
              ; the form submitting.... silently. Nice.
-             :value "Apply"
-             }]]]]))))
+             :value "Apply"}]]]]))))
 
 (defn too-many-values []
   (fn []
@@ -225,51 +219,49 @@
         selections (subscribe [:selection/selections loc view])
         text-filter (subscribe [:selection/text-filter loc view])]
     (reagent/create-class
-      {:component-will-mount
-       (fn [])
-       :component-will-update
-       (fn [])
-       :reagent-render
-       (fn [loc view]
-         (let [close-fn (partial force-close (reagent/current-component))]
-           (if (false? @response)
-             [too-many-values]
-             (if (contains? (first (:results @response)) :min)
-               [numerical-column-summary loc view (:results @response) local-state]
-               [:form.form.column-summary
-                [:div.main-view
-                 [histogram/main (:results @response)]
-                 [filter-input loc view @text-filter]
-                 [:table.table.table-striped.table-condensed
-                  [:thead [:tr [:th
-                                (if (empty? @selections)
-                                  [:span {:title "Select all"
-                                          :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
-                                  [:span {:title "Deselect all"
-                                          :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])
-                                ] [:th "Item"] [:th "Count"]]]
-                  (into [:tbody]
-                        (->> (filter (partial has-text? @text-filter) (:results @response))
-                             (map (fn [{:keys [count item]}]
-                                    [:tr.hoverable
-                                     {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                                     [:td
-                                      [:input
-                                       {:on-change (fn [])
-                                        :checked (contains? @selections item)
-                                        :type "checkbox"}]]
-                                     [:td (if item item [no-value])]
-                                     [:td
-                                      [:div count]]]))))]]
-                [:div.btn-toolbar.column-summary-toolbar
-                 [:button.btn.btn-primary
-                  {:type "button"
-                   :on-click (fn []
-                               (dispatch [:main/apply-summary-filter loc view])
-                               (close-fn))}
-                  [:i.fa.fa-filter]
-                  (str " Filter")]]]))))})))
-
+     {:component-will-mount
+      (fn [])
+      :component-will-update
+      (fn [])
+      :reagent-render
+      (fn [loc view]
+        (let [close-fn (partial force-close (reagent/current-component))]
+          (if (false? @response)
+            [too-many-values]
+            (if (contains? (first (:results @response)) :min)
+              [numerical-column-summary loc view (:results @response) local-state]
+              [:form.form.column-summary
+               [:div.main-view
+                [histogram/main (:results @response)]
+                [filter-input loc view @text-filter]
+                [:table.table.table-striped.table-condensed
+                 [:thead [:tr [:th
+                               (if (empty? @selections)
+                                 [:span {:title "Select all"
+                                         :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
+                                 [:span {:title "Deselect all"
+                                         :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])] [:th "Item"] [:th "Count"]]]
+                 (into [:tbody]
+                       (->> (filter (partial has-text? @text-filter) (:results @response))
+                            (map (fn [{:keys [count item]}]
+                                   [:tr.hoverable
+                                    {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
+                                    [:td
+                                     [:input
+                                      {:on-change (fn [])
+                                       :checked (contains? @selections item)
+                                       :type "checkbox"}]]
+                                    [:td (if item item [no-value])]
+                                    [:td
+                                     [:div count]]]))))]]
+               [:div.btn-toolbar.column-summary-toolbar
+                [:button.btn.btn-primary
+                 {:type "button"
+                  :on-click (fn []
+                              (dispatch [:main/apply-summary-filter loc view])
+                              (close-fn))}
+                 [:i.fa.fa-filter]
+                 (str " Filter")]]]))))})))
 
 (defn filter-dropdown-menu [loc view idx col-count]
   (let [query (subscribe [:main/query loc view])
@@ -301,17 +293,14 @@
          [:div.dropdown-menu
           {:class (when right? "dropdown-right")} [filter-view loc view blank-constraint-atom]]]))))
 
-
 (defn obj->clj [obj]
   (reduce (fn [total next-key]
             (assoc total (keyword next-key) (oget+ obj next-key))) {} (js-keys obj)))
-
 
 (defn align-right? [dom-node]
   (let [{left :left} (obj->clj (ocall dom-node :getBoundingClientRect))
         screen-width (oget js/window :innerWidth)]
     (> left (/ screen-width 2))))
-
 
 (defn toolbar []
   (let [right? (reagent/atom false)]

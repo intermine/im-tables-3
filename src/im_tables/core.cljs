@@ -29,11 +29,10 @@
 
 (defn ^:export init []
   #_(re-frame/dispatch-sync [:initialize-db
-                           [:test :location]
-                           {
-                            :service {:root "www.flymine.org/query"}
-                            ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}
-                            :query (query/sterilize-query db/outer-join-query)}])
+                             [:test :location]
+                             {:service {:root "www.flymine.org/query"}
+                              ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}
+                              :query (query/sterilize-query db/outer-join-query)}])
 
   (dev-setup)
   (mount-root))

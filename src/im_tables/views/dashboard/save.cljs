@@ -6,7 +6,6 @@
             [imcljs.path :as path :refer [walk class]]
             [im-tables.components.bootstrap :refer [modal]]))
 
-
 (defn join-with-arrows [col]
   (clojure.string/join " > " col))
 
@@ -42,9 +41,8 @@
                     ; Save the list
                     (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state])
                     ; Close the modal by clearing the modal markup in app-db
-                    (dispatch [:prep-modal loc nil])
+                    (dispatch [:prep-modal loc nil]))]
 
-                    )]
     {:header [:h4 (str "Save a list of " (:count details) " " (if (< count 2) (name type) (plural (name type))))]
      :body [save-dialog state details on-submit]
      :footer [save-footer loc state details on-submit]}))
@@ -64,8 +62,7 @@
         (into [:ul]
               (map (fn [[path query]]
                      [:li [:a
-                           {
-                            ;:data-toggle "modal"
+                           {;:data-toggle "modal"
                             ;:data-target "#testModal"
                             :on-click (fn [] (dispatch [:prep-modal loc
                                                         (generate-dialog loc
@@ -76,8 +73,7 @@
 (defn save-menu []
   (fn [loc model path {:keys [query count]}]
     [:li
-     {
-      ;:data-toggle "modal"
+     {;:data-toggle "modal"
       ;:data-target "#testModal"
       :on-click (fn [] (dispatch [:prep-modal loc
                                   (generate-dialog loc
@@ -85,7 +81,6 @@
                                                     :count count
                                                     :type (name (path/class model path))})]))}
      [:a (str (serialize-path model path) " (" count ")")]]))
-
 
 (defn main [loc]
   (let [model (subscribe [:assets/model loc])

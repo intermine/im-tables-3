@@ -37,5 +37,5 @@
         [table-head loc views]
         (into [:tbody]
               (->>
-                (map second (into (sorted-map) (select-keys results (range start (+ start limit)))))
-                (map (fn [r] [table-body/table-row loc r]))))]])))
+               (map second (into (sorted-map) (select-keys results (range start (+ start limit)))))
+               (map (fn [r] [table-body/table-row loc r]))))]])))

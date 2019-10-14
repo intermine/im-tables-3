@@ -35,12 +35,10 @@
                        :size 10
                        :sortOrder [{:path "symbol"
                                     :direction "ASC"}]
-                       :where [
-                               {:path "secondaryIdentifier"
+                       :where [{:path "secondaryIdentifier"
                                 :op "="
                                 :value "AC3.1*" ;AC3*
-                                :code "A"}
-                               ]})
+                                :code "A"}]})
 
 (def list-query {:title "esyN demo list"
                  :from "Gene"
@@ -48,9 +46,7 @@
                  :where [{:path "Gene", :op "IN", :value "esyN demo list"}]})
 
 (def default-db
-  {
-
-   ;:service  {:root "www.flymine.org/query"}
+  {;:service  {:root "www.flymine.org/query"}
    ;:query    {:from   "Gene"
    ;           :size   10
    ;           :select ["secondaryIdentifier"

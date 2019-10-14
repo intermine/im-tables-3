@@ -8,99 +8,99 @@
   (reduce conj (or path []) remainder-vec))
 
 (reg-sub
-  :main/query-response
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:response]))))
+ :main/query-response
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:response]))))
 
 (reg-sub
-  :main/query
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:query]))))
+ :main/query
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:query]))))
 
 (reg-sub
-  :main/temp-query
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:temp-query]))))
+ :main/temp-query
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:temp-query]))))
 
 (reg-sub
-  :main/query-parts
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:query-parts]))))
+ :main/query-parts
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:query-parts]))))
 
 (reg-sub
-  :style/overlay?
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:cache :overlay?]))))
+ :style/overlay?
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:cache :overlay?]))))
 
 (reg-sub
-  :summary/item-details
-  (fn [db [_ loc id]]
-    (get-in db (glue loc [:cache :item-details id]))))
+ :summary/item-details
+ (fn [db [_ loc id]]
+   (get-in db (glue loc [:cache :item-details id]))))
 
 (reg-sub
-  :style/dragging-item
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:cache :dragging-item]))))
+ :style/dragging-item
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:cache :dragging-item]))))
 
 (reg-sub
-  :style/dragging-over
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:cache :dragging-over]))))
+ :style/dragging-over
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:cache :dragging-over]))))
 
 (reg-sub
-  :settings/pagination
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:settings :pagination]))))
+ :settings/pagination
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:settings :pagination]))))
 
 (reg-sub
-  :settings/data-out
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:settings :data-out]))))
+ :settings/data-out
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:settings :data-out]))))
 
 (reg-sub
-  :settings/settings
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:settings]))))
+ :settings/settings
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:settings]))))
 
 (reg-sub
-  :summaries/column-summaries
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:cache :column-summary]))))
+ :summaries/column-summaries
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:cache :column-summary]))))
 
 (reg-sub
-  :selection/selections
-  (fn [db [_ prefix view]]
-    (get-in db (glue prefix [:cache :column-summary view :selections]))))
+ :selection/selections
+ (fn [db [_ prefix view]]
+   (get-in db (glue prefix [:cache :column-summary view :selections]))))
 
 (reg-sub
-  :selection/response
-  (fn [db [_ prefix view]]
-    (get-in db (glue prefix [:cache :column-summary view :response]))))
+ :selection/response
+ (fn [db [_ prefix view]]
+   (get-in db (glue prefix [:cache :column-summary view :response]))))
 
 (reg-sub
-  :selection/text-filter
-  (fn [db [_ prefix view]]
-    (get-in db (glue prefix [:cache :column-summary view :filters :text]))))
+ :selection/text-filter
+ (fn [db [_ prefix view]]
+   (get-in db (glue prefix [:cache :column-summary view :filters :text]))))
 
 (reg-sub
-  :assets/model
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:service :model]))))
+ :assets/model
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:service :model]))))
 
 (reg-sub
-  :assets/service
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:service]))))
+ :assets/service
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:service]))))
 
 (reg-sub
-  :tree-view/selection
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:cache :tree-view :selection]))))
+ :tree-view/selection
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:cache :tree-view :selection]))))
 
 (reg-sub
-  :modal
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:cache :modal]))))
+ :modal
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:cache :modal]))))
 
 (defn head-contains?
   "True if a collection's head contains all elements of another collection (sub-coll)
@@ -135,14 +135,14 @@
             (filter (partial head-missing? starts-with) (drop (count leading) string-coll)))))
 
 (reg-sub
-  :query-response/views
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:response :views]))))
+ :query-response/views
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:response :views]))))
 
 (reg-sub
-  :query/joins
-  (fn [db [_ prefix]]
-    (get-in db (glue prefix [:query :joins]))))
+ :query/joins
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:query :joins]))))
 
 ; The following two subscriptions do two things to support outer joins, resulting in:
 ;     Gene.secondaryIdentifier Gene.publications.year Gene.symbol Gene.publications.title
@@ -155,26 +155,26 @@
 
 ; First move any views that are part of outer joins next to eachother:
 (reg-sub
-  :query-response/views-sorted-by-joins
-  (fn [[_ loc]]
-    [(subscribe [:query-response/views loc])
-     (subscribe [:query/joins loc])])
-  (fn [[views joins]]
-    (reduce (fn [total next] (group-by-starts-with total next)) views joins)))
+ :query-response/views-sorted-by-joins
+ (fn [[_ loc]]
+   [(subscribe [:query-response/views loc])
+    (subscribe [:query/joins loc])])
+ (fn [[views joins]]
+   (reduce (fn [total next] (group-by-starts-with total next)) views joins)))
 
 ; ...then replace all views that are part of outer joins with the name of the outer joins:
 (reg-sub
-  :query-response/views-collapsed-by-joins
-  (fn [[_ loc]]
-    [(subscribe [:query-response/views-sorted-by-joins loc])
-     (subscribe [:query/joins loc])])
-  (fn [[views joins]]
-    (reduce (fn [total next] (replace-join-views total next)) views joins)))
+ :query-response/views-collapsed-by-joins
+ (fn [[_ loc]]
+   [(subscribe [:query-response/views-sorted-by-joins loc])
+    (subscribe [:query/joins loc])])
+ (fn [[views joins]]
+   (reduce (fn [total next] (replace-join-views total next)) views joins)))
 
 (reg-sub
-  :rel-manager/query
-  (fn [db [_ loc]]
-    (get-in db (glue loc [:cache :rel-manager]))))
+ :rel-manager/query
+ (fn [db [_ loc]]
+   (get-in db (glue loc [:cache :rel-manager]))))
 
 ;;;;;;;;;;;;;;;; Code generation
 
@@ -182,77 +182,77 @@
   (string/join "\n"
                (-> []
                    (cond->
-                     (and html? comments?) (conj "<!-- The Element we will target -->")
-                     html? (conj "<div id=\"some-elem\"></div>\n")
-                     (and html? comments?) (conj "<!-- The imtables source -->")
-                     html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/2.0.0-beta/imtables.js\" charset=\"UTF8\"></script>"))
-                     html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/2.0.0-beta/main.sandboxed.css\" rel=\"stylesheet\">\n"))
-                     html? (conj "<script>")
-                     
-                     (and (not html?) comments?) (conj "/* Install from npm: npm install imtables\n * This snippet assumes the presence on the page of an element like:\n * <div id=\"some-elem\"></div>\n */")
-                     (not html?) (conj "var imtables = require(\"imtables\");\n"))
+                    (and html? comments?) (conj "<!-- The Element we will target -->")
+                    html? (conj "<div id=\"some-elem\"></div>\n")
+                    (and html? comments?) (conj "<!-- The imtables source -->")
+                    html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/2.0.0-beta/imtables.js\" charset=\"UTF8\"></script>"))
+                    html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/2.0.0-beta/main.sandboxed.css\" rel=\"stylesheet\">\n"))
+                    html? (conj "<script>")
+
+                    (and (not html?) comments?) (conj "/* Install from npm: npm install imtables\n * This snippet assumes the presence on the page of an element like:\n * <div id=\"some-elem\"></div>\n */")
+                    (not html?) (conj "var imtables = require(\"imtables\");\n"))
                    (conj "var selector = \"#some-elem\";\n")
                    (conj (str "var service = " (js/JSON.stringify
-                                                 (clj->js (-> service
-                                                              (select-keys [:root :token])
-                                                              (update :root scrub-url))) nil 2) "\n"))
+                                                (clj->js (-> service
+                                                             (select-keys [:root :token])
+                                                             (update :root scrub-url))) nil 2) "\n"))
                    (conj (str "var query = " (js/JSON.stringify (clj->js query) nil 2) "\n"))
                    (conj (str "imtables.loadTable(\n  selector, // Can also be an element, or a jQuery object.\n  {\"start\":0,\"size\":25}, // May be null\n  {service: service, query: query} // May be an imjs.Query\n).then(\n  function (table) { console.log('Table loaded', table); },\n  function (error) { console.error('Could not load table', error); }\n);"))
                    (cond->
-                     html? (conj "</script>")))))
+                    html? (conj "</script>")))))
 
 (defn remove-java-comments [s]
   (clojure.string/replace s #"/\*([\S\s]*?)\*/" ""))
 
 (defn octo-comment? [s]
   (or
-    (clojure.string/starts-with? s "# ")
-    (every? true? (map (partial = "#") s))))
+   (clojure.string/starts-with? s "# ")
+   (every? true? (map (partial = "#") s))))
 
 (def not-octo-comment? (complement octo-comment?))
 
 (defn remove-octothorpe-comments [s]
   (let [lines (clojure.string/split-lines s)]
     (clojure.string/replace
-      (->> lines
-           (map (fn [line] (if (octo-comment? line) "\n" line)))
-           (clojure.string/join "\n"))
-      #"\n\n\n+"
-      "\n\n")))
+     (->> lines
+          (map (fn [line] (if (octo-comment? line) "\n" line)))
+          (clojure.string/join "\n"))
+     #"\n\n\n+"
+     "\n\n")))
 
 (defn format-code [{:keys [lang code comments? html? query service cdn] :as options}]
   (cond
     (= "js" lang) (when (and query service) (generate-javascript options))
     (= "java" lang) (cond-> code (not comments?) remove-java-comments)
     (or
-      (= "rb" lang)
-      (= "py" lang)
-      (= "pl" lang)) (cond-> code (not comments?) remove-octothorpe-comments)
+     (= "rb" lang)
+     (= "py" lang)
+     (= "pl" lang)) (cond-> code (not comments?) remove-octothorpe-comments)
     :else ""))
 
 (reg-sub
-  :codegen/code
-  (fn [db [_ loc]]
-    (get-in db (glue loc [:codegen :code]))))
+ :codegen/code
+ (fn [db [_ loc]]
+   (get-in db (glue loc [:codegen :code]))))
 
 (reg-sub
-  :codegen/options
-  (fn [db [_ loc]]
-    (get-in db (glue loc [:settings :codegen]))))
+ :codegen/options
+ (fn [db [_ loc]]
+   (get-in db (glue loc [:settings :codegen]))))
 
 (reg-sub
-  :codegen/formatted-code
-  (fn [db [_ loc]]
-    (let [{:keys [html? comments? lang]} (get-in db (glue loc [:settings :codegen]))
-          code (get-in db (glue loc [:codegen :code]))
-          cdn (get-in db (glue loc [:settings :cdn]))
-          {:keys [query service]} (get-in db (glue loc nil))]
-      (when code
-        (format-code {:lang lang
-                      :code code
-                      :comments? comments?
-                      :html? html?
-                      :query query
-                      :service service
-                      :cdn cdn})))))
+ :codegen/formatted-code
+ (fn [db [_ loc]]
+   (let [{:keys [html? comments? lang]} (get-in db (glue loc [:settings :codegen]))
+         code (get-in db (glue loc [:codegen :code]))
+         cdn (get-in db (glue loc [:settings :cdn]))
+         {:keys [query service]} (get-in db (glue loc nil))]
+     (when code
+       (format-code {:lang lang
+                     :code code
+                     :comments? comments?
+                     :html? html?
+                     :query query
+                     :service service
+                     :cdn cdn})))))
 
