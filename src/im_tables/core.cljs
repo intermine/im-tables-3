@@ -7,7 +7,6 @@
             [im-tables.views :as views]
             [im-tables.config :as config]
             [imcljs.query :as query]
-            [re-frisk.core :refer [enable-re-frisk!]]
             [cljsjs.react-transition-group]
             [cljsjs.highlight]
             [cljsjs.highlight.langs.javascript]
@@ -16,11 +15,9 @@
             [cljsjs.highlight.langs.ruby]
             [cljsjs.highlight.langs.java]))
 
-
 (defn dev-setup []
   (when config/debug?
     (enable-console-print!)
-    (enable-re-frisk!)
     (println "dev mode")))
 
 (defn mount-root []
@@ -29,11 +26,10 @@
 
 (defn ^:export init []
   #_(re-frame/dispatch-sync [:initialize-db
-                           [:test :location]
-                           {
-                            :service {:root "www.flymine.org/query"}
-                            ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}
-                            :query (query/sterilize-query db/outer-join-query)}])
+                             [:test :location]
+                             {:service {:root "www.flymine.org/query"}
+                              ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}
+                              :query (query/sterilize-query db/outer-join-query)}])
 
   (dev-setup)
   (mount-root))

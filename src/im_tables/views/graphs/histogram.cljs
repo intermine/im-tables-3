@@ -1,6 +1,5 @@
 (ns im-tables.views.graphs.histogram)
 
-
 (defn linear-scale [[r1-lower r1-upper] [r2-lower r2-upper]]
   (fn [v]
     (+ (/ (* (- v r1-lower) (- r2-upper r2-lower))

@@ -85,7 +85,7 @@
                           (get db :service)
                           (get db :query)
                           {:format (:file-type file-type)})}
-     :db db}))
+    :db db}))
 
 (reg-event-fx
  :exporttable/run-fasta-query

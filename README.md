@@ -98,13 +98,25 @@ You will often see location passed to the outermost function, but don't be caugh
 
 When a table first loads it only renders the first page of the query results as bog standard html with minimal components. This allows many tables to be rendered to, say, a report page while reducing load on the browser. Mousing over the table triggers a change that forces the table into "React" mode when the table cells become more complex.
 
-
+## Building
 
 ### Initial setup
 Once you've checked this project, you'll need to download the css dependencies using [bower](https://bower.io/). Assuming you have bower installed already, it's just
 
 ```
 bower install
+```
+
+### Quickstart
+
+These commands are explained in more depth below, but if you know what you want here's a quick reference of the most useful ones.
+
+```
+lein dev         # start dev server with hot-reloading
+lein repl        # start dev server with hot-reloading and nrepl (no clean or css)
+lein deploy      # build prod release and deploy to clojars
+
+lein format      # run cljfmt to fix code indentation
 ```
 
 ### Compile css:
@@ -143,6 +155,8 @@ The above command assumes that you have [phantomjs](https://www.npmjs.com/packag
 
 ## Production Build
 
+### Deploying to Heroku
+
 ```
 lein clean
 lein uberjar
@@ -171,3 +185,12 @@ To compile clojurescript to javascript:
 lein clean
 lein cljsbuild once min
 ```
+
+### Releasing a new version
+
+The release process is a combination of the above commands, with some additional steps. Generally, you'll want to do the following.
+
+1. Update the version number in **project.clj**.
+1. Commit this change and tag it using `git tag -a v1.0.0 -m "Release v1.0.0"`, replacing *1.0.0* with your version number.
+1. Push your commit and tag using `git push origin` followed by `git push origin v1.0.0` (again replace *1.0.0* with your version number). Make sure that you push to the intermine repository, not just your fork!
+1. Deploy a new uberjar to Clojars with `lein deploy`.
