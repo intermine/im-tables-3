@@ -32,13 +32,16 @@
                      ["less" "once"]
                      ["cljsbuild" "once" "min"]]
             "deploy" ["with-profile" "+uberjar" "deploy" "clojars"]
-            "format" ["cljfmt" "fix"]}
+            "format" ["cljfmt" "fix"]
+            "kaocha" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]}
 
   :repositories {"clojars" {:sign-releases false}}
 
   :min-lein-version "2.8.1"
 
   :source-paths ["src"]
+
+  :test-paths ["test/cljs"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
                                     "test/js"]
@@ -55,14 +58,15 @@
   :main im-tables.core
 
   :profiles {:dev {:dependencies [[binaryage/devtools "0.9.10"]
-                                  [day8.re-frame/re-frame-10x "0.4.3"]
+                                  [day8.re-frame/re-frame-10x "0.4.4"]
                                   [day8.re-frame/tracing "0.5.1"]
                                   [figwheel-sidecar "0.5.19"]
                                   [cider/piggieback "0.4.1"]]
-                   :plugins [[lein-figwheel "0.5.19"]
-                             [lein-doo "0.1.8"]]}
+                   :plugins [[lein-figwheel "0.5.19"]]}
              :repl {:source-paths ["dev"]}
-             :uberjar {:prep-tasks ["build"]}}
+             :uberjar {:prep-tasks ["build"]}
+             :kaocha {:dependencies [[lambdaisland/kaocha "0.0-554"]
+                                     [lambdaisland/kaocha-cljs "0.0-59"]]}}
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src"]
