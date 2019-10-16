@@ -48,7 +48,7 @@
         model (subscribe [:assets/model location])
         query (subscribe [:main/query location])
         collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])
-        views (subscribe [:query-response/views])]
+        views (subscribe [:query-response/views location])]
     (reagent/create-class
      {:reagent-render
       (fn [location]
@@ -60,7 +60,7 @@
           [:div.im-table.relative
             ; When the mouse touches the table, set the flag to render the actual React components
            {:on-mouse-over (fn []
-                             (when @static?
+                             (when (and @static? (some? @response))
                                (dispatch [:main/deconstruct location])
                                (doseq [event (map (fn [view] [:main/summarize-column location view]) @views)]
                                  (dispatch event))
