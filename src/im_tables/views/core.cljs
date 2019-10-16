@@ -47,8 +47,7 @@
         static? (reagent/atom true)
         model (subscribe [:assets/model location])
         query (subscribe [:main/query location])
-        collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])
-        views (subscribe [:query-response/views location])]
+        collapsed-views (subscribe [:query-response/views-collapsed-by-joins location])]
     (reagent/create-class
      {:reagent-render
       (fn [location]
@@ -61,9 +60,7 @@
             ; When the mouse touches the table, set the flag to render the actual React components
            {:on-mouse-over (fn []
                              (when (and @static? (some? @response))
-                               (dispatch [:main/deconstruct location])
-                               (doseq [event (map (fn [view] [:main/summarize-column location view]) @views)]
-                                 (dispatch event))
+                               (dispatch [:im-tables.main/init location])
                                (reset! static? false)))}
 
            (if @static?
