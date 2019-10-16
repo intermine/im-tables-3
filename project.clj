@@ -16,7 +16,8 @@
                  [binaryage/oops "0.7.0"]
                  [inflections "0.13.2"]
                  [criterium "0.4.5"]
-                 [org.intermine/imcljs "1.0.1"]]
+                 [org.intermine/imcljs "1.0.1"]
+                 [day8.re-frame/test "0.1.5"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-less "1.7.5"]
