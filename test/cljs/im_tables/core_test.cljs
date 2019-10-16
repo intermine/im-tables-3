@@ -25,22 +25,22 @@
 
 (deftest load-im-tables
   (run-test-async
-    (let [loc [:default]]
-      (rf/dispatch-sync [:im-tables/load loc im-config])
-      (wait-for [:main/initial-query-response]
-        (testing "im-table runs query"
-          (let [response @(rf/subscribe [:main/query-response loc])]
-            (is (some? response))))))))
+   (let [loc [:default]]
+     (rf/dispatch-sync [:im-tables/load loc im-config])
+     (wait-for [:main/initial-query-response]
+       (testing "im-table runs query"
+         (let [response @(rf/subscribe [:main/query-response loc])]
+           (is (some? response))))))))
 
 (deftest column-summary
   (run-test-async
-    (let [loc [:default]]
-      (rf/dispatch-sync [:im-tables/load loc im-config])
-      (wait-for [:main/initial-query-response]
-        (rf/dispatch-sync [:im-tables.main/init loc])
-        (wait-for [(utils/match-times {:main/save-column-summary 6
-                                       :main/save-decon-count    3})]
-          (testing "at least one non-empty column summary"
-            (let [summaries @(rf/subscribe [:summaries/column-summaries loc])]
-              (is (some (every-pred map? not-empty)
-                        (map :response (vals summaries)))))))))))
+   (let [loc [:default]]
+     (rf/dispatch-sync [:im-tables/load loc im-config])
+     (wait-for [:main/initial-query-response]
+       (rf/dispatch-sync [:im-tables.main/init loc])
+       (wait-for [(utils/match-times {:main/save-column-summary 6
+                                      :main/save-decon-count    3})]
+         (testing "at least one non-empty column summary"
+           (let [summaries @(rf/subscribe [:summaries/column-summaries loc])]
+             (is (some (every-pred map? not-empty)
+                       (map :response (vals summaries)))))))))))
