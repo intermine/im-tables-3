@@ -1,0 +1,21 @@
+language: java
+jdk: openjdk8
+
+before_script:
+  # Install lein - required to build the project
+  - wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -O /tmp/lein
+  - chmod +x /tmp/lein
+  - export PATH=$PATH:/tmp/lein
+  # make several attempts at downloading dependencies
+  - travis_retry lein deps
+  # check code is well formatted
+  - lein cljfmt check
+  # setup dependencies
+  - npm install
+  - bower install
+
+script:
+  # Run unit tests
+  - lein kaocha
+  # ensure a minified build completes without error
+  - lein uberjar
