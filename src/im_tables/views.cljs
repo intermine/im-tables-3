@@ -5,14 +5,11 @@
             [reagent.dom.server :as server]
             [oops.core :refer [ocall]]))
 
-(def some-im-tables-config {:service {:root "beta.humanmine.org/beta"}
-                            :query {:from "Gene"
+(def some-im-tables-config {:service {:root "https://yeastmine.yeastgenome.org/yeastmine"}
+                            :query {:from "Protein"
                                     :select ["symbol"
                                              "secondaryIdentifier"
-                                             "dataSets.description"
-                                             "primaryIdentifier"
-                                             "organism.name"
-                                             "dataSets.name"]}
+                                             "primaryIdentifier"]}
                             :settings {:pagination {:limit 10}
                                        :links {:vocab {:mine "BananaMine"}
                                                :url (fn [vocab] (str "#/reportpage/"

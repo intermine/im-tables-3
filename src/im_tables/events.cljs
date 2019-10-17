@@ -137,7 +137,6 @@
   [m k]
   (if (contains? m k) (dissoc m k) (assoc m k true)))
 
-
 ;;;; FILTERS
 
 
@@ -169,7 +168,6 @@
      ;                 (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
      ;                 (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
      ;       :location loc}
-
 
 (reg-event-fx
  :filters/add-constraint
@@ -281,7 +279,6 @@
 
 (defn coll-contains? [needle haystack] (some? (some #{needle} haystack)))
 (defn without [coll item] (filter (partial not= item) coll))
-
 
 ;;;;; Relationship Manager
 
@@ -435,7 +432,6 @@
                          (into [:div.table-history-detail]
                                (map (fn [v]
                                       [:div v]) current-selection))]}}
-
        {:db db}))))
 
 (reg-event-fx
@@ -494,7 +490,6 @@
       :dispatch [:im-tables.main/run-query loc]})))
 
 
-
 ;;;;;; SUMMARY CACHING
 
 
@@ -523,17 +518,15 @@
  (fn [{db :db} [_ loc {:keys [class id] :as item}]]
    (cond-> {:db db}
      (not (get-in db [:cache :item-details id]))
-     (assoc :im-tables/im-operation {:on-success
-                                     [:main/cache-item-summary loc]
-                                     :op
-                                     (partial fetch/records
-                                              (get db :service)
-                                              (summary-query
-                                               (assoc item :summary-fields
-                                                      (into [] (keys (get-in db [:service :model :classes (keyword class) :attributes]))))))}))))
-
-
-
+     (assoc :im-tables/im-operation
+            {:on-success
+             [:main/cache-item-summary loc]
+             :op
+             (partial fetch/records
+                      (get db :service)
+                      (summary-query
+                       (assoc item :summary-fields
+                              (into []  (get-in db [:service :summary-fields (keyword class)])))))}))))
 
 ;;;;;;;;;;;;;;
 
