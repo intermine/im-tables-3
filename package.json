@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@cljs-oss/module-deps": "^1.1.1"
+    "@cljs-oss/module-deps": "^1.1.1",
+    "ws": "^7.1.2"
   }
 }

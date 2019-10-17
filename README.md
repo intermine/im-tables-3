@@ -101,10 +101,11 @@ When a table first loads it only renders the first page of the query results as 
 ## Building
 
 ### Initial setup
-Once you've checked this project, you'll need to download the css dependencies using [bower](https://bower.io/). Assuming you have bower installed already, it's just
+
+If you want to run the unit tests, you'll need Node.js and npm. Once these have been installed, run the following.
 
 ```
-bower install
+npm install
 ```
 
 ### Quickstart
@@ -117,6 +118,7 @@ lein repl        # start dev server with hot-reloading and nrepl (no clean or cs
 lein deploy      # build prod release and deploy to clojars
 
 lein format      # run cljfmt to fix code indentation
+lein kaocha      # run unit tests
 ```
 
 ### Compile css:
@@ -146,12 +148,11 @@ Wait a bit, then browse to [http://localhost:3448](http://localhost:3448).
 
 ### Run tests:
 
-```
-lein clean
-lein doo phantom test once
-```
+Make sure to first run `npm install` to install the dependencies required to run the unit tests. You can also add `--watch` to the command below to automatically re-run tests when saving files.
 
-The above command assumes that you have [phantomjs](https://www.npmjs.com/package/phantomjs) installed. However, please note that [doo](https://github.com/bensu/doo) can be configured to run cljs.test in many other JS environments (chrome, ie, safari, opera, slimer, node, rhino, or nashorn).
+```
+lein kaocha
+```
 
 ## Production Build
 

@@ -1,6 +1,6 @@
 # im-tables 3 dev approach
 
-IM tables 3 is designed to exist standalone or embedded inside another [re-frame](https://github.com/Day8/re-frame) application such as [BlueGenes](https://github.com/intermine/redgenes), InterMine's new UI.
+IM tables 3 is designed to exist standalone or embedded inside another [re-frame](https://github.com/Day8/re-frame) application such as [BlueGenes](https://github.com/intermine/bluegenes), InterMine's new UI.
 
 From here on, we're assuming you have familiarity with re-frame.
 

@@ -63,6 +63,17 @@
     (last vals)))
 
 (reg-event-fx
+ :im-tables.main/init
+ ;; Dispatched when the im-table is interacted with.
+ ;; Currently this is triggered on-mouse-over.
+ (sandbox)
+ (fn [{db :db} [_ loc]]
+   {:db db
+    :dispatch-n (into [[:main/deconstruct loc]]
+                      (map (fn [view] [:main/summarize-column loc view])
+                           (get-in db [:response :views])))}))
+
+(reg-event-fx
  :im-tables.main/replace-all-state
  (sandbox)
  (fn [_ [_ loc state]]
@@ -525,6 +536,7 @@
 
 
 ;;;;;;;;;;;;;;
+
 
 (defn index-map
   [results offset]
