@@ -526,39 +526,34 @@
 
 ;;;;;;;;;;;;;;
 
+(defn index-map
+  [results offset]
+  (->> results
+       (map-indexed (fn [idx item] [(+ idx offset) item]))
+       (into {})))
 
 (reg-event-db
  :main/initial-query-response
  (sandbox)
- (fn [db [_ loc {:keys [start]} results]]
-   (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
-         updated-results (assoc results :results new-results-map)]
-     (assoc db :response updated-results))))
+ (fn [db [_ loc {:keys [start]} response]]
+   (assoc db :response (update response :results index-map start))))
 
 (reg-event-fx
  :main/replace-query-response
  (sandbox)
- (fn [{db :db} [_ loc {:keys [start size]} results]]
-    ;(println "no effect replace")
-   (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
-         updated-results (assoc results :results new-results-map)]
-     {:db (assoc db :response updated-results)
-       ;:db         (assoc db :query-response results)
-      :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
-                        (map (fn [view] [:main/summarize-column loc view]) (get results :views)))})))
+ (fn [{db :db} [_ loc {:keys [start]} response]]
+   {:db (assoc db :response (update response :results index-map start))
+    :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
+                      (map (fn [view] [:main/summarize-column loc view])
+                           (get response :views)))}))
 
-(reg-event-fx
+(reg-event-db
  :main/merge-query-response
  (sandbox)
- (fn [{db :db} [_ loc {:keys [start size]} results]]
-    ;(println "no effect merge")
-   (let [new-results-map (into {} (map-indexed (fn [idx item] [(+ idx start) item]) (:results results)))
-         updated-results (assoc results :results (merge (get-in db [:response :results]) new-results-map))]
-     {:db (assoc db :response updated-results)})))
-       ;:db         (assoc db :query-response results)
-       ;:dispatch-n (into [^:flush-dom [:hide-overlay loc]]
-       ;                  (map (fn [view] [:main/summarize-column loc view]) (get results :views)))
-
+ (fn [db [_ loc {:keys [start]} response]]
+   (let [old-results (get-in db [:response :results])
+         new-results (index-map (:results response) start)]
+     (assoc db :response (assoc response :results (merge old-results new-results))))))
 
 (reg-event-fx
  :im-tables.main/run-query
