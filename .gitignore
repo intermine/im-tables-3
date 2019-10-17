@@ -16,3 +16,4 @@ node_modules
 /.cljs_node_repl/
 /.lein-repl-history
 /.lsp/
+/figwheel_server.log

@@ -102,10 +102,9 @@ When a table first loads it only renders the first page of the query results as 
 
 ### Initial setup
 
-Once you've checked out this project, you'll need to download the css dependencies using [bower](https://bower.io/). You'll also need npm to run the unit tests. Once you have them both installed, run the following.
+If you want to run the unit tests, you'll need Node.js and npm. Once these have been installed, run the following.
 
 ```
-bower install
 npm install
 ```
 
@@ -148,6 +147,8 @@ Figwheel will automatically push cljs changes to the browser.
 Wait a bit, then browse to [http://localhost:3448](http://localhost:3448).
 
 ### Run tests:
+
+Make sure to first run `npm install` to install the dependencies required to run the unit tests. You can also add `--watch` to the command below to automatically re-run tests when saving files.
 
 ```
 lein kaocha

@@ -10,9 +10,8 @@ before_script:
   - travis_retry lein deps
   # check code is well formatted
   - lein cljfmt check
-  # setup dependencies
+  # setup node dependencies
   - npm install
-  - bower install
 
 script:
   # Run unit tests
