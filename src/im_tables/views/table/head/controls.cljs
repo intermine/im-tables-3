@@ -306,14 +306,19 @@
 (defn toolbar []
   (let [right? (reagent/atom false)]
     (fn [loc view idx col-count]
-      (let [query (subscribe [:main/temp-query loc view])
+      (let [query           (subscribe [:main/temp-query loc view])
+            sort-direction  (subscribe [:ui/column-sort-direction loc view])
             active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
-            local-state (reagent/atom {})]
+            local-state     (reagent/atom {})]
         [:div.summary-toolbar
          {:ref (fn [e]
                  (when e (reset! right? (align-right? e))))}
          [:i.fa.fa-sort.sort-icon
-          {:on-click (fn [] (dispatch [:main/sort-by loc view]))
+          {:class (case @sort-direction
+                    "ASC"  "active-asc-sort"
+                    "DESC" "active-desc-sort"
+                    nil)
+           :on-click (fn [] (dispatch [:main/sort-by loc view]))
            :title (str "Sort " view " column")}]
          [:i.fa.fa-times.remove-icon
           {:on-click (fn [] (dispatch [:main/remove-view loc view]))

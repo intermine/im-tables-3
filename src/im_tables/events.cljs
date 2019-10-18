@@ -480,10 +480,12 @@
          update? (= view (:path current-sort-by))
          current-direction (get-in db [:query :sortOrder 0 :direction])]
      {:db (if update?
+            ;; Toggle direction between ascending and descending if it's present.
             (update-in db [:query :sortOrder 0]
                        assoc :direction (case current-direction
                                           "ASC" "DESC"
                                           "DESC" "ASC"))
+            ;; Else add an ascending sortOrder.
             (assoc-in db [:query :sortOrder]
                       [{:path view
                         :direction "ASC"}]))
