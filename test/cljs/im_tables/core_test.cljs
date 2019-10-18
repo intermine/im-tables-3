@@ -44,3 +44,22 @@
            (let [summaries @(rf/subscribe [:summaries/column-summaries loc])]
              (is (some (every-pred map? not-empty)
                        (map :response (vals summaries)))))))))))
+
+(deftest sort-column
+  (run-test-async
+   (let [loc [:default]]
+     (rf/dispatch-sync [:im-tables/load loc im-config])
+     (wait-for [:main/initial-query-response]
+       (rf/dispatch-sync [:im-tables.main/init loc])
+       (wait-for [(utils/match-times {:main/save-column-summary 6
+                                      :main/save-decon-count    3})]
+         (rf/dispatch-sync [:main/sort-by loc "Gene.primaryIdentifier"]
+           (wait-for [(utils/match-times {:main/save-column-summary 6
+                                          :main/save-decon-count    3})]
+             (testing "response can be sorted by column"
+               (let [response @(rf/subscribe [:main/query-response loc])
+                     result (get-in response [:results 0])]
+                 (is (= "1" (->> result
+                                 (filter #(= (:column %) "Gene.primaryIdentifier"))
+                                 first
+                                 :value))))))))))))
