@@ -9,8 +9,10 @@
 (defn tree-node []
   (let [expanded-map (reagent/atom {})]
     (fn [loc class details model current-path selected views]
-      (let [attributes (get details :attributes)
-            collections (get details :collections)]
+      (let [attributes     (vals (get details :attributes))
+            collections    (vals (get details :collections))
+            references     (vals (get details :references))
+            colls-and-refs (concat collections references)]
         [:ul.tree-view.list-unstyled.no-select
          (into [:ul.attributes.list-unstyled]
                (map (fn [{:keys [name type]}]
@@ -29,7 +31,7 @@
                                     selected? "label label-success disabled")}
                           [:i.fa.fa-tag]
                           (when (and model current-path name)
-                            (last (impath/display-name model (join "." (conj current-path name)))))]])) (vals attributes)))
+                            (last (impath/display-name model (join "." (conj current-path name)))))]])) attributes))
          (into [:ul.collections.list-unstyled]
                (map (fn [{:keys [name referencedType name] :as collection}]
                       (let [referenced-class (get-in model [:classes (keyword referencedType)])]
@@ -40,7 +42,7 @@
                             (plural (last (impath/display-name model (join "." (conj current-path name))))))]
                          (if (get @expanded-map name)
                            [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected views])]))
-                    (sort-by (comp clojure.string/upper-case :referencedType) (vals collections))))]))))
+                    (sort-by (comp clojure.string/upper-case :displayName) colls-and-refs)))]))))
 
 (defn tree-view []
   (fn [loc model query selected]
