@@ -408,11 +408,12 @@
  (fn [{db :db} [_ loc view]]
    {:db db
     :im-tables/im-operation {:on-success [:main/save-column-summary loc view]
-                             :op (partial fetch/unique-values
+                             :op (partial fetch/rows
                                           (get db :service)
                                           (get db :query)
-                                          view
-                                          1000)}}))
+                                          {:summaryPath view
+                                           :size 1000
+                                           :format "jsonrows"})}}))
 
 (reg-event-fx
  :main/apply-summary-filter
