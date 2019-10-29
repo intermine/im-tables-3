@@ -214,6 +214,55 @@
             [:i.fa.fa-filter]
             (str " Filter")]]]]))))
 
+(defn path->displaynames
+  "Takes a path as the `view` argument and returns the corresponding vector of
+  display names. Will prioritise the displayName of the referencedType class
+  (instead of the displayName in the references/collections/attributes map).
+  This makes a difference with eg. `Gene.dataSets.name`, where
+  `classes.Gene.collections.dataSets.displayName` is `Data Sets` while
+  `classes.DataSet.displayName` is `Data Set`."
+  [model view]
+  (let [[head & tail] (path/split-path view)]
+    (loop [names []
+           paths tail
+           class (get-in model [:classes head])]
+      (let [new-names (conj names (:displayName class))]
+        (if (seq paths)
+          (recur new-names
+                 (next paths)
+                 (let [subclasses (apply merge
+                                         ((juxt :references :collections :attributes) class))
+                       subclass   (subclasses (first paths))]
+                   (if-let [reference (:referencedType subclass)]
+                     (get-in model [:classes (keyword reference)])
+                     subclass)))
+          new-names)))))
+
+(defn pluralise
+  "Takes a string and adds an 's' to the end if not present."
+  [s]
+  (cond-> s
+    (not (string/ends-with? s "s"))
+    (str "s")))
+
+(defn hr-name
+  "Takes a view path and returns a human-readable name string."
+  [model view]
+  (->> (path->displaynames model view)
+       (take-last 2) ;; Last two names of the path are most descriptive.
+       (string/join " ")
+       pluralise))
+
+(defn column-summary-title [loc view response]
+  (let [model @(subscribe [:assets/model loc])
+        {:keys [results uniqueValues]} response
+        human-name (hr-name model view)]
+    [:h4.title
+     (if (< (count results) uniqueValues)
+       (str "Showing " (nf (count results)) " of "
+            (nf uniqueValues) " " human-name)
+       (str (nf uniqueValues) " " human-name))]))
+
 (defn column-summary [loc view local-state]
   (let [response (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
@@ -232,6 +281,7 @@
               [numerical-column-summary loc view (:results @response) local-state]
               [:form.form.column-summary
                [:div.main-view
+                [column-summary-title loc view @response]
                 [histogram/main (:results @response)]
                 [filter-input loc view @text-filter]
                 [:table.table.table-striped.table-condensed
