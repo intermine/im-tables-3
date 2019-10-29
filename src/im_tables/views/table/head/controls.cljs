@@ -302,10 +302,29 @@
         screen-width (oget js/window :innerWidth)]
     (> left (/ screen-width 2))))
 
+(defn on
+  "For use with `:ref` attribute on elements to easily define jquery listeners.
+  Uses `some->` as the event isn't guaranteed to hold a value. Returns the event
+  so you can chain multiple `on` calls by wrapping them in `comp`. Example:
+      [:span.dropdown
+       {:ref (comp
+               (on \"hide.bs.dropdown\"
+                   #(js/alert \"I'm closing!\"))
+               (on \"show.bs.dropdown\"
+                   #(js/alert \"I'm opening!\")))}]"
+  [trigger callback]
+  (fn [event]
+    (some-> event
+            js/$
+            (ocall :off trigger)
+            (ocall :on trigger callback))
+    event))
+
 (defn toolbar []
   (let [right? (reagent/atom false)]
     (fn [loc view idx col-count]
       (let [query (subscribe [:main/temp-query loc view])
+            response (subscribe [:selection/response loc view])
             active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
             local-state (reagent/atom {})]
         [:div.summary-toolbar
@@ -319,15 +338,19 @@
            :title (str "Remove " view " column")}]
          [filter-dropdown-menu loc view idx col-count @right?]
          [:span.dropdown
-          {:ref (fn [e]
-                  ; Bind an event to clear the selected items when the dropdown closes.
-                  ; Why don't we just avoid state all together and pick up the checkbox values
-                  ; when the user clicks "Filter"? Because we still want to know what's selected
-                  ; (for instance, highlighting the histogram).
-                  ; Use some-> because e isn't guaranteed to hold a value
-                  (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
-                                                                 (reset! local-state {})
-                                                                 (dispatch [:select/clear-selection loc view])))))}
+          ;; Bind an event to clear the selected items when the dropdown
+          ;; closes. Why don't we just avoid state all together and pick up the
+          ;; checkbox values when the user clicks "Filter"? Because we still
+          ;; want to know what's selected (for instance, highlighting the
+          ;; histogram).
+          {:ref (comp
+                  (on "hide.bs.dropdown"
+                      (fn []
+                        (reset! local-state {})
+                        (dispatch [:select/clear-selection loc view])))
+                  (on "show.bs.dropdown"
+                      #(when (nil? @response)
+                         (dispatch [:main/summarize-column loc view]))))}
           [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
           [:div.dropdown-menu
            {:title (str "Summarise " view " column")

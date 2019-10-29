@@ -69,9 +69,7 @@
  (sandbox)
  (fn [{db :db} [_ loc]]
    {:db db
-    :dispatch-n (into [[:main/deconstruct loc]]
-                      (map (fn [view] [:main/summarize-column loc view])
-                           (get-in db [:response :views])))}))
+    :dispatch [:main/deconstruct loc]}))
 
 (reg-event-fx
  :im-tables.main/replace-all-state
@@ -549,9 +547,7 @@
  (sandbox)
  (fn [{db :db} [_ loc {:keys [start]} response]]
    {:db (assoc db :response (update response :results index-map start))
-    :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
-                      (map (fn [view] [:main/summarize-column loc view])
-                           (get response :views)))}))
+    :dispatch ^:flush-dom [:hide-overlay loc]}))
 
 (reg-event-db
  :main/merge-query-response
