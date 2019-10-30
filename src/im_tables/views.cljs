@@ -46,7 +46,21 @@
                                             (:class vocab) "/"
                                             (:objectId vocab)))}}})
 
-
+(def biotestmine-config
+  {:service {:root "http://localhost:8080/biotestmine"}
+   :query {:from "Gene"
+           :select ["symbol"
+                    "secondaryIdentifier"
+                    "dataSets.description"
+                    "primaryIdentifier"
+                    "organism.name"
+                    "dataSets.name"]}
+   :settings {:pagination {:limit 10}
+              :links {:vocab {:mine "BananaMine"}
+                      :url (fn [vocab] (str "#/reportpage/"
+                                            (:mine vocab) "/"
+                                            (:class vocab) "/"
+                                            (:id vocab)))}}})
 
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:
