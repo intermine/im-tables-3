@@ -578,7 +578,7 @@
                                             :size (* limit (get-in db [:settings :buffer]))}))
        {:db (assoc-in db [:cache :column-summary] {})
         :dispatch-n [^:flush-dom [:show-overlay loc]
-                     [:main/deconstruct loc]]
+                     [:main/deconstruct loc :force? true]]
         :im-tables/im-operation-chan {:on-success (if merge?
                                                     ^:flush-dom [:main/merge-query-response loc pagination]
                                                     ^:flush-dom [:main/replace-query-response loc pagination])
@@ -589,7 +589,7 @@
  :main/save-decon-count
  (sandbox)
  (fn [db [_ loc path count]]
-   (assoc-in db [:query-parts path :count] count)))
+   (assoc-in db [:query-parts-counts path] (js/parseInt count 10))))
 
 (reg-event-fx
  :main/count-deconstruction
@@ -604,15 +604,19 @@
 (reg-event-fx
  :main/deconstruct
  (sandbox)
- (fn [{db :db} [_ loc]]
+ (fn [{db :db} [_ loc & {:keys [force?]}]]
    (let [deconstructed-query (into {} (map vec (sort-by
                                                 (fn [[p _]] (count (clojure.string/split p ".")))
                                                 (partition 2
                                                            (flatten
                                                             (map seq (vals (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query])))))))))]
 
-     {:db (assoc db :query-parts deconstructed-query)
-      :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction loc part details]) deconstructed-query))})))
+     (cond-> {:db (assoc db :query-parts deconstructed-query)}
+       force? (assoc :dispatch-n
+                     (into []
+                           (map (fn [[part details]]
+                                  [:main/count-deconstruction loc part details])
+                                deconstructed-query)))))))
 
 (reg-event-fx
  :main/set-codegen-option
