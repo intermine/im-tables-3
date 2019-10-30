@@ -3,20 +3,10 @@
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
             [im-tables.views.common :refer [no-value]]
-            [goog.i18n.NumberFormat.Format]
             [imcljs.path :as path]
             [clojure.string :as string]
-            [oops.core :refer [oget ocall ocall! oapply oget+]])
-  (:import
-   (goog.i18n NumberFormat)
-   (goog.i18n.NumberFormat Format)))
-
-(def nff
-  (NumberFormat. Format/DECIMAL))
-
-(defn- nf
-  [num]
-  (.format nff (str num)))
+            [oops.core :refer [oget ocall ocall! oget+]]
+            [im-tables.utils :refer [on-event hr-number hr-name]]))
 
 (defn filter-input []
   (fn [loc view val]
@@ -177,9 +167,17 @@
           [:div.numerical-content-wrapper
            [:table.table.table-condensed
             [:thead
-             [:tr [:th "Min"] [:th "Max"] [:th "Average"] [:th "Std Deviation"]]]
+             [:tr
+              [:th "Min"]
+              [:th "Max"]
+              [:th "Average"]
+              [:th "Std Deviation"]]]
             [:tbody
-             [:tr [:td (nf min)] [:td (nf max)] [:td (nf average)] [:td (nf stdev)]]]]
+             [:tr
+              [:td (hr-number min)]
+              [:td (hr-number max)]
+              [:td (hr-number average)]
+              [:td (hr-number stdev)]]]]
            [:div
             [:label "Trim from " [:input {:type "text"
                                           :value (or (:from @trimmer) min)
@@ -214,54 +212,15 @@
             [:i.fa.fa-filter]
             (str " Filter")]]]]))))
 
-(defn path->displaynames
-  "Takes a path as the `view` argument and returns the corresponding vector of
-  display names. Will prioritise the displayName of the referencedType class
-  (instead of the displayName in the references/collections/attributes map).
-  This makes a difference with eg. `Gene.dataSets.name`, where
-  `classes.Gene.collections.dataSets.displayName` is `Data Sets` while
-  `classes.DataSet.displayName` is `Data Set`."
-  [model view]
-  (let [[head & tail] (path/split-path view)]
-    (loop [names []
-           paths tail
-           class (get-in model [:classes head])]
-      (let [new-names (conj names (:displayName class))]
-        (if (seq paths)
-          (recur new-names
-                 (next paths)
-                 (let [subclasses (apply merge
-                                         ((juxt :references :collections :attributes) class))
-                       subclass   (subclasses (first paths))]
-                   (if-let [reference (:referencedType subclass)]
-                     (get-in model [:classes (keyword reference)])
-                     subclass)))
-          new-names)))))
-
-(defn pluralise
-  "Takes a string and adds an 's' to the end if not present."
-  [s]
-  (cond-> s
-    (not (string/ends-with? s "s"))
-    (str "s")))
-
-(defn hr-name
-  "Takes a view path and returns a human-readable name string."
-  [model view]
-  (->> (path->displaynames model view)
-       (take-last 2) ;; Last two names of the path are most descriptive.
-       (string/join " ")
-       pluralise))
-
 (defn column-summary-title [loc view response]
   (let [model @(subscribe [:assets/model loc])
         {:keys [results uniqueValues]} response
         human-name (hr-name model view)]
     [:h4.title
      (if (< (count results) uniqueValues)
-       (str "Showing " (nf (count results)) " of "
-            (nf uniqueValues) " " human-name)
-       (str (nf uniqueValues) " " human-name))]))
+       (str "Showing " (hr-number (count results)) " of "
+            (hr-number uniqueValues) " " human-name)
+       (str (hr-number uniqueValues) " " human-name))]))
 
 (defn column-summary [loc view local-state]
   (let [response (subscribe [:selection/response loc view])
@@ -313,28 +272,33 @@
                  [:i.fa.fa-filter]
                  (str " Filter")]]]))))})))
 
+;; Bootstrap and ReactJS don't always mix well. Components that make up
+;; dropdown menus are only mounted (reactjs) once and then their visibility is
+;; toggled (bootstrap). These means any local state in the dropdown menu does
+;; NOT get reset when the dropdown menu disappears because its never really
+;; unmounts.  This was causing the new constraint textbox to retain its value
+;; if a user entered something but changed their mind and closed the dropdown.
+;; Reopening it would show what they previously entered. Making it look like it
+;; had been applied.  To fix this we've create the blank constraint local atom
+;; all the way up here at the dropdown level so that we can reset it manually,
+;; and then we pass the atom down to the blank constraint component. Lame.
 (defn filter-dropdown-menu [loc view idx col-count]
   (let [query (subscribe [:main/query loc view])
         blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})]
     (fn [loc view idx col-count right?]
       (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
         [:span.dropdown
-         {:ref (fn [e]
-                 (some-> e js/$ (ocall :on "hide.bs.dropdown"
-                                       (fn []
-  ;; Bootstrap and ReactJS don't always mix well. Components that make up dropdown menus are only
-  ;; mounted (reactjs) once and then their visibility is toggled (bootstrap). These means any local state
-  ;; in the dropdown menu does NOT get reset when the dropdown menu disappears because its never really unmounts.
-  ;; This was causing the new constraint textbox to retain its value if a user entered something but changed their
-  ;; mind and closed the dropdown. Reopening it would show what they previously entered. Making it look like it had been applied.
-  ;; To fix this we've create the blank constraint local atom all the way up here at the dropdown level so that we can reset
-  ;; it manually, and then we pass the atom down to the blank constraint component. Lame.
-                                         ;; Reset the blank constraint atom when the dropdown is closed
-                                         (reset! blank-constraint-atom {:path view :op "=" :value nil})
-  ;; *Try* to save the changes every time the dropdown is closed, even by just clicking off it.
-  ;; This means a user can remove a handful of filters without having to click Apply.
-  ;; The event will do a diff to make sure something has actually changed before rerunning the query
-                                         (dispatch [:filters/save-changes loc])))))}
+         {:ref (on-event
+                 "hide.bs.dropdown"
+                 (fn []
+                   ;; Reset the blank constraint atom when the dropdown is closed
+                   (reset! blank-constraint-atom {:path view :op "=" :value nil})
+                   ;; *Try* to save the changes every time the dropdown is
+                   ;; closed, even by just clicking off it.  This means a user
+                   ;; can remove a handful of filters without having to click
+                   ;; Apply. The event will do a diff to make sure something
+                   ;; has actually changed before rerunning the query
+                   (dispatch [:filters/save-changes loc])))}
          [:i.fa.fa-filter.dropdown-toggle.filter-icon
           {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
            :data-toggle "dropdown"
@@ -352,24 +316,6 @@
   (let [{left :left} (obj->clj (ocall dom-node :getBoundingClientRect))
         screen-width (oget js/window :innerWidth)]
     (> left (/ screen-width 2))))
-
-(defn on
-  "For use with `:ref` attribute on elements to easily define jquery listeners.
-  Uses `some->` as the event isn't guaranteed to hold a value. Returns the event
-  so you can chain multiple `on` calls by wrapping them in `comp`. Example:
-      [:span.dropdown
-       {:ref (comp
-               (on \"hide.bs.dropdown\"
-                   #(js/alert \"I'm closing!\"))
-               (on \"show.bs.dropdown\"
-                   #(js/alert \"I'm opening!\")))}]"
-  [trigger callback]
-  (fn [event]
-    (some-> event
-            js/$
-            (ocall :off trigger)
-            (ocall :on trigger callback))
-    event))
 
 (defn toolbar []
   (let [right? (reagent/atom false)]
@@ -400,13 +346,15 @@
           ;; want to know what's selected (for instance, highlighting the
           ;; histogram).
           {:ref (comp
-                  (on "hide.bs.dropdown"
-                      (fn []
-                        (reset! local-state {})
-                        (dispatch [:select/clear-selection loc view])))
-                  (on "show.bs.dropdown"
-                      #(when (nil? @response)
-                         (dispatch [:main/summarize-column loc view]))))}
+                  (on-event
+                    "hide.bs.dropdown"
+                    (fn []
+                      (reset! local-state {})
+                      (dispatch [:select/clear-selection loc view])))
+                  (on-event
+                    "show.bs.dropdown"
+                    #(when (nil? @response)
+                       (dispatch [:main/summarize-column loc view]))))}
           [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
           [:div.dropdown-menu
            {:title (str "Summarise " view " column")

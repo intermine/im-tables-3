@@ -4,7 +4,8 @@
             [oops.core :refer [oget ocall ocall!]]
             [inflections.core :refer [plural]]
             [imcljs.path :as path :refer [walk class]]
-            [im-tables.components.bootstrap :refer [modal]]))
+            [im-tables.components.bootstrap :refer [modal]]
+            [im-tables.utils :refer [on-event]]))
 
 (defn join-with-arrows [col]
   (clojure.string/join " > " col))
@@ -87,39 +88,22 @@
                                                         :type (name (path/class model path))})]))}
          [:a (str (serialize-path model path) " (" count ")")]]))))
 
-(defn on
-  "For use with `:ref` attribute on elements to easily define jquery listeners.
-  Uses `some->` as the event isn't guaranteed to hold a value. Returns the event
-  so you can chain multiple `on` calls by wrapping them in `comp`. Example:
-      [:span.dropdown
-       {:ref (comp
-               (on \"hide.bs.dropdown\"
-                   #(js/alert \"I'm closing!\"))
-               (on \"show.bs.dropdown\"
-                   #(js/alert \"I'm opening!\")))}]"
-  [trigger callback]
-  (fn [event]
-    (some-> event
-            js/$
-            (ocall :off trigger)
-            (ocall :on trigger callback))
-    event))
-
 (defn main [loc]
   (let [model       (subscribe [:assets/model loc])
         query-parts (subscribe [:main/query-parts loc])
         counts      (subscribe [:main/query-parts-counts loc])]
     (fn [loc]
       [:div.dropdown
-       {:ref (on "show.bs.dropdown"
-                 #(when (nil? @counts)
-                    ;; This will only run for the initial query. For any
-                    ;; subsequent queries, we'll `:main/count-deconstruction`
-                    ;; alongside the query.
-                    (doseq [event (map (fn [[part details]]
-                                         [:main/count-deconstruction loc part details])
-                                       @query-parts)]
-                      (dispatch event))))}
+       {:ref (on-event
+               "show.bs.dropdown"
+               #(when (nil? @counts)
+                  ;; This will only run for the initial query. For any
+                  ;; subsequent queries, we'll `:main/count-deconstruction`
+                  ;; alongside the query.
+                  (doseq [event (map (fn [[part details]]
+                                       [:main/count-deconstruction loc part details])
+                                     @query-parts)]
+                    (dispatch event))))}
        [:button.btn.btn-default.dropdown-toggle
         {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
        (into [:ul.dropdown-menu]
