@@ -63,15 +63,6 @@
     (last vals)))
 
 (reg-event-fx
- :im-tables.main/init
- ;; Dispatched when the im-table is interacted with.
- ;; Currently this is triggered on-mouse-over.
- (sandbox)
- (fn [{db :db} [_ loc]]
-   {:db db
-    :dispatch [:main/deconstruct loc]}))
-
-(reg-event-fx
  :im-tables.main/replace-all-state
  (sandbox)
  (fn [_ [_ loc state]]
@@ -605,12 +596,11 @@
  :main/deconstruct
  (sandbox)
  (fn [{db :db} [_ loc & {:keys [force?]}]]
-   (let [deconstructed-query (into {} (map vec (sort-by
-                                                (fn [[p _]] (count (clojure.string/split p ".")))
-                                                (partition 2
-                                                           (flatten
-                                                            (map seq (vals (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query])))))))))]
-
+   (let [deconstructed-query (->> (query/deconstruct-by-class
+                                    (get-in db [:service :model])
+                                    (get-in db [:query]))
+                                  vals
+                                  (apply merge))]
      (cond-> {:db (assoc db :query-parts deconstructed-query)}
        force? (assoc :dispatch-n
                      (into []

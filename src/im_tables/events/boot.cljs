@@ -81,6 +81,7 @@
                               :service service
                               :response response
                               :query query)
+                   :dispatch [:main/deconstruct loc]
                    :im-tables/im-operation-chan {:on-success ^:flush-dom [:main/initial-query-response loc pagination]
                                                  :channel (fetch/table-rows service query {:start start
                                                                                            :size (* limit buffer)})}})))
