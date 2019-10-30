@@ -24,23 +24,29 @@
                                                          (:id vocab)))}}})
 
 (deftest load-im-tables
-  (run-test-async
-   (let [loc [:default]]
-     (rf/dispatch-sync [:im-tables/load loc im-config])
-     (wait-for [:main/initial-query-response]
-       (testing "im-table runs query"
+  (let [loc [:default]]
+    (utils/after-load loc im-config
+      (testing "im-table runs query"
          (let [response @(rf/subscribe [:main/query-response loc])]
-           (is (some? response))))))))
+           (is (some? response)))))))
 
 (deftest column-summary
-  (run-test-async
-   (let [loc [:default]]
-     (rf/dispatch-sync [:im-tables/load loc im-config])
-     (wait-for [:main/initial-query-response]
-       (rf/dispatch-sync [:im-tables.main/init loc])
-       (wait-for [(utils/match-times {:main/save-column-summary 6
-                                      :main/save-decon-count    3})]
-         (testing "at least one non-empty column summary"
-           (let [summaries @(rf/subscribe [:summaries/column-summaries loc])]
-             (is (some (every-pred map? not-empty)
-                       (map :response (vals summaries)))))))))))
+  (let [loc [:default]]
+    (utils/after-init loc im-config
+      (testing "at least one non-empty column summary"
+        (let [summaries @(rf/subscribe [:summaries/column-summaries loc])]
+          (is (some (every-pred map? not-empty)
+                    (map :response (vals summaries)))))))))
+
+(deftest sort-column
+  (let [loc [:default]]
+    (utils/after-init loc im-config
+      (rf/dispatch-sync [:main/sort-by loc "Gene.primaryIdentifier"])
+      (utils/wait-for-query loc im-config
+        (testing "response can be sorted by column"
+          (let [response @(rf/subscribe [:main/query-response loc])
+                result (get-in response [:results 0])]
+            (is (= "1" (->> result
+                            (filter #(= (:column %) "Gene.primaryIdentifier"))
+                            first
+                            :value)))))))))

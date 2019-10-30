@@ -21,7 +21,7 @@
    :title "Lookup --> Mammalian phenotypes (MP terms)",
    :constraintLogic "A and B",
    :select ["MPTerm.name" "MPTerm.identifier" "MPTerm.description"],
-   :orderBy [{:MPTerm.name "ASC"}],
+   :sortOrder [{:path "MPTerm.name", :direction "ASC"}],
    :model {:name "genomic"}})
 
 (def outer-join-query {:from "Gene"

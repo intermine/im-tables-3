@@ -256,3 +256,10 @@
                      :service service
                      :cdn cdn})))))
 
+(reg-sub
+ :ui/column-sort-direction
+ (fn [db [_ loc view]]
+   (let [sortm (get-in db (glue loc [:query :sortOrder 0]))]
+     (when (and sortm (= (string/join "." (drop 1 (string/split view ".")))
+                         (:path sortm)))
+       (:direction sortm)))))

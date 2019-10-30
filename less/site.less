@@ -362,6 +362,22 @@
             text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
         }
 
+        .sort-icon.active-asc-sort {
+            &::before {
+                background: linear-gradient(to bottom, #6495ed 40%, #333 60%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+        }
+
+        .sort-icon.active-desc-sort {
+            &::before {
+                background: linear-gradient(to top, #6495ed 40%, #333 60%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+        }
+
         & > * {
             padding: 2px;
         }

@@ -102,30 +102,27 @@
            ; rows means outer-join, so show outer-join table
            [outer-join-table loc data view]
            ; otherwise a regular cell
-           [:span {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
+           (let [item-details @(subscribe [:summary/item-details loc id])
+                 link (url (merge data (:value item-details) (get-in @settings [:links :vocab])))]
+             [:span {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
 
-            [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
-                       :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
+              [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
+                         :data-content (when (not-empty item-details)
+                                         (->html (summary-table item-details)))}
 
-             [:a {:href (url (merge
-                              data
-                              (:value @(subscribe [:summary/item-details loc id]))
-                              (get-in @settings [:links :vocab])))
-                  :on-click (fn []
-                              (when (and on-click value)
-                                (do
-                                  ; Call the provided on-click
-                                  (on-click (url (merge
-                                                  data
-                                                  (:value @(subscribe [:summary/item-details loc id]))
-                                                  (get-in @settings [:links :vocab]))))
-                                  ; Side effect!!
-                                  ; Destroy the popover in case the table is embedded in an SPA
-                                  ; otherwise it will stick after page routes
-                                  (-> @pop-el js/$
-                                      (ocall :find "[data-trigger='hover']")
-                                      (ocall :popover "destroy")))))}
-              (or value [no-value])]]])]))))
+               [:a {:href link
+                    :on-click (fn []
+                                (when (and on-click value)
+                                  (do
+                                    ; Call the provided on-click
+                                    (on-click link)
+                                    ; Side effect!!
+                                    ; Destroy the popover in case the table is embedded in an SPA
+                                    ; otherwise it will stick after page routes
+                                    (-> @pop-el js/$
+                                        (ocall :find "[data-trigger='hover']")
+                                        (ocall :popover "destroy")))))}
+                (or value [no-value])]]]))]))))
 
 (defn table-row [loc row]
   (into [:tr]
