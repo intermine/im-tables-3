@@ -466,15 +466,17 @@
  (sandbox)
  (fn [{db :db} [_ loc view]]
    (let [view (join "." (drop 1 (split view ".")))
-         [current-sort-by] (get-in db [:query :orderBy])
+         [current-sort-by] (get-in db [:query :sortOrder])
          update? (= view (:path current-sort-by))
-         current-direction (get-in db [:query :orderBy 0 :direction])]
+         current-direction (get-in db [:query :sortOrder 0 :direction])]
      {:db (if update?
-            (update-in db [:query :orderBy 0]
+            ;; Toggle direction between ascending and descending if it's present.
+            (update-in db [:query :sortOrder 0]
                        assoc :direction (case current-direction
                                           "ASC" "DESC"
                                           "DESC" "ASC"))
-            (assoc-in db [:query :orderBy]
+            ;; Else add an ascending sortOrder.
+            (assoc-in db [:query :sortOrder]
                       [{:path view
                         :direction "ASC"}]))
       :dispatch [:im-tables.main/run-query loc]})))
