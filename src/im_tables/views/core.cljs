@@ -59,8 +59,7 @@
           [:div.im-table.relative
             ; When the mouse touches the table, set the flag to render the actual React components
            {:on-mouse-over (fn []
-                             (when (and @static? (some? @response))
-                               (dispatch [:im-tables.main/init location])
+                             (when @static?
                                (reset! static? false)))}
 
            (if @static?

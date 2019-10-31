@@ -63,17 +63,6 @@
     (last vals)))
 
 (reg-event-fx
- :im-tables.main/init
- ;; Dispatched when the im-table is interacted with.
- ;; Currently this is triggered on-mouse-over.
- (sandbox)
- (fn [{db :db} [_ loc]]
-   {:db db
-    :dispatch-n (into [[:main/deconstruct loc]]
-                      (map (fn [view] [:main/summarize-column loc view])
-                           (get-in db [:response :views])))}))
-
-(reg-event-fx
  :im-tables.main/replace-all-state
  (sandbox)
  (fn [_ [_ loc state]]
@@ -408,11 +397,12 @@
  (fn [{db :db} [_ loc view]]
    {:db db
     :im-tables/im-operation {:on-success [:main/save-column-summary loc view]
-                             :op (partial fetch/unique-values
+                             :op (partial fetch/rows
                                           (get db :service)
                                           (get db :query)
-                                          view
-                                          1000)}}))
+                                          {:summaryPath view
+                                           :size 1000
+                                           :format "jsonrows"})}}))
 
 (reg-event-fx
  :main/apply-summary-filter
@@ -550,9 +540,7 @@
  (sandbox)
  (fn [{db :db} [_ loc {:keys [start]} response]]
    {:db (assoc db :response (update response :results index-map start))
-    :dispatch-n (into [^:flush-dom [:hide-overlay loc]]
-                      (map (fn [view] [:main/summarize-column loc view])
-                           (get response :views)))}))
+    :dispatch ^:flush-dom [:hide-overlay loc]}))
 
 (reg-event-db
  :main/merge-query-response
@@ -583,7 +571,7 @@
                                             :size (* limit (get-in db [:settings :buffer]))}))
        {:db (assoc-in db [:cache :column-summary] {})
         :dispatch-n [^:flush-dom [:show-overlay loc]
-                     [:main/deconstruct loc]]
+                     [:main/deconstruct loc :force? true]]
         :im-tables/im-operation-chan {:on-success (if merge?
                                                     ^:flush-dom [:main/merge-query-response loc pagination]
                                                     ^:flush-dom [:main/replace-query-response loc pagination])
@@ -594,7 +582,7 @@
  :main/save-decon-count
  (sandbox)
  (fn [db [_ loc path count]]
-   (assoc-in db [:query-parts path :count] count)))
+   (assoc-in db [:query-parts-counts path] (js/parseInt count 10))))
 
 (reg-event-fx
  :main/count-deconstruction
@@ -609,15 +597,18 @@
 (reg-event-fx
  :main/deconstruct
  (sandbox)
- (fn [{db :db} [_ loc]]
-   (let [deconstructed-query (into {} (map vec (sort-by
-                                                (fn [[p _]] (count (clojure.string/split p ".")))
-                                                (partition 2
-                                                           (flatten
-                                                            (map seq (vals (query/deconstruct-by-class (get-in db [:service :model]) (get-in db [:query])))))))))]
-
-     {:db (assoc db :query-parts deconstructed-query)
-      :dispatch-n (into [] (map (fn [[part details]] [:main/count-deconstruction loc part details]) deconstructed-query))})))
+ (fn [{db :db} [_ loc & {:keys [force?]}]]
+   (let [deconstructed-query (->> (query/deconstruct-by-class
+                                    (get-in db [:service :model])
+                                    (get-in db [:query]))
+                                  vals
+                                  (apply merge))]
+     (cond-> {:db (assoc db :query-parts deconstructed-query)}
+       force? (assoc :dispatch-n
+                     (into []
+                           (map (fn [[part details]]
+                                  [:main/count-deconstruction loc part details])
+                                deconstructed-query)))))))
 
 (reg-event-fx
  :main/set-codegen-option

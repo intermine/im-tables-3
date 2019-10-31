@@ -4,7 +4,8 @@
             [oops.core :refer [oget ocall ocall!]]
             [inflections.core :refer [plural]]
             [imcljs.path :as path :refer [walk class]]
-            [im-tables.components.bootstrap :refer [modal]]))
+            [im-tables.components.bootstrap :refer [modal]]
+            [im-tables.utils :refer [on-event]]))
 
 (defn join-with-arrows [col]
   (clojure.string/join " > " col))
@@ -43,7 +44,12 @@
                     ; Close the modal by clearing the modal markup in app-db
                     (dispatch [:prep-modal loc nil]))]
 
-    {:header [:h4 (str "Save a list of " (:count details) " " (if (< count 2) (name type) (plural (name type))))]
+    {:header [:h4 (str "Save a list of " (:count details) " "
+                       ;; It's possible that `count` is the string "..." if
+                       ;; the webservice hasn't responded yet.
+                       (if (and (number? count) (< count 2))
+                         (name type)
+                         (plural (name type))))]
      :body [save-dialog state details on-submit]
      :footer [save-footer loc state details on-submit]}))
 
@@ -70,23 +76,36 @@
                                                                           :type class})]))}
                            (serialize-path @model path)]]) details))]])))
 
-(defn save-menu []
-  (fn [loc model path {:keys [query count]}]
-    [:li
-     {;:data-toggle "modal"
-      ;:data-target "#testModal"
-      :on-click (fn [] (dispatch [:prep-modal loc
-                                  (generate-dialog loc
-                                                   {:query query
-                                                    :count count
-                                                    :type (name (path/class model path))})]))}
-     [:a (str (serialize-path model path) " (" count ")")]]))
+(defn save-menu [loc _model _path _details]
+  (let [counts (subscribe [:main/query-parts-counts loc])]
+    (fn [loc model path {:keys [query]}]
+      (let [count (get @counts path "...")]
+        [:li
+         {;:data-toggle "modal"
+          ;:data-target "#testModal"
+          :on-click (fn [] (dispatch [:prep-modal loc
+                                      (generate-dialog loc
+                                                       {:query query
+                                                        :count count
+                                                        :type (name (path/class model path))})]))}
+         [:a (str (serialize-path model path) " (" count ")")]]))))
 
 (defn main [loc]
-  (let [model (subscribe [:assets/model loc])
-        query-parts (subscribe [:main/query-parts loc])]
+  (let [model       (subscribe [:assets/model loc])
+        query-parts (subscribe [:main/query-parts loc])
+        counts      (subscribe [:main/query-parts-counts loc])]
     (fn [loc]
       [:div.dropdown
+       {:ref (on-event
+               "show.bs.dropdown"
+               #(when (nil? @counts)
+                  ;; This will only run for the initial query. For any
+                  ;; subsequent queries, we'll `:main/count-deconstruction`
+                  ;; alongside the query.
+                  (doseq [event (map (fn [[part details]]
+                                       [:main/count-deconstruction loc part details])
+                                     @query-parts)]
+                    (dispatch event))))}
        [:button.btn.btn-default.dropdown-toggle
         {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
        (into [:ul.dropdown-menu]

@@ -2,6 +2,7 @@
   (:require [re-frame.core :as re-frame :refer [dispatch]]
             [im-tables.views.core :as main-view]
             [reagent.core :as r]
+            [clojure.string :as string]
             [reagent.dom.server :as server]
             [oops.core :refer [ocall]]))
 
@@ -15,11 +16,9 @@
                     "organism.name"
                     "dataSets.name"]}
    :settings {:pagination {:limit 10}
-              :links {:vocab {:mine "BananaMine"}
-                      :url (fn [vocab] (str "#/reportpage/"
-                                            (:mine vocab) "/"
-                                            (:class vocab) "/"
-                                            (:id vocab)))}}})
+              :links {:vocab {:mine "humanmine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
 
 (def yeastmine-config
   {:service {:root "https://yeastmine.yeastgenome.org/yeastmine"}
@@ -28,11 +27,9 @@
                     "secondaryIdentifier"
                     "primaryIdentifier"]}
    :settings {:pagination {:limit 10}
-              :links {:vocab {:mine "BananaMine"}
-                      :url (fn [vocab] (str "#/reportpage/"
-                                            (:mine vocab) "/"
-                                            (:class vocab) "/"
-                                            (:id vocab)))}}})
+              :links {:vocab {:mine "yeastmine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
 
 (def testmine-config
   {:service {:root "localhost:8080/intermine-demo"}
@@ -40,13 +37,23 @@
            :select ["name"
                     "department.name"]}
    :settings {:pagination {:limit 10}
-              :links {:vocab {:mine "BananaMine"}
-                      :url (fn [vocab] (str "#/reportpage/"
-                                            (:mine vocab) "/"
-                                            (:class vocab) "/"
-                                            (:objectId vocab)))}}})
+              :links {:vocab {:mine "testmine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
 
-
+(def biotestmine-config
+  {:service {:root "http://localhost:8080/biotestmine"}
+   :query {:from "Gene"
+           :select ["symbol"
+                    "secondaryIdentifier"
+                    "dataSets.description"
+                    "primaryIdentifier"
+                    "organism.name"
+                    "dataSets.name"]}
+   :settings {:pagination {:limit 10}
+              :links {:vocab {:mine "biotestmine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
 
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:

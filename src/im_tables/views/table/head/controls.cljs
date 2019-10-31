@@ -3,20 +3,10 @@
             [reagent.core :as reagent]
             [im-tables.views.graphs.histogram :as histogram]
             [im-tables.views.common :refer [no-value]]
-            [goog.i18n.NumberFormat.Format]
             [imcljs.path :as path]
             [clojure.string :as string]
-            [oops.core :refer [oget ocall ocall! oapply oget+]])
-  (:import
-   (goog.i18n NumberFormat)
-   (goog.i18n.NumberFormat Format)))
-
-(def nff
-  (NumberFormat. Format/DECIMAL))
-
-(defn- nf
-  [num]
-  (.format nff (str num)))
+            [oops.core :refer [oget ocall ocall! oget+]]
+            [im-tables.utils :refer [on-event pretty-number display-name]]))
 
 (defn filter-input []
   (fn [loc view val]
@@ -169,17 +159,25 @@
       (let [model (subscribe [:assets/model loc])
             {:keys [min max average stdev]} (first results)
             close-fn (partial force-close (reagent/current-component))
-            display-name (str (string/join " " (take-last 2 (string/split (path/friendly @model view) " > "))) "s")]
+            friendly-name (str (string/join " " (take-last 2 (string/split (path/friendly @model view) " > "))) "s")]
         [:form.form.column-summary
-         [:h4 (str "Showing numerical distribution for " (count results) " " display-name)]
+         [:h4 (str "Showing numerical distribution for " (count results) " " friendly-name)]
          [histogram/numerical-histogram results @trimmer]
          [:div.main-view
           [:div.numerical-content-wrapper
            [:table.table.table-condensed
             [:thead
-             [:tr [:th "Min"] [:th "Max"] [:th "Average"] [:th "Std Deviation"]]]
+             [:tr
+              [:th "Min"]
+              [:th "Max"]
+              [:th "Average"]
+              [:th "Std Deviation"]]]
             [:tbody
-             [:tr [:td (nf min)] [:td (nf max)] [:td (nf average)] [:td (nf stdev)]]]]
+             [:tr
+              [:td (pretty-number min)]
+              [:td (pretty-number max)]
+              [:td (pretty-number average)]
+              [:td (pretty-number stdev)]]]]
            [:div
             [:label "Trim from " [:input {:type "text"
                                           :value (or (:from @trimmer) min)
@@ -214,6 +212,16 @@
             [:i.fa.fa-filter]
             (str " Filter")]]]]))))
 
+(defn column-summary-title [loc view response]
+  (let [model @(subscribe [:assets/model loc])
+        {:keys [results uniqueValues]} response
+        human-name (display-name model view)]
+    [:h4.title
+     (if (< (count results) uniqueValues)
+       (str "Showing " (pretty-number (count results)) " of "
+            (pretty-number uniqueValues) " " human-name)
+       (str (pretty-number uniqueValues) " " human-name))]))
+
 (defn column-summary [loc view local-state]
   (let [response (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
@@ -232,6 +240,7 @@
               [numerical-column-summary loc view (:results @response) local-state]
               [:form.form.column-summary
                [:div.main-view
+                [column-summary-title loc view @response]
                 [histogram/main (:results @response)]
                 [filter-input loc view @text-filter]
                 [:table.table.table-striped.table-condensed
@@ -263,28 +272,33 @@
                  [:i.fa.fa-filter]
                  (str " Filter")]]]))))})))
 
+;; Bootstrap and ReactJS don't always mix well. Components that make up
+;; dropdown menus are only mounted (reactjs) once and then their visibility is
+;; toggled (bootstrap). These means any local state in the dropdown menu does
+;; NOT get reset when the dropdown menu disappears because its never really
+;; unmounts.  This was causing the new constraint textbox to retain its value
+;; if a user entered something but changed their mind and closed the dropdown.
+;; Reopening it would show what they previously entered. Making it look like it
+;; had been applied.  To fix this we've create the blank constraint local atom
+;; all the way up here at the dropdown level so that we can reset it manually,
+;; and then we pass the atom down to the blank constraint component. Lame.
 (defn filter-dropdown-menu [loc view idx col-count]
   (let [query (subscribe [:main/query loc view])
         blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})]
     (fn [loc view idx col-count right?]
       (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
         [:span.dropdown
-         {:ref (fn [e]
-                 (some-> e js/$ (ocall :on "hide.bs.dropdown"
-                                       (fn []
-  ;; Bootstrap and ReactJS don't always mix well. Components that make up dropdown menus are only
-  ;; mounted (reactjs) once and then their visibility is toggled (bootstrap). These means any local state
-  ;; in the dropdown menu does NOT get reset when the dropdown menu disappears because its never really unmounts.
-  ;; This was causing the new constraint textbox to retain its value if a user entered something but changed their
-  ;; mind and closed the dropdown. Reopening it would show what they previously entered. Making it look like it had been applied.
-  ;; To fix this we've create the blank constraint local atom all the way up here at the dropdown level so that we can reset
-  ;; it manually, and then we pass the atom down to the blank constraint component. Lame.
-                                         ;; Reset the blank constraint atom when the dropdown is closed
-                                         (reset! blank-constraint-atom {:path view :op "=" :value nil})
-  ;; *Try* to save the changes every time the dropdown is closed, even by just clicking off it.
-  ;; This means a user can remove a handful of filters without having to click Apply.
-  ;; The event will do a diff to make sure something has actually changed before rerunning the query
-                                         (dispatch [:filters/save-changes loc])))))}
+         {:ref (on-event
+                 "hide.bs.dropdown"
+                 (fn []
+                   ;; Reset the blank constraint atom when the dropdown is closed
+                   (reset! blank-constraint-atom {:path view :op "=" :value nil})
+                   ;; *Try* to save the changes every time the dropdown is
+                   ;; closed, even by just clicking off it.  This means a user
+                   ;; can remove a handful of filters without having to click
+                   ;; Apply. The event will do a diff to make sure something
+                   ;; has actually changed before rerunning the query
+                   (dispatch [:filters/save-changes loc])))}
          [:i.fa.fa-filter.dropdown-toggle.filter-icon
           {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
            :data-toggle "dropdown"
@@ -307,6 +321,7 @@
   (let [right? (reagent/atom false)]
     (fn [loc view idx col-count]
       (let [query           (subscribe [:main/temp-query loc view])
+            response        (subscribe [:selection/response loc view])
             sort-direction  (subscribe [:ui/column-sort-direction loc view])
             active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
             local-state     (reagent/atom {})]
@@ -325,15 +340,21 @@
            :title (str "Remove " view " column")}]
          [filter-dropdown-menu loc view idx col-count @right?]
          [:span.dropdown
-          {:ref (fn [e]
-                  ; Bind an event to clear the selected items when the dropdown closes.
-                  ; Why don't we just avoid state all together and pick up the checkbox values
-                  ; when the user clicks "Filter"? Because we still want to know what's selected
-                  ; (for instance, highlighting the histogram).
-                  ; Use some-> because e isn't guaranteed to hold a value
-                  (some-> e js/$ (ocall :on "hide.bs.dropdown" (fn []
-                                                                 (reset! local-state {})
-                                                                 (dispatch [:select/clear-selection loc view])))))}
+          ;; Bind an event to clear the selected items when the dropdown
+          ;; closes. Why don't we just avoid state all together and pick up the
+          ;; checkbox values when the user clicks "Filter"? Because we still
+          ;; want to know what's selected (for instance, highlighting the
+          ;; histogram).
+          {:ref (comp
+                  (on-event
+                    "hide.bs.dropdown"
+                    (fn []
+                      (reset! local-state {})
+                      (dispatch [:select/clear-selection loc view])))
+                  (on-event
+                    "show.bs.dropdown"
+                    #(when (nil? @response)
+                       (dispatch [:main/summarize-column loc view]))))}
           [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
           [:div.dropdown-menu
            {:title (str "Summarise " view " column")

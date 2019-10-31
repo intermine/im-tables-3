@@ -87,27 +87,10 @@
 ;; in tests. By grouping them under a single name for each operation, the unit
 ;; tests can be written more succinctly, making their intent clearer.
 
-(defmacro wait-for-query
-  "Used to wait-for im-tables-3 to complete a query."
-  [_location im-config & body]
-  `(wait-for [(match-times {:main/save-column-summary
-                            (count (get-in ~im-config [:query :select]))
-                            :main/save-decon-count
-                            (count (deconstruct-naively (:query ~im-config)))})]
-     ~@body))
-
 (defmacro after-load
   "Common operation that includes loading im-tables-3."
   [location im-config & body]
   `(run-test-async
      (rf/dispatch-sync [:im-tables/load ~location ~im-config])
      (wait-for [:main/initial-query-response]
-       ~@body)))
-
-(defmacro after-init
-  "Common operation that includes loading and initialising im-tables-3."
-  [location im-config & body]
-  `(after-load ~location ~im-config
-     (rf/dispatch-sync [:im-tables.main/init ~location])
-     (wait-for-query ~location ~im-config
        ~@body)))

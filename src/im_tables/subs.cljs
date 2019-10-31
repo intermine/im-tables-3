@@ -28,6 +28,11 @@
    (get-in db (glue prefix [:query-parts]))))
 
 (reg-sub
+ :main/query-parts-counts
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:query-parts-counts]))))
+
+(reg-sub
  :style/overlay?
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:cache :overlay?]))))
