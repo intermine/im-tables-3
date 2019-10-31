@@ -8,7 +8,7 @@
            [goog.i18n.NumberFormat Format]))
 
 (let [numformat (NumberFormat. Format/DECIMAL)]
-  (defn hr-number
+  (defn pretty-number
     "Returns a human-readable (comma thousand-separators) number using the
     Google Closure formatter."
     [n]
@@ -56,7 +56,7 @@
                      subclass)))
           new-names)))))
 
-(defn hr-name
+(defn display-name
   "Takes a view path and returns a human-readable name string."
   [model view]
   (->> (path->displaynames model view)

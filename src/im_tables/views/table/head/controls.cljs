@@ -6,7 +6,7 @@
             [imcljs.path :as path]
             [clojure.string :as string]
             [oops.core :refer [oget ocall ocall! oget+]]
-            [im-tables.utils :refer [on-event hr-number hr-name]]))
+            [im-tables.utils :refer [on-event pretty-number display-name]]))
 
 (defn filter-input []
   (fn [loc view val]
@@ -159,9 +159,9 @@
       (let [model (subscribe [:assets/model loc])
             {:keys [min max average stdev]} (first results)
             close-fn (partial force-close (reagent/current-component))
-            display-name (str (string/join " " (take-last 2 (string/split (path/friendly @model view) " > "))) "s")]
+            friendly-name (str (string/join " " (take-last 2 (string/split (path/friendly @model view) " > "))) "s")]
         [:form.form.column-summary
-         [:h4 (str "Showing numerical distribution for " (count results) " " display-name)]
+         [:h4 (str "Showing numerical distribution for " (count results) " " friendly-name)]
          [histogram/numerical-histogram results @trimmer]
          [:div.main-view
           [:div.numerical-content-wrapper
@@ -174,10 +174,10 @@
               [:th "Std Deviation"]]]
             [:tbody
              [:tr
-              [:td (hr-number min)]
-              [:td (hr-number max)]
-              [:td (hr-number average)]
-              [:td (hr-number stdev)]]]]
+              [:td (pretty-number min)]
+              [:td (pretty-number max)]
+              [:td (pretty-number average)]
+              [:td (pretty-number stdev)]]]]
            [:div
             [:label "Trim from " [:input {:type "text"
                                           :value (or (:from @trimmer) min)
@@ -215,12 +215,12 @@
 (defn column-summary-title [loc view response]
   (let [model @(subscribe [:assets/model loc])
         {:keys [results uniqueValues]} response
-        human-name (hr-name model view)]
+        human-name (display-name model view)]
     [:h4.title
      (if (< (count results) uniqueValues)
-       (str "Showing " (hr-number (count results)) " of "
-            (hr-number uniqueValues) " " human-name)
-       (str (hr-number uniqueValues) " " human-name))]))
+       (str "Showing " (pretty-number (count results)) " of "
+            (pretty-number uniqueValues) " " human-name)
+       (str (pretty-number uniqueValues) " " human-name))]))
 
 (defn column-summary [loc view local-state]
   (let [response (subscribe [:selection/response loc view])

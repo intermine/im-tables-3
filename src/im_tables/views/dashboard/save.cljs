@@ -45,6 +45,8 @@
                     (dispatch [:prep-modal loc nil]))]
 
     {:header [:h4 (str "Save a list of " (:count details) " "
+                       ;; It's possible that `count` is the string "..." if
+                       ;; the webservice hasn't responded yet.
                        (if (and (number? count) (< count 2))
                          (name type)
                          (plural (name type))))]
