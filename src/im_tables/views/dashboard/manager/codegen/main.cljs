@@ -87,7 +87,9 @@
         options (subscribe [:codegen/options loc])]
     (fn [loc]
       [:div.btn-toolbar.pull-right
-       [:button.btn.btn-default {:on-click (fn [] (dispatch [:prep-modal loc nil]))} "Close"]
+       [:button.btn.btn-default
+        {:on-click #(dispatch [:modal/close loc])}
+        "Close"]
        [:button.btn.btn-primary
         {:on-click (fn [] (save-to-disk "query" @code (:lang @options)))}
         [:i.fa.fa-save] " Download"]])))
@@ -107,7 +109,7 @@
        [:div.btn-group
         [:button.btn.btn-default
          {:on-click (fn []
-                      (dispatch [:prep-modal loc (build-modal loc)])
+                      (dispatch [:modal/open loc (build-modal loc)])
                       (dispatch [:main/generate-code loc @service (:model @service) @query (:lang @options)]))}
          [:i.fa.fa-code] (str " " (get-in languages [(:lang @options) :label]))]
         [:button.btn.btn-default.dropdown-toggle
@@ -116,5 +118,5 @@
               (map (fn [[value {:keys [label]}]]
                      [:li {:on-click (fn []
                                        (dispatch [:main/set-codegen-option loc :lang value true])
-                                       (dispatch [:prep-modal loc (build-modal loc)]))}
+                                       (dispatch [:modal/open loc (build-modal loc)]))}
                       [:a label]]) languages))]])))

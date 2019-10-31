@@ -30,7 +30,7 @@
   (fn [loc state details on-submit]
     [:div.btn-toolbar.pull-right
      [:button.btn.btn-default
-      {:on-click (fn [] (dispatch [:prep-modal loc nil]))}
+      {:on-click #(dispatch [:modal/close loc])}
       "Cancel"]
      [:button.btn.btn-success
       {:on-click on-submit}
@@ -42,7 +42,7 @@
                     ; Save the list
                     (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state])
                     ; Close the modal by clearing the modal markup in app-db
-                    (dispatch [:prep-modal loc nil]))]
+                    (dispatch [:modal/close loc]))]
 
     {:header [:h4 (str "Save a list of " (:count details) " "
                        ;; It's possible that `count` is the string "..." if
@@ -67,27 +67,23 @@
         [:h4 class]
         (into [:ul]
               (map (fn [[path query]]
-                     [:li [:a
-                           {;:data-toggle "modal"
-                            ;:data-target "#testModal"
-                            :on-click (fn [] (dispatch [:prep-modal loc
-                                                        (generate-dialog loc
-                                                                         {:query query
-                                                                          :type class})]))}
+                     [:li [:a {:on-click
+                               #(dispatch [:modal/open loc
+                                           (generate-dialog loc
+                                                            {:query query
+                                                             :type class})])}
                            (serialize-path @model path)]]) details))]])))
 
 (defn save-menu [loc _model _path _details]
   (let [counts (subscribe [:main/query-parts-counts loc])]
     (fn [loc model path {:keys [query]}]
       (let [count (get @counts path "...")]
-        [:li
-         {;:data-toggle "modal"
-          ;:data-target "#testModal"
-          :on-click (fn [] (dispatch [:prep-modal loc
-                                      (generate-dialog loc
-                                                       {:query query
-                                                        :count count
-                                                        :type (name (path/class model path))})]))}
+        [:li {:on-click
+              #(dispatch [:modal/open loc
+                          (generate-dialog loc
+                                           {:query query
+                                            :count count
+                                            :type (name (path/class model path))})])}
          [:a (str (serialize-path model path) " (" count ")")]]))))
 
 (defn main [loc]

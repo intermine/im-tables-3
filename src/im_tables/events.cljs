@@ -83,38 +83,17 @@
     :im-tables/im-operation {:on-success [:imt.io/save-list-success]
                              :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins) options)}}))
 
-(reg-event-fx
- :prep-modal
- [(sandbox)]
- (fn [{db :db} [_ loc contents]]
-   {:db (assoc-in db [:cache :modal] contents)}))
+(reg-event-db
+ :modal/open
+ (sandbox)
+ (fn [db [_ loc contents]]
+   (assoc-in db [:cache :modal] contents)))
 
-(reg-event-fx
+(reg-event-db
  :modal/close
  (sandbox)
- (fn [{db :db} [_ loc]]
-   (let [modal (ocall js/document :getElementById "testModal")]
-      ;;feigning a click is easier than dismissing it programatically for some reason
-     (ocall modal "click"))
-   {:db (assoc-in db [:cache :modal] nil)}))
-
-(reg-event-db
- :show-overlay
- (sandbox)
  (fn [db [_ loc]]
-   (assoc-in db [:cache :overlay?] true)))
-
-(reg-event-db
- :show-overlay
- (sandbox)
- (fn [db [_ location value]]
-   (update-in db location assoc-in [:cache :overlay?] value)))
-
-(reg-event-db
- :hide-overlay
- (sandbox)
- (fn [db [_ loc]]
-   (assoc-in db [:cache :overlay?] false)))
+   (assoc-in db [:cache :modal] nil)))
 
 (defn toggle-into-set [haystack needle]
   (if (some #{needle} haystack)
@@ -379,9 +358,8 @@
      (cond-> {:db (-> db
                       (update-in [:query :select] move-nth dragged-item dragged-over)
                       (update-in [:cache] dissoc :dragging-item :dragging-over))}
-       (not= dragged-item dragged-over) (assoc :dispatch-n
-                                               [^:flush-dom [:show-overlay loc]
-                                                [:im-tables.main/run-query loc]])))))
+       (not= dragged-item dragged-over)
+       (assoc :dispatch [:im-tables.main/run-query loc])))))
 
 ;;;;; MANIPULATE QUERY
 
@@ -530,17 +508,10 @@
        (into {})))
 
 (reg-event-db
- :main/initial-query-response
+ :main/replace-query-response
  (sandbox)
  (fn [db [_ loc {:keys [start]} response]]
    (assoc db :response (update response :results index-map start))))
-
-(reg-event-fx
- :main/replace-query-response
- (sandbox)
- (fn [{db :db} [_ loc {:keys [start]} response]]
-   {:db (assoc db :response (update response :results index-map start))
-    :dispatch ^:flush-dom [:hide-overlay loc]}))
 
 (reg-event-db
  :main/merge-query-response
@@ -570,8 +541,7 @@
                                            {:start start
                                             :size (* limit (get-in db [:settings :buffer]))}))
        {:db (assoc-in db [:cache :column-summary] {})
-        :dispatch-n [^:flush-dom [:show-overlay loc]
-                     [:main/deconstruct loc :force? true]]
+        :dispatch [:main/deconstruct loc :force? true]
         :im-tables/im-operation-chan {:on-success (if merge?
                                                     ^:flush-dom [:main/merge-query-response loc pagination]
                                                     ^:flush-dom [:main/replace-query-response loc pagination])

@@ -92,5 +92,5 @@
   [location im-config & body]
   `(run-test-async
      (rf/dispatch-sync [:im-tables/load ~location ~im-config])
-     (wait-for [:main/initial-query-response]
+     (wait-for [:main/replace-query-response]
        ~@body)))

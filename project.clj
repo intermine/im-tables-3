@@ -48,7 +48,7 @@
   :test-paths ["test/cljs"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
-                                    "test/js"]
+                                    "out" "test/js"]
 
   :figwheel {:css-dirs ["resources/public/css"]
              :server-port 3448}

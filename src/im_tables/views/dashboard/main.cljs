@@ -23,7 +23,7 @@
           {:on-click (fn []
                        ; Clear the previous state of the column manager when (re)opening
                        (dispatch [:tree-view/clear-state loc])
-                       (dispatch [:prep-modal loc (saver/make-modal loc)]))}
+                       (dispatch [:modal/open loc (saver/make-modal loc)]))}
           [:i.fa.fa-columns] " Add Columns"]]
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]
