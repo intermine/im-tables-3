@@ -83,20 +83,17 @@
     :im-tables/im-operation {:on-success [:imt.io/save-list-success]
                              :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins) options)}}))
 
-(reg-event-fx
- :prep-modal
- [(sandbox)]
- (fn [{db :db} [_ loc contents]]
-   {:db (assoc-in db [:cache :modal] contents)}))
+(reg-event-db
+ :modal/open
+ (sandbox)
+ (fn [db [_ loc contents]]
+   (assoc-in db [:cache :modal] contents)))
 
-(reg-event-fx
+(reg-event-db
  :modal/close
  (sandbox)
- (fn [{db :db} [_ loc]]
-   (let [modal (ocall js/document :getElementById "testModal")]
-      ;;feigning a click is easier than dismissing it programatically for some reason
-     (ocall modal "click"))
-   {:db (assoc-in db [:cache :modal] nil)}))
+ (fn [db [_ loc]]
+   (assoc-in db [:cache :modal] nil)))
 
 (defn toggle-into-set [haystack needle]
   (if (some #{needle} haystack)

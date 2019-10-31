@@ -93,7 +93,7 @@
           query (subscribe [:main/query loc])]
       [:div.btn-toolbar.pull-right
        [:button.btn.btn-default
-        {:on-click (fn [] (dispatch [:prep-modal loc nil]))}
+        {:on-click #(dispatch [:modal/close loc])}
         "Cancel"]
        [:button.btn.btn-success
         {:data-dismiss "modal"
@@ -102,7 +102,7 @@
                      ; Merge the new columns into the query
                      (dispatch [:tree-view/merge-new-columns loc])
                      ; Close the modal by clearing the modal value in app-db
-                     (dispatch [:prep-modal loc nil]))}
+                     (dispatch [:modal/close loc]))}
         (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]])))
 
 (defn make-modal [loc]

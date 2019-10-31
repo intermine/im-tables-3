@@ -66,13 +66,15 @@
   (let [model (subscribe [:assets/model loc])]
     (fn [loc]
       [:div.btn-toolbar.pull-right
-       [:button.btn.btn-default {:on-click (fn [] (dispatch [:prep-modal loc nil]))} "Cancel"]
+       [:button.btn.btn-default
+        {:on-click #(dispatch [:modal/close loc])}
+        "Cancel"]
        [:button.btn.btn-success
         {:on-click (fn []
                      ; Apply the changes
                      (dispatch [:rel-manager/apply-changes loc])
                      ; Close the modal by clearing the markup from app-db
-                     (dispatch [:prep-modal loc nil]))}
+                     (dispatch [:modal/close loc]))}
         "Apply Changes"]])))
 
 (defn build-modal [loc]
@@ -90,5 +92,5 @@
                       ; Reset the state of the modal
                       (dispatch [:rel-manager/reset loc])
                       ; Build the modal markup and send it to app-db
-                      (dispatch [:prep-modal loc (build-modal loc)]))}
+                      (dispatch [:modal/open loc (build-modal loc)]))}
          [:i.fa.fa-share-alt] " Manage Relationships"]]])))

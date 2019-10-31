@@ -14,8 +14,7 @@
 (defn custom-modal []
   (fn [loc {:keys [header body footer extra-class]}]
     [:div.im-modal
-     {:on-mouse-down (fn [e]
-                       (dispatch [:prep-modal loc nil]))}
+     {:on-mouse-down #(dispatch [:modal/close loc])}
      [:div.im-modal-content
       {:class extra-class
        :on-mouse-down (fn [e]
