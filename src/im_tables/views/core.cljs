@@ -11,16 +11,6 @@
 (def css-transition-group
   (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
 
-(defn table-thinking []
-  (fn [show?]
-    [css-transition-group
-     {:transition-name          "fade"
-      :transition-enter-timeout 50
-      :transition-leave-timeout 50}
-     (if show?
-       [:div.overlay
-        [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]])]))
-
 (defn custom-modal []
   (fn [loc {:keys [header body footer extra-class]}]
     [:div.im-modal
@@ -42,7 +32,6 @@
 (defn main [location]
   (let [response (subscribe [:main/query-response location])
         pagination (subscribe [:settings/pagination location])
-        overlay? (subscribe [:style/overlay? location])
         modal-markup (subscribe [:modal location])
         static? (reagent/atom true)
         model (subscribe [:assets/model location])
@@ -102,7 +91,3 @@
 
             ; Only show the modal when the modal subscription has a value
            (when @modal-markup [custom-modal location @modal-markup])]))})))
-
-            ; Cover the app whenever it's thinking
-            ;[table-thinking @overlay?]
-

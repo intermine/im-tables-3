@@ -85,6 +85,5 @@
    :cache {:summaries {}
            :summary {}
            :selection {}
-           :overlay? false
            :filters {}
            :tree-view {:selection #{}}}})
