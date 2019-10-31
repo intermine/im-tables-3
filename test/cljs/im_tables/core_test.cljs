@@ -4,7 +4,8 @@
             [re-frame.core :as rf]
             [day8.re-frame.test :refer-macros [run-test-sync run-test-async wait-for]]
             [im-tables.events]
-            [im-tables.subs]))
+            [im-tables.subs]
+            [clojure.string :as string]))
 
 (use-fixtures :each utils/fixtures)
 
@@ -17,11 +18,9 @@
                                  "organism.name"
                                  "dataSets.name"]}
                 :settings {:pagination {:limit 10}
-                           :links {:vocab {:mine "BananaMine"}
-                                   :url (fn [vocab] (str "#/reportpage/"
-                                                         (:mine vocab) "/"
-                                                         (:class vocab) "/"
-                                                         (:id vocab)))}}})
+                           :links {:vocab {:mine "beta-humanmine"}
+                                   :url (fn [{:keys [mine class objectId] :as _vocab}]
+                                          (string/join "/" [nil mine "report" class objectId]))}}})
 
 (deftest load-im-tables
   (let [loc [:default]]
