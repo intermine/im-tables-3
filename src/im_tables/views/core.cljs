@@ -8,9 +8,6 @@
             [oops.core :refer [ocall]]
             [imcljs.path :as impath]))
 
-(def css-transition-group
-  (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
-
 (defn custom-modal []
   (fn [loc {:keys [header body footer extra-class]}]
     [:div.im-modal
