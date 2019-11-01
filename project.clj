@@ -1,4 +1,4 @@
-(defproject org.intermine/im-tables "0.8.3"
+(defproject org.intermine/im-tables "0.9.0"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.520"]
                  [org.clojure/core.async "0.4.500"]
