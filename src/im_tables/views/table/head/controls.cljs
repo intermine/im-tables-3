@@ -8,6 +8,9 @@
             [oops.core :refer [oget ocall ocall! oget+]]
             [im-tables.utils :refer [on-event pretty-number display-name]]))
 
+(def css-transition-group
+  (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
+
 (defn filter-input []
   (fn [loc view val]
     [:div.inline-filter [:i.fa.fa-filter]
@@ -161,7 +164,7 @@
             close-fn (partial force-close (reagent/current-component))
             friendly-name (str (string/join " " (take-last 2 (string/split (path/friendly @model view) " > "))) "s")]
         [:form.form.column-summary
-         [:h4 (str "Showing numerical distribution for " (count results) " " friendly-name)]
+         [:h4.title (str "Showing numerical distribution for " (count results) " " friendly-name)]
          [histogram/numerical-histogram results @trimmer]
          [:div.main-view
           [:div.numerical-content-wrapper
@@ -222,7 +225,15 @@
             (pretty-number uniqueValues) " " human-name)
        (str (pretty-number uniqueValues) " " human-name))]))
 
-(defn column-summary [loc view local-state]
+(defn column-summary-thinking []
+  [css-transition-group
+   {:transition-name          "fade"
+    :transition-enter-timeout 50
+    :transition-leave-timeout 50}
+   [:div.column-summary-loader
+    [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]]])
+
+(defn column-summary [loc view local-state !dropdown]
   (let [response (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
         text-filter (subscribe [:selection/text-filter loc view])]
@@ -233,44 +244,52 @@
       (fn [])
       :reagent-render
       (fn [loc view]
-        (let [close-fn (partial force-close (reagent/current-component))]
-          (if (false? @response)
-            [too-many-values]
-            (if (contains? (first (:results @response)) :min)
-              [numerical-column-summary loc view (:results @response) local-state]
-              [:form.form.column-summary
-               [:div.main-view
-                [column-summary-title loc view @response]
-                [histogram/main (:results @response)]
-                [filter-input loc view @text-filter]
-                [:table.table.table-striped.table-condensed
-                 [:thead [:tr [:th
-                               (if (empty? @selections)
-                                 [:span {:title "Select all"
-                                         :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
-                                 [:span {:title "Deselect all"
-                                         :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])] [:th "Item"] [:th "Count"]]]
-                 (into [:tbody]
-                       (->> (filter (partial has-text? @text-filter) (:results @response))
-                            (map (fn [{:keys [count item]}]
-                                   [:tr.hoverable
-                                    {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                                    [:td
-                                     [:input
-                                      {:on-change (fn [])
-                                       :checked (contains? @selections item)
-                                       :type "checkbox"}]]
-                                    [:td (if item item [no-value])]
-                                    [:td
-                                     [:div count]]]))))]]
-               [:div.btn-toolbar.column-summary-toolbar
-                [:button.btn.btn-primary
-                 {:type "button"
-                  :on-click (fn []
-                              (dispatch [:main/apply-summary-filter loc view])
-                              (close-fn))}
-                 [:i.fa.fa-filter]
-                 (str " Filter")]]]))))})))
+        (cond
+          (nil? @response)
+          [column-summary-thinking]
+
+          (false? @response)
+          [too-many-values]
+
+          (contains? (first (:results @response)) :min)
+          [numerical-column-summary loc view (:results @response) local-state]
+
+          :else
+          [:form.form.column-summary
+           [column-summary-title loc view @response]
+           [:div.main-view
+            [histogram/main (:results @response)]
+            [filter-input loc view @text-filter]
+            [:table.table.table-striped.table-condensed
+             [:thead [:tr [:th
+                           (if (empty? @selections)
+                             [:span {:title "Select all"
+                                     :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
+                             [:span {:title "Deselect all"
+                                     :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])] [:th "Item"] [:th "Count"]]]
+             (into [:tbody]
+                   (->> (filter (partial has-text? @text-filter) (:results @response))
+                        (map (fn [{:keys [count item]}]
+                               [:tr.hoverable
+                                {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
+                                [:td
+                                 [:input
+                                  {:on-change (fn [])
+                                   :checked (contains? @selections item)
+                                   :type "checkbox"}]]
+                                [:td (if item item [no-value])]
+                                [:td
+                                 [:div count]]]))))]]
+           [:div.btn-toolbar.column-summary-toolbar
+            [:button.btn.btn-primary
+             {:type "button"
+              :on-click (fn []
+                          (dispatch [:main/apply-summary-filter loc view])
+                          (when-let [el @!dropdown]
+                            (-> (js/$ el)
+                                (ocall! "dropdown" "toggle"))))}
+             [:i.fa.fa-filter]
+             (str " Filter")]]]))})))
 
 ;; Bootstrap and ReactJS don't always mix well. Components that make up
 ;; dropdown menus are only mounted (reactjs) once and then their visibility is
@@ -318,7 +337,8 @@
     (> left (/ screen-width 2))))
 
 (defn toolbar []
-  (let [right? (reagent/atom false)]
+  (let [right? (reagent/atom false)
+        !summary-dropdown (atom nil)]
     (fn [loc view idx col-count]
       (let [query           (subscribe [:main/temp-query loc view])
             response        (subscribe [:selection/response loc view])
@@ -355,8 +375,10 @@
                     "show.bs.dropdown"
                     #(when (nil? @response)
                        (dispatch [:main/summarize-column loc view]))))}
-          [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]
+          [:i.fa.fa-bar-chart.dropdown-toggle
+           {:data-toggle "dropdown"
+            :ref (fn [el] (reset! !summary-dropdown el))}]
           [:div.dropdown-menu
            {:title (str "Summarise " view " column")
             :class (when @right? "dropdown-right")}
-           [column-summary loc view local-state]]]]))))
+           [column-summary loc view local-state !summary-dropdown]]]]))))
