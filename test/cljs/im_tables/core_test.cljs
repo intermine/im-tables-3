@@ -26,8 +26,8 @@
   (let [loc [:default]]
     (utils/after-load loc im-config
       (testing "im-table runs query"
-         (let [response @(rf/subscribe [:main/query-response loc])]
-           (is (some? response)))))))
+        (let [response @(rf/subscribe [:main/query-response loc])]
+          (is (some? response)))))))
 
 (deftest column-summary
   (let [loc [:default]]

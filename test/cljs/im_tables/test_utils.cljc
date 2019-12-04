@@ -45,7 +45,7 @@
      {:before (fn []
                 (when-let [vars (seq @stubbed-variables)]
                   (doseq [restore-fn vars]
-                         (restore-fn))
+                    (restore-fn))
                   (reset! stubbed-variables '()))
                 (rf/dispatch-sync [:clear-db]))}))
 
@@ -91,6 +91,6 @@
   "Common operation that includes loading im-tables-3."
   [location im-config & body]
   `(run-test-async
-     (rf/dispatch-sync [:im-tables/load ~location ~im-config])
-     (wait-for [:main/replace-query-response]
-       ~@body)))
+    (rf/dispatch-sync [:im-tables/load ~location ~im-config])
+    (wait-for [:main/replace-query-response]
+      ~@body)))

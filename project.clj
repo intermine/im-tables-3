@@ -25,7 +25,8 @@
             [lein-pdo "0.1.1"]
             [lein-cljfmt "0.6.1"]]
 
-  :cljfmt {:indents {wait-for [[:inner 0]]}}
+  :cljfmt {:indents {wait-for [[:inner 0]]
+                     after-load [[:inner 0]]}}
 
   :aliases {"dev" ["do" "clean"
                    ["pdo"
