@@ -308,16 +308,16 @@
       (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
         [:span.dropdown
          {:ref (on-event
-                 "hide.bs.dropdown"
-                 (fn []
+                "hide.bs.dropdown"
+                (fn []
                    ;; Reset the blank constraint atom when the dropdown is closed
-                   (reset! blank-constraint-atom {:path view :op "=" :value nil})
+                  (reset! blank-constraint-atom {:path view :op "=" :value nil})
                    ;; *Try* to save the changes every time the dropdown is
                    ;; closed, even by just clicking off it.  This means a user
                    ;; can remove a handful of filters without having to click
                    ;; Apply. The event will do a diff to make sure something
                    ;; has actually changed before rerunning the query
-                   (dispatch [:filters/save-changes loc])))}
+                  (dispatch [:filters/save-changes loc])))}
          [:i.fa.fa-filter.dropdown-toggle.filter-icon
           {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
            :data-toggle "dropdown"
@@ -366,15 +366,15 @@
           ;; want to know what's selected (for instance, highlighting the
           ;; histogram).
           {:ref (comp
-                  (on-event
-                    "hide.bs.dropdown"
-                    (fn []
-                      (reset! local-state {})
-                      (dispatch [:select/clear-selection loc view])))
-                  (on-event
-                    "show.bs.dropdown"
-                    #(when (nil? @response)
-                       (dispatch [:main/summarize-column loc view]))))}
+                 (on-event
+                  "hide.bs.dropdown"
+                  (fn []
+                    (reset! local-state {})
+                    (dispatch [:select/clear-selection loc view])))
+                 (on-event
+                  "show.bs.dropdown"
+                  #(when (nil? @response)
+                     (dispatch [:main/summarize-column loc view]))))}
           [:i.fa.fa-bar-chart.dropdown-toggle
            {:data-toggle "dropdown"
             :ref (fn [el] (reset! !summary-dropdown el))}]

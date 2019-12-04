@@ -93,15 +93,15 @@
     (fn [loc]
       [:div.dropdown
        {:ref (on-event
-               "show.bs.dropdown"
-               #(when (nil? @counts)
+              "show.bs.dropdown"
+              #(when (nil? @counts)
                   ;; This will only run for the initial query. For any
                   ;; subsequent queries, we'll `:main/count-deconstruction`
                   ;; alongside the query.
-                  (doseq [event (map (fn [[part details]]
-                                       [:main/count-deconstruction loc part details])
-                                     @query-parts)]
-                    (dispatch event))))}
+                 (doseq [event (map (fn [[part details]]
+                                      [:main/count-deconstruction loc part details])
+                                    @query-parts)]
+                   (dispatch event))))}
        [:button.btn.btn-default.dropdown-toggle
         {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
        (into [:ul.dropdown-menu]

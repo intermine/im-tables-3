@@ -569,8 +569,8 @@
  (sandbox)
  (fn [{db :db} [_ loc & {:keys [force?]}]]
    (let [deconstructed-query (->> (query/deconstruct-by-class
-                                    (get-in db [:service :model])
-                                    (get-in db [:query]))
+                                   (get-in db [:service :model])
+                                   (get-in db [:query]))
                                   vals
                                   (apply merge))]
      (cond-> {:db (assoc db :query-parts deconstructed-query)}
