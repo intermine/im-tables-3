@@ -14,6 +14,7 @@ before_script:
   - npm install
 
 script:
+  - Xvfb :99 -screen 0 1280x1024x24 &
   # Run unit tests
   - lein kaocha
   # ensure a minified build completes without error
