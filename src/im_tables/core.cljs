@@ -22,8 +22,8 @@
     (println "dev mode")))
 
 (defn mount-root []
-  (dom/render [views/main-panel
-                  (.getElementById js/document "app")]))
+  (dom/render [views/main-panel]
+              (.getElementById js/document "app")))
 
 (defn ^:export init []
   #_(re-frame/dispatch-sync [:initialize-db

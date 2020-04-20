@@ -155,6 +155,8 @@ Make sure to first run `npm install` to install the dependencies required to run
 lein kaocha
 ```
 
+*Note: Running tests requires you to have a [Biotestmine](https://github.com/intermine/biotestmine) running locally. The easiest way to achieve this is by using [intermine_boot](https://github.com/intermine/intermine_boot).*
+
 ## Production Build
 
 ### Deploying to Heroku
