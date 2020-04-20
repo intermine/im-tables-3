@@ -1,6 +1,7 @@
 (ns im-tables.views.table.head.controls
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
+            [reagent.dom :as dom]
             [im-tables.views.graphs.histogram :as histogram]
             [im-tables.views.common :refer [no-value]]
             [imcljs.path :as path]
@@ -27,7 +28,7 @@
 (defn force-close
   "Force a dropdown to close "
   [component]
-  (-> (js/$ (reagent/dom-node component))
+  (-> (js/$ (dom/dom-node component))
       (ocall! "closest" ".dropdown-menu")
       (ocall! "parent")
       (ocall! "removeClass" "open")))

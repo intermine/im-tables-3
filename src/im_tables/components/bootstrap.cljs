@@ -1,5 +1,6 @@
 (ns im-tables.components.bootstrap
   (:require [reagent.core :as reagent]
+            [reagent.dom :as dom]
             [reagent.dom.server :as server]
             [oops.core :refer [ocall oapply oget oset!]]))
 
@@ -14,24 +15,24 @@
   (reagent/create-class
    {;:component-did-mount
      ;(fn [this]
-     ;  (let [node (reagent/dom-node this)] (ocall (-> node js/$) "popover")))
+     ;  (let [node (dom/dom-node this)] (ocall (-> node js/$) "popover")))
      ;:component-will-unmount
      ;(fn [this]
-     ;  (let [node (reagent/dom-node this)] (ocall (-> "popover" js/$) "remove")))
+     ;  (let [node (dom/dom-node this)] (ocall (-> "popover" js/$) "remove")))
      ;:component-did-update
      ;(fn [this]
-     ;  (.log js/console "me" (reagent/dom-node this))
-     ;  (let [node (reagent/dom-node this)]
+     ;  (.log js/console "me" (dom/dom-node this))
+     ;  (let [node (dom/dom-node this)]
      ;    (ocall (-> "popover" js/$) "remove")
      ;    (ocall (-> node js/$) "popover")))
     :component-did-mount
     (fn [this])
-       ;(.log js/console "d" (ocall (js/$ (reagent/dom-node this)) "popover"))
+       ;(.log js/console "d" (ocall (js/$ (dom/dom-node this)) "popover"))
 
     :component-did-update
     (fn [this]
-      (.log js/console "me" (js/$ (reagent/dom-node this)))
-      (-> (js/$ (reagent/dom-node this))
+      (.log js/console "me" (js/$ (dom/dom-node this)))
+      (-> (js/$ (dom/dom-node this))
            ;(ocall "popover" "destroy")
           (ocall "popover" "toggle")))
     :reagent-render
@@ -66,7 +67,7 @@
      {:name "Tooltip"
       :component-did-mount
       (fn [this]
-        (let [bb (ocall (reagent/dom-node this) "getBoundingClientRect")]
+        (let [bb (ocall (dom/dom-node this) "getBoundingClientRect")]
           (swap! mystate assoc
                  :width (oget bb "width")
                  :height (oget bb "height")

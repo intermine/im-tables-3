@@ -1,5 +1,6 @@
 (ns im-tables.core
   (:require [reagent.core :as reagent]
+            [reagent.dom :as dom]
             [re-frame.core :as re-frame]
             [im-tables.events]
             [im-tables.subs]
@@ -21,8 +22,8 @@
     (println "dev mode")))
 
 (defn mount-root []
-  (reagent/render [views/main-panel]
-                  (.getElementById js/document "app")))
+  (dom/render [views/main-panel
+                  (.getElementById js/document "app")]))
 
 (defn ^:export init []
   #_(re-frame/dispatch-sync [:initialize-db
