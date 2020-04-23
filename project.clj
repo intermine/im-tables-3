@@ -17,7 +17,10 @@
                  [inflections "0.13.2"]
                  [criterium "0.4.5"]
                  [org.intermine/imcljs "1.1.0"]
-                 [day8.re-frame/test "0.1.5"]]
+                 [day8.re-frame/test "0.1.5"]
+                 [cljsjs/react-day-picker "7.3.0-1"]
+                 [cljsjs/react-select "2.4.4-0"]
+                 [com.andrewmcveigh/cljs-time "0.5.2"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-less "1.7.5"]

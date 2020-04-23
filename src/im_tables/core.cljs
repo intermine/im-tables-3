@@ -9,6 +9,8 @@
             [im-tables.config :as config]
             [imcljs.query :as query]
             [cljsjs.react-transition-group]
+            [cljsjs.react-day-picker]
+            [cljsjs.react-select]
             [cljsjs.highlight]
             [cljsjs.highlight.langs.javascript]
             [cljsjs.highlight.langs.perl]

@@ -83,6 +83,11 @@
    (get-in db (glue prefix [:cache :column-summary view :filters :text]))))
 
 (reg-sub
+ :selection/possible-values
+ (fn [db [_ prefix view]]
+   (get-in db (glue prefix [:cache :possible-values view]))))
+
+(reg-sub
  :assets/model
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:service :model]))))

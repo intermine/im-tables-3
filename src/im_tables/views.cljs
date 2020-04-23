@@ -55,6 +55,21 @@
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
                              (string/join "/" [nil mine "report" class objectId]))}}})
 
+(def covidmine-config
+  {:service {:root "https://test.intermine.org/covidmine"}
+   :query {:from "Distribution"
+           :select ["date"
+                    "totalConfirmed"
+                    "totalActive"
+                    "totalDeaths"
+                    "totalRecovered"
+                    "geoLocation.state"
+                    "geoLocation.country"]}
+   :settings {:pagination {:limit 10}
+              :links {:vocab {:mine "covidmine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
+
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:
 ; [im-tables.views.core/main {:location ... :service ... :query ...}]
@@ -65,7 +80,7 @@
   ; (useful for stress testing)
   (let [number-of-tables 2
         reboot-tables-fn (fn [] (dotimes [n number-of-tables]
-                                  (dispatch [:im-tables/load [:test :location n] humanmine-config])))]
+                                  (dispatch [:im-tables/load [:test :location n] covidmine-config])))]
     (r/create-class
      {:component-did-mount reboot-tables-fn
       :reagent-render (let [show? (r/atom true)]

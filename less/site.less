@@ -17,6 +17,7 @@
 @import "tooltip";
 @import "modal";
 @import "highlight";
+@import "calendar";
 
 .force-wrap {
 
@@ -247,7 +248,6 @@
     .column-summary .main-view,
     .filter-view {
         max-height: 60vh;
-        overflow: auto;
 
         .imtable-constraint {
             display: flex;
@@ -261,6 +261,10 @@
         .toolbar {
             margin: 0 0.3em 0.3em;
         }
+    }
+
+    .column-summary .main-view {
+        overflow: auto;
     }
 
     .column-summary .title {
@@ -614,5 +618,11 @@
     }
     .numerical-content-wrapper {
         padding: 10px;
+    }
+
+    // Applies to react-select third-party component.
+    .constraint-select {
+        width: 100%;
+        font-size: 14px;
     }
 }

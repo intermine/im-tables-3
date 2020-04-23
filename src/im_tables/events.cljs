@@ -17,6 +17,7 @@
             [imcljs.internal.utils :refer [scrub-url]]
             [oops.core :refer [oapply ocall oget]]
             [clojure.string :as string :refer [split join starts-with?]]
+            [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
             [reagent.core :as r]))
 
@@ -160,8 +161,8 @@
  :filters/save-changes
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc]]
-   (let [added (not-empty (clojure.set/difference (set (:where (:temp-query db))) (set (:where (:query db)))))
-         removed (not-empty (clojure.set/difference (set (:where (:query db))) (set (:where (:temp-query db)))))
+   (let [added (not-empty (set/difference (set (:where (:temp-query db))) (set (:where (:query db)))))
+         removed (not-empty (set/difference (set (:where (:query db))) (set (:where (:temp-query db)))))
          model (get-in db [:service :model])]
       ; This event is usually fired when the filter dropdown closed which means it's fired
       ; a lot even when not necessary. To prevent multiple blank undos from piling up, we only
@@ -266,8 +267,8 @@
  (fn [{db :db} [_ loc]]
    (let [pre-joins (set (get-in db [:query :joins]))
          post-joins (set (get-in db [:cache :rel-manager :joins]))
-         added (not-empty (clojure.set/difference post-joins pre-joins))
-         removed (not-empty (clojure.set/difference pre-joins post-joins))
+         added (not-empty (set/difference post-joins pre-joins))
+         removed (not-empty (set/difference pre-joins post-joins))
          model (get-in db [:service :model])]
      {:db (assoc db :query (get-in db [:cache :rel-manager]))
       :dispatch [:im-tables.main/run-query loc]
@@ -362,6 +363,29 @@
        (assoc :dispatch [:im-tables.main/run-query loc])))))
 
 ;;;;; MANIPULATE QUERY
+
+(reg-event-db
+ :main/store-possible-values
+ (sandbox)
+ (fn [db [_ loc view res]]
+   (let [items (->> res :results (map :item) (remove nil?) sort)]
+     (assoc-in db [:cache :possible-values view] items))))
+
+(reg-event-fx
+ :main/fetch-possible-values
+ (sandbox)
+ (fn [{db :db} [_ loc view]]
+   (let [model (get-in db [:service :model])
+         summary-path (im-path/adjust-path-to-last-class model view)
+         [class path] (split summary-path ".")]
+     {:db db
+      :im-tables/im-operation {:on-success [:main/store-possible-values loc view]
+                               :op (partial fetch/unique-values
+                                            (get db :service)
+                                            {:from class
+                                             :select [path]}
+                                            summary-path
+                                            1000)}})))
 
 (reg-event-db
  :main/save-column-summary

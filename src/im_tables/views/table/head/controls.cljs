@@ -6,11 +6,20 @@
             [im-tables.views.common :refer [no-value]]
             [imcljs.path :as path]
             [clojure.string :as string]
+            [clojure.set :as set]
             [oops.core :refer [oget ocall ocall! oget+]]
-            [im-tables.utils :refer [on-event pretty-number display-name]]))
+            [im-tables.utils :refer [on-event pretty-number display-name]]
+            [cljs-time.coerce :as time-coerce]
+            [cljs-time.format :as time-format]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
+
+(def constraint-ops-single
+  ["=" "!=" "<" "<=" ">" ">=" "CONTAINS" "LIKE" "NOT LIKE"])
+
+(def constraint-ops-multi
+  ["ONE OF" "NONE OF"])
 
 (defn filter-input []
   (fn [loc view val]
@@ -45,73 +54,230 @@
 (defn constraint-has-path? [view constraint]
   (= view (:path constraint)))
 
-(defn constraint-dropdown []
-  (fn [{:keys [value on-change]}]
-    [:select.form-control
-     {:value (if value value "=")
-      :on-change (fn [e] (on-change {:op (.. e -target -value)}))}
-     [:option {:value ">"} ">"]
-     [:option {:value ">="} ">="]
-     [:option {:value "<"} "<"]
-     [:option {:value "<="} "<="]
-     [:option {:value "="} "="]
-     [:option {:value "!="} "!="]
-     [:option {:value "LIKE"} "LIKE"]
-     [:option {:value "NOT LIKE"} "NOT LIKE"]
-     [:option {:value "CONTAINS"} "CONTAINS"]
-     [:option {:value "ONE OF"} "ONE OF"]
-     [:option {:value "NONE OF"} "NONE OF"]]))
+(defn constraint-dropdown [{:keys [value on-change]}]
+  (into [:select.form-control
+         {:value (or value "=")
+          :on-change (fn [e] (on-change {:op (.. e -target -value)}))}]
+        (for [op (concat constraint-ops-single constraint-ops-multi)]
+          [:option {:value op} op])))
 
-(defn constraint-text []
-  (fn [{:keys [value on-change]}]
-    [:input.form-control {:type "text"
-                          :on-change (fn [e] (on-change {:value (.. e -target -value)}))
-                          :value value}]))
+;; The following input components and code are duplicated from BlueGenes.
+;; If we wish to continue using im-tables-3 in the future, we should consider
+;; moving these into a library of common components.
 
-(defn blank-constraint [loc path state]
-  (fn [loc path]
-    (let [submit-constraint (fn [] (dispatch
-                                    [:filters/add-constraint loc @state]
-                                    (reset! state {:path path :op "=" :value nil})))]
-      [:div.imtable-constraint
-       [:div.constraint-operator
-        [constraint-dropdown
-         {:value (:op @state)
-          :on-change (fn [v] (swap! state assoc :op (:op v)))}]]
-       [:div.constraint-input [:input.form-control
-                               {:type "text"
-                                :value (:value @state)
-                                :on-change (fn [e] (swap! state assoc :value (.. e -target -value)))
-                                ;:on-blur (fn [e] (when (not (clojure.string/blank? (.. e -target -value)))
-                                ;                   (submit-constraint)))
-                                :on-key-press
-                                (fn [e]
-                                  (let [keycode (.-charCode e)
-                                        input (.. e -target -value)]
-                                    ;; submit when pressing enter & not blank.
-                                    (when (and (= keycode 13) (not (clojure.string/blank? input)))
-                                      (submit-constraint))))}]]])))
+(def fmt "yyyy-MM-dd")
+(def date-fmt (time-format/formatter fmt))
 
-(defn constraint []
-  (fn [loc {:keys [path op value values code] :as const}]
-    (letfn [(on-change [new-value] (dispatch [:filters/update-constraint loc (merge const new-value)]))]
-      [:div.imtable-constraint
-       [:div.constraint-operator
-        [constraint-dropdown {:value op
-                              :on-change on-change}]]
-       [:div.constraint-input
-        [constraint-text {:value (or value values)
-                          :on-change on-change}]]
-       [:button.btn.btn-danger
-        {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
-         :type "button"} [:i.fa.fa-times]]])))
+(defn read-day-change
+  "Convert DayPicker input to the string we use as constraint."
+  [date _mods picker]
+  (let [input (-> (ocall picker :getInput)
+                  (oget :value))]
+    ;; `date` can be nil if it's not a valid date. We use the raw input text in
+    ;; that case, to accomodate alien calendars.
+    (or (some->> date
+                 (time-coerce/from-date)
+                 (time-format/unparse date-fmt))
+        input)))
+
+(defn date-constraint-input
+  "Wraps `cljsjs/react-day-picker` for use as constraint input for selecting dates."
+  [{:keys [value on-change on-blur]}]
+  [:> js/DayPicker.Input
+   {:inputProps {:class "form-control"}
+    :value (or value "")
+    :placeholder "YYYY-MM-DD"
+    :formatDate (fn [date _ _]
+                  (if (instance? js/Date date)
+                    (->> date (time-coerce/from-date) (time-format/unparse date-fmt))
+                    ""))
+    :parseDate (fn [s _ _]
+                 (when (and (string? s)
+                            (= (count s) (count fmt)))
+                   ;; Invalid dates like "2020-03-33" causes cljs-time
+                   ;; to throw an error. We don't care and return nil.
+                   (try
+                     (some->> s (time-format/parse date-fmt) (time-coerce/to-date))
+                     (catch js/Error _
+                       nil))))
+    :onDayChange (comp on-change read-day-change)
+    :onDayPickerHide #(on-blur value)}])
+
+(defn select-placeholder
+  [model path]
+  (->> (string/split (path/friendly model path) " > ")
+       (take-last 2)
+       (string/join " > ")
+       (str "Choose ")))
+
+(defn select-constraint-input
+  "Wraps `cljsjs/react-select` for use as constraint input for selecting
+  one value out of `possible-values`."
+  [{:keys [model path value on-blur possible-values disabled]}]
+  [:> js/Select
+   {:className "constraint-select"
+    :classNamePrefix "constraint-select"
+    :placeholder (select-placeholder model path)
+    :isDisabled disabled
+    ;; Leaving the line below as it can be useful in the future.
+    ; :isLoading (seq? possible-values)
+    :onChange (fn [value]
+                (on-blur (oget value :value)))
+    :value (when (not-empty value) {:value value :label value})
+    :options (map (fn [v] {:value v :label v}) (remove nil? possible-values))}])
+
+(defn select-multiple-constraint-input
+  "Wraps `cljsjs/react-select` for use as constraint input for selecting
+  multiple values out of `possible-values`."
+  [{:keys [model path value on-blur possible-values disabled]}]
+  [:> js/Select
+   {:className "constraint-select"
+    :classNamePrefix "constraint-select"
+    :placeholder (select-placeholder model path)
+    :isMulti true
+    :isDisabled disabled
+    ;; Leaving the line below as it can be useful in the future.
+    ; :isLoading (seq? possible-values)
+    :onChange (fn [values]
+                (on-blur (not-empty (map :value (js->clj values :keywordize-keys true)))))
+    :value (map (fn [v] {:value v :label v}) value)
+    :options (map (fn [v] {:value v :label v}) (remove nil? possible-values))}])
+
+(defn text-constraint-input
+  "Freeform textbox for String / Lookup constraints."
+  []
+  (let [focused? (reagent/atom false)]
+    (fn [{:keys [value on-change on-blur disabled]}]
+      [:input.form-control
+       {:data-toggle "none"
+        :disabled disabled
+        :class (when disabled "disabled")
+        :type "text"
+        :value value
+        :on-focus (fn [e] (reset! focused? true))
+        :on-change (fn [e] (on-change (oget e :target :value)))
+        :on-blur (fn [e] (on-blur (oget e :target :value)) (reset! focused? false))
+        :on-key-down (fn [e] (when (= (oget e :keyCode) 13)
+                               (on-blur (oget e :target :value))
+                               (reset! focused? false)))}])))
+
+(defn constraint-input
+  "Returns the appropriate input component for the constraint operator."
+  [& {:keys [model path value typeahead? on-change on-blur type
+             possible-values disabled op]
+      :as props}]
+  (cond
+    (= type "java.util.Date")
+    [date-constraint-input props]
+
+    (and (not= type "java.lang.Integer")
+         typeahead?
+         (seq? possible-values)
+         (#{"=" "!="} op))
+    [select-constraint-input props]
+
+    (and typeahead?
+         (seq? possible-values)
+         (#{"ONE OF" "NONE OF"} op))
+    [select-multiple-constraint-input props]
+
+    :else
+    [text-constraint-input props]))
+
+(def op-type
+  "Map from constraint string to either `:single` or `:multi`, corresponding
+  to whether the constraint is for one or multiple values."
+  (merge (zipmap constraint-ops-single (repeat :single))
+         (zipmap constraint-ops-multi (repeat :multi))))
+
+(defn update-constraint
+  "Takes a constraint map and a map with a new value and/or operation, and
+  updates the original constraint map, making sure to update the value key if
+  switching between single and multi constraints."
+  [{old-op :op :as constraint} {new-op :op new-value :value}]
+  (cond-> constraint
+    new-op (as-> const
+             (assoc const :op new-op)
+             (case [(op-type old-op) (op-type new-op)]
+               [:single :multi] (-> const
+                                    (set/rename-keys {:value :values})
+                                    (update :values #(if (empty? %) (list) (list %))))
+               [:multi :single] (-> const
+                                    (set/rename-keys {:values :value})
+                                    (update :value first))
+               const))
+    new-value (as-> const
+                (case (op-type (:op const))
+                  :single (assoc const :value new-value)
+                  :multi (assoc const :values new-value)))))
+
+(defn blank-constraint [loc view]
+  (let [possible-values (subscribe [:selection/possible-values loc view])
+        model (subscribe [:assets/model loc])]
+    (fn [loc view state]
+      (let [submit-constraint (fn [] (dispatch
+                                      [:filters/add-constraint loc @state]
+                                      (reset! state {:path view :op "=" :value nil})))
+            on-constraint-change (fn [new-const]
+                                   (swap! state update-constraint new-const))
+            on-change (fn [v]
+                        (swap! state update-constraint {:value v}))]
+        [:div.imtable-constraint
+         [:div.constraint-operator
+          [constraint-dropdown
+           {:value (:op @state)
+            :on-change on-constraint-change}]]
+         [constraint-input
+          :model @model
+          :path view
+          :value (or (:value @state)
+                     (:values @state))
+          :typeahead? true
+          :on-change on-change
+          :on-blur on-change
+          :type (path/data-type @model view)
+          :possible-values @possible-values
+          :disabled false
+          :op (:op @state)]]))))
+
+(defn constraint [loc view]
+  (let [possible-values (subscribe [:selection/possible-values loc view])
+        model (subscribe [:assets/model loc])]
+    (fn [loc view {:keys [path op value values code] :as const}]
+      (letfn [(on-constraint-change [new-const]
+                (dispatch [:filters/update-constraint loc
+                           (update-constraint const new-const)]))
+              (on-change [v]
+                (dispatch [:filters/update-constraint loc
+                           (update-constraint const {:value v})]))]
+        [:div.imtable-constraint
+         [:div.constraint-operator
+          [constraint-dropdown
+           {:value op
+            :on-change on-constraint-change}]]
+         [:div.constraint-input
+          [constraint-input
+           :model @model
+           :path path
+           :value (or value values)
+           :typeahead? true
+           :on-change on-change
+           :on-blur on-change
+           :type (path/data-type @model path)
+           :possible-values @possible-values
+           :disabled false
+           :op op]]
+         [:button.btn.btn-danger
+          {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
+           :type "button"} [:i.fa.fa-times]]]))))
 
 (defn filter-view [loc view blank-constraint-atom]
-  (let [response (subscribe [:selection/response loc view])
-        selections (subscribe [:selection/selections loc view])
-        query (subscribe [:main/temp-query loc view])]
+  (let [query (subscribe [:main/temp-query loc view])]
     (fn [loc view]
-      (let [active-filters (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query)))
+      (let [active-filters (map (fn [c]
+                                  [constraint loc view c])
+                                (filter (partial constraint-has-path? view)
+                                        (:where @query)))
             dropdown (reagent/current-component)]
         [:form.form.filter-view {:style {:padding "5px"}
                                  :on-submit (fn [e]
@@ -138,7 +304,8 @@
            [:input.btn.btn-primary.pull-right
             {:type "submit"
              :on-click (fn []
-                         (when (not (clojure.string/blank? (:value @blank-constraint-atom)))
+                         (when (or (not-empty (:value @blank-constraint-atom))
+                                   (not-empty (:values @blank-constraint-atom)))
                            (dispatch
                             [:filters/add-constraint loc @blank-constraint-atom]
                             (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
@@ -303,22 +470,28 @@
 ;; all the way up here at the dropdown level so that we can reset it manually,
 ;; and then we pass the atom down to the blank constraint component. Lame.
 (defn filter-dropdown-menu [loc view idx col-count]
-  (let [query (subscribe [:main/query loc view])
+  (let [possible-values (subscribe [:selection/possible-values loc view])
+        query (subscribe [:main/query loc view])
         blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})]
     (fn [loc view idx col-count right?]
       (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
         [:span.dropdown
-         {:ref (on-event
-                "hide.bs.dropdown"
-                (fn []
-                   ;; Reset the blank constraint atom when the dropdown is closed
-                  (reset! blank-constraint-atom {:path view :op "=" :value nil})
-                   ;; *Try* to save the changes every time the dropdown is
-                   ;; closed, even by just clicking off it.  This means a user
-                   ;; can remove a handful of filters without having to click
-                   ;; Apply. The event will do a diff to make sure something
-                   ;; has actually changed before rerunning the query
-                  (dispatch [:filters/save-changes loc])))}
+         {:ref (comp
+                (on-event
+                 "hide.bs.dropdown"
+                 (fn []
+                    ;; Reset the blank constraint atom when the dropdown is closed
+                   (reset! blank-constraint-atom {:path view :op "=" :value nil})
+                    ;; *Try* to save the changes every time the dropdown is
+                    ;; closed, even by just clicking off it.  This means a user
+                    ;; can remove a handful of filters without having to click
+                    ;; Apply. The event will do a diff to make sure something
+                    ;; has actually changed before rerunning the query
+                   (dispatch [:filters/save-changes loc])))
+                (on-event
+                  "show.bs.dropdown"
+                  #(when (nil? @possible-values)
+                     (dispatch [:main/fetch-possible-values loc view]))))}
          [:i.fa.fa-filter.dropdown-toggle.filter-icon
           {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
            :data-toggle "dropdown"
@@ -344,7 +517,6 @@
       (let [query           (subscribe [:main/temp-query loc view])
             response        (subscribe [:selection/response loc view])
             sort-direction  (subscribe [:ui/column-sort-direction loc view])
-            active-filters? (seq (map (fn [c] [constraint loc c]) (filter (partial constraint-has-path? view) (:where @query))))
             local-state     (reagent/atom {})]
         [:div.summary-toolbar
          {:ref (fn [e]
