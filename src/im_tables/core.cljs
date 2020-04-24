@@ -24,15 +24,11 @@
     (println "dev mode")))
 
 (defn mount-root []
+  (re-frame/clear-subscription-cache!)
   (dom/render [views/main-panel]
               (.getElementById js/document "app")))
 
 (defn ^:export init []
-  #_(re-frame/dispatch-sync [:initialize-db
-                             [:test :location]
-                             {:service {:root "www.flymine.org/query"}
-                              ;:service {:root "yeastmine.yeastgenome.org/yeastmine"}
-                              :query (query/sterilize-query db/outer-join-query)}])
-
+  (views/reboot-tables-fn)
   (dev-setup)
   (mount-root))
