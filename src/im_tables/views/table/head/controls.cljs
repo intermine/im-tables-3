@@ -17,52 +17,40 @@
 
 (def operators [{:op "LOOKUP"
                  :label "Lookup"
-                 :applies-to #{nil}
-                 :multiple-values? false}
+                 :applies-to #{nil}}
                 {:op "IN"
                  :label "In list"
-                 :applies-to #{nil}
-                 :multiple-values? false}
+                 :applies-to #{nil}}
                 {:op "NOT IN"
                  :label "Not in list"
-                 :applies-to #{nil}
-                 :multiple-values? false}
+                 :applies-to #{nil}}
                 {:op "="
                  :label "="
-                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}}
                 {:op "!="
                  :label "!="
-                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}}
                 {:op "<"
                  :label "<"
-                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}}
                 {:op "<="
                  :label "<="
-                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}}
                 {:op ">"
                  :label ">"
-                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}}
                 {:op ">="
                  :label ">="
-                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}}
                 {:op "CONTAINS"
                  :label "Contains"
-                 :applies-to #{"java.lang.String"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.String"}}
                 {:op "LIKE"
                  :label "Like"
-                 :applies-to #{"java.lang.String"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.String"}}
                 {:op "NOT LIKE"
                  :label "Not like"
-                 :applies-to #{"java.lang.String"}
-                 :multiple-values? false}
+                 :applies-to #{"java.lang.String"}}
                 {:op "ONE OF"
                  :label "One of"
                  :applies-to #{"java.lang.String"}
@@ -70,7 +58,15 @@
                 {:op "NONE OF"
                  :label "None of"
                  :applies-to #{"java.lang.String"}
-                 :multiple-values? true}])
+                 :multiple-values? true}
+                {:op "IS NULL"
+                 :label "Null"
+                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :no-value? true}
+                {:op "IS NOT NULL"
+                 :label "Not null"
+                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :no-value? true}])
 
 (defn filter-input []
   (fn [loc view val]
@@ -213,12 +209,18 @@
                                (on-blur (oget e :target :value))
                                (reset! focused? false)))}])))
 
+(def operators-no-value
+  (set (map :op (filter :no-value? operators))))
+
 (defn constraint-input
   "Returns the appropriate input component for the constraint operator."
   [& {:keys [model path value typeahead? on-change on-blur type
              possible-values disabled op]
       :as props}]
   (cond
+    (operators-no-value op)
+    nil
+
     (= type "java.util.Date")
     [date-constraint-input props]
 
@@ -365,7 +367,8 @@
             {:type "submit"
              :on-click (fn []
                          (when (or (not-empty (:value @blank-constraint-atom))
-                                   (not-empty (:values @blank-constraint-atom)))
+                                   (not-empty (:values @blank-constraint-atom))
+                                   (operators-no-value (:op @blank-constraint-atom)))
                            (dispatch
                             [:filters/add-constraint loc @blank-constraint-atom]
                             (reset! blank-constraint-atom {:path view :op "=" :value nil}))))
