@@ -15,11 +15,62 @@
 (def css-transition-group
   (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
 
-(def constraint-ops-single
-  ["=" "!=" "<" "<=" ">" ">=" "CONTAINS" "LIKE" "NOT LIKE"])
-
-(def constraint-ops-multi
-  ["ONE OF" "NONE OF"])
+(def operators [{:op "LOOKUP"
+                 :label "Lookup"
+                 :applies-to #{nil}
+                 :multiple-values? false}
+                {:op "IN"
+                 :label "In list"
+                 :applies-to #{nil}
+                 :multiple-values? false}
+                {:op "NOT IN"
+                 :label "Not in list"
+                 :applies-to #{nil}
+                 :multiple-values? false}
+                {:op "="
+                 :label "="
+                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :multiple-values? false}
+                {:op "!="
+                 :label "!="
+                 :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :multiple-values? false}
+                {:op "<"
+                 :label "<"
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :multiple-values? false}
+                {:op "<="
+                 :label "<="
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :multiple-values? false}
+                {:op ">"
+                 :label ">"
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :multiple-values? false}
+                {:op ">="
+                 :label ">="
+                 :applies-to #{"java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}
+                 :multiple-values? false}
+                {:op "CONTAINS"
+                 :label "Contains"
+                 :applies-to #{"java.lang.String"}
+                 :multiple-values? false}
+                {:op "LIKE"
+                 :label "Like"
+                 :applies-to #{"java.lang.String"}
+                 :multiple-values? false}
+                {:op "NOT LIKE"
+                 :label "Not like"
+                 :applies-to #{"java.lang.String"}
+                 :multiple-values? false}
+                {:op "ONE OF"
+                 :label "One of"
+                 :applies-to #{"java.lang.String"}
+                 :multiple-values? true}
+                {:op "NONE OF"
+                 :label "None of"
+                 :applies-to #{"java.lang.String"}
+                 :multiple-values? true}])
 
 (defn filter-input []
   (fn [loc view val]
@@ -54,12 +105,13 @@
 (defn constraint-has-path? [view constraint]
   (= view (:path constraint)))
 
-(defn constraint-dropdown [{:keys [value on-change]}]
+(defn constraint-dropdown [{:keys [value on-change data-type]}]
   (into [:select.form-control
          {:value (or value "=")
           :on-change (fn [e] (on-change {:op (.. e -target -value)}))}]
-        (for [op (concat constraint-ops-single constraint-ops-multi)]
-          [:option {:value op} op])))
+        (for [{:keys [op label applies-to]} operators
+              :when (contains? applies-to data-type)]
+          [:option {:value op} label])))
 
 ;; The following input components and code are duplicated from BlueGenes.
 ;; If we wish to continue using im-tables-3 in the future, we should consider
@@ -187,8 +239,10 @@
 (def op-type
   "Map from constraint string to either `:single` or `:multi`, corresponding
   to whether the constraint is for one or multiple values."
-  (merge (zipmap constraint-ops-single (repeat :single))
-         (zipmap constraint-ops-multi (repeat :multi))))
+  (merge (zipmap (map :op (filter (complement :multiple-values?) operators))
+                 (repeat :single))
+         (zipmap (map :op (filter :multiple-values? operators))
+                 (repeat :multi))))
 
 (defn update-constraint
   "Takes a constraint map and a map with a new value and/or operation, and
@@ -221,12 +275,14 @@
             on-constraint-change (fn [new-const]
                                    (swap! state update-constraint new-const))
             on-change (fn [v]
-                        (swap! state update-constraint {:value v}))]
+                        (swap! state update-constraint {:value v}))
+            type (path/data-type @model view)]
         [:div.imtable-constraint
          [:div.constraint-operator
           [constraint-dropdown
            {:value (:op @state)
-            :on-change on-constraint-change}]]
+            :on-change on-constraint-change
+            :data-type type}]]
          [constraint-input
           :model @model
           :path view
@@ -235,7 +291,7 @@
           :typeahead? true
           :on-change on-change
           :on-blur on-change
-          :type (path/data-type @model view)
+          :type type
           :possible-values @possible-values
           :disabled false
           :op (:op @state)]]))))
@@ -244,17 +300,19 @@
   (let [possible-values (subscribe [:selection/possible-values loc view])
         model (subscribe [:assets/model loc])]
     (fn [loc view {:keys [path op value values code] :as const}]
-      (letfn [(on-constraint-change [new-const]
-                (dispatch [:filters/update-constraint loc
-                           (update-constraint const new-const)]))
-              (on-change [v]
-                (dispatch [:filters/update-constraint loc
-                           (update-constraint const {:value v})]))]
+      (let [on-constraint-change (fn [new-const]
+                                   (dispatch [:filters/update-constraint loc
+                                              (update-constraint const new-const)]))
+            on-change (fn [v]
+                        (dispatch [:filters/update-constraint loc
+                                   (update-constraint const {:value v})]))
+            type (path/data-type @model view)]
         [:div.imtable-constraint
          [:div.constraint-operator
           [constraint-dropdown
            {:value op
-            :on-change on-constraint-change}]]
+            :on-change on-constraint-change
+            :data-type type}]]
          [:div.constraint-input
           [constraint-input
            :model @model
@@ -263,7 +321,7 @@
            :typeahead? true
            :on-change on-change
            :on-blur on-change
-           :type (path/data-type @model path)
+           :type type
            :possible-values @possible-values
            :disabled false
            :op op]]
