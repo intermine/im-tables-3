@@ -248,22 +248,24 @@
   "Takes a constraint map and a map with a new value and/or operation, and
   updates the original constraint map, making sure to update the value key if
   switching between single and multi constraints."
-  [{old-op :op :as constraint} {new-op :op new-value :value}]
+  [{old-op :op :as constraint} {new-op :op new-value :value :as new-const}]
   (cond-> constraint
-    new-op (as-> const
-             (assoc const :op new-op)
-             (case [(op-type old-op) (op-type new-op)]
-               [:single :multi] (-> const
-                                    (set/rename-keys {:value :values})
-                                    (update :values #(if (empty? %) (list) (list %))))
-               [:multi :single] (-> const
-                                    (set/rename-keys {:values :value})
-                                    (update :value first))
-               const))
-    new-value (as-> const
-                (case (op-type (:op const))
-                  :single (assoc const :value new-value)
-                  :multi (assoc const :values new-value)))))
+    (contains? new-const :op)
+    (as-> const
+      (assoc const :op new-op)
+      (case [(op-type old-op) (op-type new-op)]
+        [:single :multi] (-> const
+                             (set/rename-keys {:value :values})
+                             (update :values #(if (empty? %) (list) (list %))))
+        [:multi :single] (-> const
+                             (set/rename-keys {:values :value})
+                             (update :value first))
+        const))
+    (contains? new-const :value)
+    (as-> const
+      (case (op-type (:op const))
+        :single (assoc const :value new-value)
+        :multi (assoc const :values new-value)))))
 
 (defn blank-constraint [loc view]
   (let [possible-values (subscribe [:selection/possible-values loc view])
