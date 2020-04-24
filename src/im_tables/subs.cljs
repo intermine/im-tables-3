@@ -268,3 +268,17 @@
      (when (and sortm (= (string/join "." (drop 1 (string/split view ".")))
                          (:path sortm)))
        (:direction sortm)))))
+
+(reg-sub
+ :filter-manager/filters
+ (fn [[_ loc]]
+   (subscribe [:main/temp-query loc]))
+ (fn [query [_ loc]]
+   (:where query)))
+
+(reg-sub
+ :filter-manager/constraint-logic
+ (fn [[_ loc]]
+   (subscribe [:main/temp-query loc]))
+ (fn [query [_ loc]]
+   (:constraintLogic query)))

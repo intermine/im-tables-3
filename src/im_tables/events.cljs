@@ -142,51 +142,77 @@
  :filters/add-constraint
  (sandbox)
  (fn [{db :db} [_ loc new-constraint]]
-   {:db (update-in db [:temp-query :where]
-                   (fn [constraints]
-                     (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))
+   (let [letter (->> (get-in db [:temp-query :where])
+                     (map :code)
+                     (first-letter))
+         new-constraint+code (assoc new-constraint :code letter)]
+     {:db (-> db
+              (update-in [:temp-query :where] conj new-constraint+code)
+              (update-in [:temp-query :constraintLogic]
+                         #(if (empty? %)
+                            letter
+                            (str % " and " letter))))})))
 
 (reg-event-fx
  :filters/remove-constraint
  (sandbox)
- (fn [{db :db} [_ loc new-constraint]]
-   {:db (update-in db [:temp-query :where]
-                   (fn [constraints]
-                     (remove nil? (map (fn [constraint]
-                                         (if (= constraint new-constraint)
-                                           nil
-                                           constraint)) constraints))))}))
+ (fn [{db :db} [_ loc const]]
+   (let [constraints  (get-in db [:temp-query :where])
+         constraints' (filterv #(not= const %) constraints)
+         const-logic  (->> (map :code constraints')
+                           (join " and "))]
+     {:db (-> db
+              (assoc-in [:temp-query :where] constraints')
+              (assoc-in [:temp-query :constraintLogic] const-logic))})))
+
 
 (reg-event-fx
  :filters/save-changes
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc]]
-   (let [added (not-empty (set/difference (set (:where (:temp-query db))) (set (:where (:query db)))))
-         removed (not-empty (set/difference (set (:where (:query db))) (set (:where (:temp-query db)))))
+   (let [added (not-empty (set/difference (set (:where (:temp-query db)))
+                                          (set (:where (:query db)))))
+         removed (not-empty (set/difference (set (:where (:query db)))
+                                            (set (:where (:temp-query db)))))
+         changed-logic (not= (get-in db [:temp-query :constraintLogic])
+                             (get-in db [:query :constraintLogic]))
          model (get-in db [:service :model])]
       ; This event is usually fired when the filter dropdown closed which means it's fired
       ; a lot even when not necessary. To prevent multiple blank undos from piling up, we only
       ; attach the :undo side effect when something was actually added or removed from the query
      (cond-> {:db (assoc db :query (get db :temp-query))}
-       (or added removed) (assoc :undo {:message [:div
-                                                  (when added
-                                                    [:div
-                                                     [:div "Added filters"]
-                                                     (into [:span]
-                                                           (map (fn [{:keys [path op value]}]
-                                                                  [:div.table-history-detail
-                                                                   [:div (str (im-path/friendly model path))]
-                                                                   [:div (str op " " value)]]) added))])
-                                                  (when removed
-                                                    [:div
-                                                     [:div "Removed filters"]
-                                                     (into [:span]
-                                                           (map (fn [{:keys [path op value]}]
-                                                                  [:div.table-history-detail
-                                                                   [:div (str (im-path/friendly model path))]
-                                                                   [:div (str op " " value)]]) removed))])]
-                                        :location loc})
-       (or added removed) (assoc :dispatch [:im-tables.main/run-query loc])))))
+       (or added removed changed-logic)
+       (assoc
+        :undo {:message [:div
+                         (when added
+                           [:div
+                            [:div "Added filters"]
+                            (into [:span]
+                                  (map (fn [{:keys [path op value]}]
+                                         [:div.table-history-detail
+                                          [:div (str (im-path/friendly model path))]
+                                          [:div (str op " " value)]])
+                                       added))])
+                         (when removed
+                           [:div
+                            [:div "Removed filters"]
+                            (into [:span]
+                                  (map (fn [{:keys [path op value]}]
+                                         [:div.table-history-detail
+                                          [:div (str (im-path/friendly model path))]
+                                          [:div (str op " " value)]])
+                                       removed))])
+                         (when changed-logic
+                           [:div
+                            [:div "Changed logic"]
+                            [:span
+                             [:div.table-history-detail
+                              [:div (get-in db [:query :constraintLogic])]]
+                             [:div "to"]
+                             [:div.table-history-detail
+                              [:div (get-in db [:temp-query :constraintLogic])]]]])]
+               :location loc}
+        :dispatch [:im-tables.main/run-query loc])))))
 
 ;;;; TRANSIENT VALUES
 
@@ -634,3 +660,10 @@
  (sandbox)
  (fn [db [_ loc lang response]]
    (update db :codegen assoc :code response :lang lang)))
+
+(reg-event-db
+ :filter-manager/change-constraint
+ (sandbox)
+ (fn [db [_ loc value]]
+   (assoc-in db [:temp-query :constraintLogic] value)))
+

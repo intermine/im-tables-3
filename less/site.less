@@ -578,10 +578,6 @@
     .ontop {
         background-color: @highlightcolor;
     }
-    .modal-body {
-        max-height: 70vh;
-        overflow: auto;
-    }
     .modal-header h3 {margin:0;}
 
     .table-history-detail {
@@ -624,5 +620,40 @@
     .constraint-select {
         width: 100%;
         font-size: 14px;
+
+        // The following nested selectors are for setting the height.
+        // Yes, it's this hard.
+        // EDIT: I commented it out since it's working fine for single values,
+        // but it won't grow in height if you select 2+ multiple values.
+        // Leaving this arduous task for a future endeavour.
+        // .constraint-select__control {
+        //     height: 34px;
+
+        //     .constraint-select__value-container {
+        //         height: 34px;
+        //         align-items: baseline;
+        //         padding: 0.5px 8px;
+        //     }
+
+        //     .constraint-select__placeholder {
+        //         line-height: 30px;
+        //     }
+
+        //     .constraint-select__value {
+        //         line-height: 30px !important;
+
+        //         .constraint-select__value-label {
+        //             line-height: 30px;
+        //         }
+        //     }
+
+        //     .constraint-select__input {
+        //         height: 30px;
+        //     }
+
+        //     .constraint-select__indicators {
+        //         height: 34px;
+        //     }
+        // }
     }
 }
