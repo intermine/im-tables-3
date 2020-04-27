@@ -247,20 +247,42 @@
 
     .column-summary .main-view,
     .filter-view {
-        max-height: 60vh;
+        padding: @spacer/2;
 
         .imtable-constraint {
             display: flex;
+            margin-bottom: @spacer/2;
+        }
+
+        .constraint-operator {
+            margin-right: @spacer/2;
+
+            .form-control {
+                height: 38px;
+            }
         }
 
         .constraint-input {
             flex-grow: 1;
-            padding: 0 0.3em;
-            color: initial;
+            // Remove green color from active filter.
+            color: rgb(51, 51, 51);
+
+            .DayPickerInput {
+                width: 175px;
+            }
+
+            .form-control {
+                height: 38px;
+            }
         }
 
-        .toolbar {
-            margin: 0 0.3em 0.3em;
+        .constraint-delete {
+            margin-left: @spacer/2;
+        }
+
+        .btn-toolbar {
+            margin-right: @spacer/3;
+            margin-bottom: @spacer/3;
         }
     }
 

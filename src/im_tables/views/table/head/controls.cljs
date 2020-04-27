@@ -287,18 +287,19 @@
            {:value (:op @state)
             :on-change on-constraint-change
             :data-type type}]]
-         [constraint-input
-          :model @model
-          :path view
-          :value (or (:value @state)
-                     (:values @state))
-          :typeahead? true
-          :on-change on-change
-          :on-blur on-change
-          :type type
-          :possible-values @possible-values
-          :disabled false
-          :op (:op @state)]]))))
+         [:div.constraint-input
+          [constraint-input
+           :model @model
+           :path view
+           :value (or (:value @state)
+                      (:values @state))
+           :typeahead? true
+           :on-change on-change
+           :on-blur on-change
+           :type type
+           :possible-values @possible-values
+           :disabled false
+           :op (:op @state)]]]))))
 
 (defn constraint [loc view]
   (let [possible-values (subscribe [:selection/possible-values loc view])
@@ -329,7 +330,7 @@
            :possible-values @possible-values
            :disabled false
            :op op]]
-         [:button.btn.btn-danger
+         [:button.btn.btn-danger.constraint-delete
           {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
            :type "button"} [:i.fa.fa-times]]]))))
 
@@ -341,8 +342,7 @@
                                 (filter (partial constraint-has-path? view)
                                         (:where @query)))
             dropdown (reagent/current-component)]
-        [:form.form.filter-view {:style {:padding "5px"}
-                                 :on-submit (fn [e]
+        [:form.form.filter-view {:on-submit (fn [e]
                                               (ocall e "preventDefault")
                                               (force-close dropdown)
                                               (dispatch [:filters/save-changes loc]))}
