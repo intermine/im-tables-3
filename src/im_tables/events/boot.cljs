@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [re-frame.core :refer [reg-event-fx reg-event-db reg-fx dispatch]]
             [cljs.core.async :refer [<! >! chan]]
+            [clojure.string :as str]
             [im-tables.db :as db]
             [im-tables.interceptors :refer [sandbox]]
             [imcljs.fetch :as fetch]
@@ -80,7 +81,11 @@
                   {:db (assoc db
                               :service service
                               :response response
-                              :query query)
+                              :query (cond-> query
+                                       (not (contains? query :constraintLogic))
+                                       (assoc :constraintLogic (->> (:where query)
+                                                                    (map :code)
+                                                                    (str/join " and ")))))
                    :dispatch [:main/deconstruct loc]
                    :im-tables/im-operation-chan {:on-success ^:flush-dom [:main/replace-query-response loc pagination]
                                                  :channel (fetch/table-rows service query {:start start

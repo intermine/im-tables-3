@@ -67,9 +67,7 @@
                     "geoLocation.country"]
            :where [{:path "Distribution.geoLocation.country"
                     :op "="
-                    :value "US"
-                    :code "A"}]
-           :constraintLogic "A"}
+                    :value "US"}]}
    :settings {:pagination {:limit 10}
               :links {:vocab {:mine "covidmine"}
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
