@@ -73,6 +73,25 @@
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
                              (string/join "/" [nil mine "report" class objectId]))}}})
 
+;; This query has a very wide column, making it great for testing overflow.
+(def flymine-config
+  {:service {:root "https://www.flymine.org/flymine"}
+   :query {:from "Gene"
+           :select ["primaryIdentifier"
+                    "symbol"
+                    "regulatoryRegions.primaryIdentifier"
+                    "regulatoryRegions.chromosome.primaryIdentifier"
+                    "regulatoryRegions.sequenceOntologyTerm.name"
+                    "regulatoryRegions.chromosomeLocation.end"
+                    "regulatoryRegions.chromosomeLocation.start"
+                    "regulatoryRegions.dataSets.dataSource.name"
+                    "regulatoryRegions.sequence.residues"]}
+   :settings {:pagination {:limit 10}
+              :links {:vocab {:mine "flymine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
+
+
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:
 ; [im-tables.views.core/main {:location ... :service ... :query ...}]
@@ -82,7 +101,7 @@
 (def number-of-tables 1)
 (defn reboot-tables-fn []
   (dotimes [n number-of-tables]
-    (re-frame/dispatch-sync [:im-tables/load [:test :location n] covidmine-config])))
+    (re-frame/dispatch-sync [:im-tables/load [:test :location n] flymine-config])))
 
 (defn main-panel []
   (let [show? (r/atom true)]
@@ -100,6 +119,6 @@
             [:button.btn.btn-default {:on-click (fn [] (swap! show? not))}
              (if @show? "Unmount Tables" "Mount Tables")]]]]]]
        (when @show?
-         (into [:div]
+         (into [:div {:style {:max-width "100vh"}}]
                (->> (range 0 number-of-tables)
                     (map (fn [n] [main-view/main [:test :location n]])))))])))

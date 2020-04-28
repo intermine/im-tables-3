@@ -186,6 +186,10 @@
         transition: opacity 50ms ease-in;
     }
 
+    .table-container {
+        overflow: auto;
+    }
+
     .relative {
         position: relative;
     }
@@ -399,9 +403,12 @@
         border-right: solid 1px @histogram-bg;
     }
 
-    .dropdown-right {
-        right: 100%;
-        left: auto;
+    .dropdown {
+        // This would normally be `relative` so the dropdown can be positioned
+        // directly below it. However, we want the dropdown to escape the
+        // overflow which means we can't use `relative` and have to position
+        // it manually with JS instead.
+        position: unset;
     }
 
     .summary-toolbar {
@@ -412,6 +419,8 @@
         .dropdown-menu {
             min-width: 360px;
             padding: 0;
+
+            position: absolute;
         }
 
         .filter-icon.active-filter {

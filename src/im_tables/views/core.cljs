@@ -52,34 +52,35 @@
              [:div
                ; Force the dashboard buttons to be just HTML (their lights are on but no one is home)
               [:div {:dangerouslySetInnerHTML {"__html" (server/render-to-static-markup [dashboard/main location @response @pagination])}}]
-              [:table.table.table-condensed.table-bordered.table-striped
-                ; Good old static (fast) html table:
-               [:thead
-                (into [:tr]
-                      (->> @collapsed-views
-                           (map-indexed (fn [idx h]
-                                          (let [display-name (when (and @model h) (impath/display-name @model h))
-                                                active-filters (not-empty (filter (partial constraint-has-path? h) (:where @query)))]
-                                             ; This is a simple HTML representation of
-                                             ; im-tables.views.table.head.controls/toolbar
-                                             ; If you modify this form or the one in the toolbar, please remember to modify both
-                                             ; or they won't look the same when the table is activated
-                                            [:th
-                                             [:div.summary-toolbar
-                                              [:i.fa.fa-sort.sort-icon]
-                                              [:i.fa.fa-times.remove-icon]
-                                              [:i.fa.fa-filter.dropdown-toggle.filter-icon
-                                               {:class (when active-filters "active-filter")}]
-                                              [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]]
-                                             [:div
-                                              [:div (last (drop-last display-name))]
-                                              [:div (last display-name)]]])))))]
-               (into [:tbody] (map (fn [row]
-                                     (into [:tr] (map (fn [cell]
-                                                        [:td
-                                                         (if-let [value (:value cell)]
-                                                           [:a value]
-                                                           [:a.no-value "NO VALUE"])]) row))) preview-rows))]]
+              [:div.table-container
+               [:table.table.table-condensed.table-bordered.table-striped
+                 ; Good old static (fast) html table:
+                [:thead
+                 (into [:tr]
+                       (->> @collapsed-views
+                            (map-indexed (fn [idx h]
+                                           (let [display-name (when (and @model h) (impath/display-name @model h))
+                                                 active-filters (not-empty (filter (partial constraint-has-path? h) (:where @query)))]
+                                              ; This is a simple HTML representation of
+                                              ; im-tables.views.table.head.controls/toolbar
+                                              ; If you modify this form or the one in the toolbar, please remember to modify both
+                                              ; or they won't look the same when the table is activated
+                                             [:th
+                                              [:div.summary-toolbar
+                                               [:i.fa.fa-sort.sort-icon]
+                                               [:i.fa.fa-times.remove-icon]
+                                               [:i.fa.fa-filter.dropdown-toggle.filter-icon
+                                                {:class (when active-filters "active-filter")}]
+                                               [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]]
+                                              [:div
+                                               [:div (last (drop-last display-name))]
+                                               [:div (last display-name)]]])))))]
+                (into [:tbody] (map (fn [row]
+                                      (into [:tr] (map (fn [cell]
+                                                         [:td
+                                                          (if-let [value (:value cell)]
+                                                            [:a value]
+                                                            [:a.no-value "NO VALUE"])]) row))) preview-rows))]]]
               ; Otherwise show the interactive React components
              [:div
               [dashboard/main location @response @pagination]
