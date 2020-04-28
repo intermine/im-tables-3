@@ -11,7 +11,6 @@
             [im-tables.utils :refer [on-event pretty-number display-name]]
             [cljs-time.coerce :as time-coerce]
             [cljs-time.format :as time-format]
-            [goog.dom :as gdom]
             [goog.style :as gstyle]))
 
 (def css-transition-group
@@ -389,74 +388,74 @@
 (def clj-min min)
 (def clj-max max)
 
-(defn numerical-column-summary []
-  (let []
-    (fn [loc view results trimmer]
-      (let [model (subscribe [:assets/model loc])
-            {:keys [min max average stdev]} (first results)
-            close-fn (partial force-close (reagent/current-component))
-            friendly-name (str (string/join " " (take-last 2 (string/split (path/friendly @model view) " > "))) "s")]
-        [:form.form.column-summary
-         [:h4.title (str "Showing numerical distribution for " (count results) " " friendly-name)]
-         [histogram/numerical-histogram results @trimmer]
-         [:div.main-view
-          [:div.numerical-content-wrapper
-           [:table.table.table-condensed
-            [:thead
-             [:tr
-              [:th "Min"]
-              [:th "Max"]
-              [:th "Average"]
-              [:th "Std Deviation"]]]
-            [:tbody
-             [:tr
-              [:td (pretty-number min)]
-              [:td (pretty-number max)]
-              [:td (pretty-number average)]
-              [:td (pretty-number stdev)]]]]
-           [:div
-            [:label "Trim from " [:input {:type "text"
-                                          :value (or (:from @trimmer) min)
-                                          :on-change (fn [e]
-                                                       (swap! trimmer assoc :from (oget e :target :value)))}]]
-            [:input {:type "range"
-                     :min min
-                     :value (or (:from @trimmer) min)
-                     :max max
-                     :on-change (fn [e] (swap! trimmer assoc :from
-                                               (let [new-value (js/parseInt (clj-min (or (:to @trimmer) max) (oget e :target :value)))]
-                                                 (if (= new-value min) nil new-value))))}]
-            [:label "Trim to " [:input {:type "text"
-                                        :value (or (:to @trimmer) max)
-                                        :placeholder max
-                                        :on-change (fn [e]
-                                                     (swap! trimmer assoc :to (oget e :target :value)))}]]
-            [:input {:type "range"
-                     :min min
-                     :value (or (:to @trimmer) max)
-                     :max max
-                     :on-change (fn [e] (swap! trimmer assoc :to
-                                               (let [new-value (js/parseInt (clj-max (or (:from @trimmer) min) (oget e :target :value)))]
-                                                 (if (= new-value max) nil new-value))))}]]]
-          [:div.btn-toolbar.column-summary-toolbar
-           [:button.btn.btn-primary
-            {:type "button"
-             :on-click (fn []
-                         (dispatch [:main/apply-numerical-filter loc view @trimmer])
-                         (close-fn)
-                         (reset! trimmer {}))}
-            [:i.fa.fa-filter]
-            (str " Filter")]]]]))))
-
-(defn column-summary-title [loc view response]
+(defn column-summary-title [loc view response & {:keys [numerical?]}]
   (let [model @(subscribe [:assets/model loc])
         {:keys [results uniqueValues]} response
         human-name (display-name model view)]
     [:h4.title
-     (if (< (count results) uniqueValues)
-       (str "Showing " (pretty-number (count results)) " of "
-            (pretty-number uniqueValues) " " human-name)
-       (str (pretty-number uniqueValues) " " human-name))]))
+     (cond
+       numerical? (str "Showing numerical distribution for " (pretty-number (count results)) " " human-name)
+       :else (if (< (count results) uniqueValues)
+               (str "Showing " (pretty-number (count results)) " of "
+                    (pretty-number uniqueValues) " " human-name)
+               (str (pretty-number uniqueValues) " " human-name)))]))
+
+(defn numerical-column-summary []
+  (fn [loc view response trimmer]
+    (let [results (:results response)
+          {:keys [min max average stdev]} (first results)
+          close-fn (partial force-close (reagent/current-component))]
+      [:form.form.column-summary
+       [column-summary-title loc view response :numerical? true]
+       [histogram/numerical-histogram results @trimmer]
+       [:div.main-view
+        [:div.numerical-content-wrapper
+         [:table.table.table-condensed
+          [:thead
+           [:tr
+            [:th "Min"]
+            [:th "Max"]
+            [:th "Average"]
+            [:th "Std Deviation"]]]
+          [:tbody
+           [:tr
+            [:td (pretty-number min)]
+            [:td (pretty-number max)]
+            [:td (pretty-number average)]
+            [:td (pretty-number stdev)]]]]
+         [:div
+          [:label "Trim from " [:input {:type "text"
+                                        :value (or (:from @trimmer) min)
+                                        :on-change (fn [e]
+                                                     (swap! trimmer assoc :from (oget e :target :value)))}]]
+          [:input {:type "range"
+                   :min min
+                   :value (or (:from @trimmer) min)
+                   :max max
+                   :on-change (fn [e] (swap! trimmer assoc :from
+                                             (let [new-value (js/parseInt (clj-min (or (:to @trimmer) max) (oget e :target :value)))]
+                                               (if (= new-value min) nil new-value))))}]
+          [:label "Trim to " [:input {:type "text"
+                                      :value (or (:to @trimmer) max)
+                                      :placeholder max
+                                      :on-change (fn [e]
+                                                   (swap! trimmer assoc :to (oget e :target :value)))}]]
+          [:input {:type "range"
+                   :min min
+                   :value (or (:to @trimmer) max)
+                   :max max
+                   :on-change (fn [e] (swap! trimmer assoc :to
+                                             (let [new-value (js/parseInt (clj-max (or (:from @trimmer) min) (oget e :target :value)))]
+                                               (if (= new-value max) nil new-value))))}]]]
+        [:div.btn-toolbar.column-summary-toolbar
+         [:button.btn.btn-primary
+          {:type "button"
+           :on-click (fn []
+                       (dispatch [:main/apply-numerical-filter loc view @trimmer])
+                       (close-fn)
+                       (reset! trimmer {}))}
+          [:i.fa.fa-filter]
+          (str " Filter")]]]])))
 
 (defn column-summary-thinking []
   [css-transition-group
@@ -479,7 +478,7 @@
         [too-many-values]
 
         (contains? (first (:results @response)) :min)
-        [numerical-column-summary loc view (:results @response) local-state]
+        [numerical-column-summary loc view @response local-state]
 
         :else
         [:form.form.column-summary
