@@ -31,10 +31,12 @@
               only-one-count-result?
               [:div.no-histogram [:i.fa.fa-bar-chart] " No histogram; all values occur exactly " (first unique-results) " time(s)"])))))
 
-(defn bucket []
-  (fn [bucket-number data-points]
-    [:div.histo-bucket
-     {:class (if data-points "full" "empty")} max]))
+(defn bucket [height-scale {:keys [count] :as data}]
+  [:div.histo-bucket
+   (merge
+    {:class (if data "full" "empty")}
+    (when (pos? count)
+      {:style {:height (str (height-scale count) "px")}}))])
 
 (defn percent-of [min max number]
   (* 100 (/ (- number min) (- max min))))
@@ -46,11 +48,14 @@
   (fn [data-points trim]
     (let [{:keys [buckets min max]} (first data-points)
           {:keys [from to]} trim
-          by-bucket (group-by :bucket data-points)]
+          by-bucket (group-by :bucket data-points)
+          height-scale (linear-scale [0 (apply clj-max (map :count data-points))] [0 75])]
       [:div.histo
        (when (or from to)
          [:div.trimmer
           {:style {:left (str (clj-max 0 (percent-of min max (or from min))) "%")
                    :right (str (clj-min 100 (- 100 (percent-of min max (or to max)))) "%")}}])
        (map (fn [bucket-number]
-              ^{:key bucket-number} [bucket bucket-number (get by-bucket bucket-number)]) (range 1 (inc buckets)))])))
+              ^{:key bucket-number}
+              [bucket height-scale (-> bucket-number by-bucket first)])
+            (range 1 (inc buckets)))])))
