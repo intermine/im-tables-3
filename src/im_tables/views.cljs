@@ -101,7 +101,7 @@
 (def number-of-tables 1)
 (defn reboot-tables-fn []
   (dotimes [n number-of-tables]
-    (re-frame/dispatch-sync [:im-tables/load [:test :location n] flymine-config])))
+    (re-frame/dispatch-sync [:im-tables/load [:test :location n] covidmine-config])))
 
 (defn main-panel []
   (let [show? (r/atom true)]

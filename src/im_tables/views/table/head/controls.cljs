@@ -486,13 +486,13 @@
          [:div.main-view
           [histogram/main (:results @response)]
           [filter-input loc view @text-filter]
-          [:table.table.table-striped.table-condensed
+          [:table.table.table-striped.table-condensed.table-scrollable
            [:thead [:tr [:th
                          (if (empty? @selections)
                            [:span {:title "Select all"
                                    :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
                            [:span {:title "Deselect all"
-                                   :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])] [:th "Item"] [:th "Count"]]]
+                                   :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])] [:th.data-item "Item"] [:th "Count"]]]
            (into [:tbody]
                  (->> (filter (partial has-text? @text-filter) (:results @response))
                       (map (fn [{:keys [count item]}]
@@ -503,7 +503,7 @@
                                 {:on-change (fn [])
                                  :checked (contains? @selections item)
                                  :type "checkbox"}]]
-                              [:td (if item item [no-value])]
+                              [:td.data-item (if item item [no-value])]
                               [:td
                                [:div count]]]))))]]
          [:div.btn-toolbar.column-summary-toolbar

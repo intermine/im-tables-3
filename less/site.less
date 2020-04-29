@@ -291,7 +291,7 @@
     }
 
     .column-summary .main-view {
-        overflow: auto;
+        overflow: hidden;
     }
 
     .column-summary .title {
@@ -418,6 +418,7 @@
 
         .dropdown-menu {
             min-width: 360px;
+            max-width: 600px;
             padding: 0;
 
             position: absolute;
@@ -486,6 +487,37 @@
         .table-condensed > thead > tr > td,
         .table-condensed > thead > tr > th {
             padding: 4px;
+        }
+
+        table.table-scrollable {
+            margin-bottom: 0;
+
+            tbody {
+                display: block;
+                overflow-y: auto;
+                overflow-x: hidden;
+                max-height: 50vh;
+                max-width: 586px;
+            }
+
+            thead tr,
+            tbody tr {
+                display: table;
+            }
+
+            thead tr th:last-child {
+                padding-right: 1.2*@spacer;
+            }
+
+            thead tr th:first-of-type,
+            tbody tr td:first-of-type {
+                width: 25px;
+            }
+
+            thead tr th.data-item,
+            tbody tr td.data-item {
+                width: 100%;
+            }
         }
     }
 
