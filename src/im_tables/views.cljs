@@ -119,6 +119,6 @@
             [:button.btn.btn-default {:on-click (fn [] (swap! show? not))}
              (if @show? "Unmount Tables" "Mount Tables")]]]]]]
        (when @show?
-         (into [:div {:style {:max-width "100vh"}}]
+         (into [:div {:style {:max-width "100vw"}}]
                (->> (range 0 number-of-tables)
                     (map (fn [n] [main-view/main [:test :location n]])))))])))
