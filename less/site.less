@@ -505,10 +505,6 @@
                 display: table;
             }
 
-            thead tr th:last-child {
-                padding-right: 1.2*@spacer;
-            }
-
             thead tr th:first-of-type,
             tbody tr td:first-of-type {
                 width: 25px;
@@ -517,6 +513,11 @@
             thead tr th.data-item,
             tbody tr td.data-item {
                 width: 100%;
+            }
+
+            thead tr th:last-of-type,
+            tbody tr td:last-of-type {
+                padding-right: 1.2*@spacer;
             }
         }
     }
