@@ -117,6 +117,32 @@
 (defn first-letter [letters]
   (first (drop-while (partial haystack-has? letters) alphabet)))
 
+(defn consts->letter
+  "Takes a sequence of constraints and returns the first unused letter.
+  Expects all constraints to have a `:code` key so make sure the query has been
+  run through `imcljs.query/sterilize-query`."
+  [consts]
+  (->> consts
+       (map :code)
+       (first-letter)))
+
+(defn logic-append
+  "Appends a new letter to a possibly empty constraint logic string."
+  [constlogic letter]
+  (if (empty? constlogic)
+    letter
+    (str constlogic " and " letter)))
+
+(defn constraint-append
+  "Append a new constraint to a query map. Computes the next letter to be assoced
+  as `:code` on the constraint, and appends it to the `:constraintLogic` string."
+  [query constraint]
+  (let [letter (consts->letter (:where query))
+        constraint+code (assoc constraint :code letter)]
+    (-> query
+        (update :where conj constraint+code)
+        (update :constraintLogic logic-append letter))))
+
 (reg-event-db
  :main/set-temp-query
  (sandbox)
@@ -142,16 +168,7 @@
  :filters/add-constraint
  (sandbox)
  (fn [{db :db} [_ loc new-constraint]]
-   (let [letter (->> (get-in db [:temp-query :where])
-                     (map :code)
-                     (first-letter))
-         new-constraint+code (assoc new-constraint :code letter)]
-     {:db (-> db
-              (update-in [:temp-query :where] conj new-constraint+code)
-              (update-in [:temp-query :constraintLogic]
-                         #(if (empty? %)
-                            letter
-                            (str % " and " letter))))})))
+   {:db (update db :temp-query constraint-append new-constraint)}))
 
 (reg-event-fx
  :filters/remove-constraint
@@ -438,9 +455,9 @@
  (fn [{db :db} [_ loc view]]
    (let [model (get-in db [:service :model])]
      (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
-       {:db (update-in db [:query :where] conj {:path view
-                                                :op "ONE OF"
-                                                :values current-selection})
+       {:db (update db :query constraint-append {:path view
+                                                 :op "ONE OF"
+                                                 :values current-selection})
         :dispatch [:im-tables.main/run-query loc]
         :undo {:location loc
                :message [:div
@@ -460,11 +477,33 @@
      (let [existing-constraints (get-in db [:query :where])
            existing-from? (not-empty (filter (comp (partial = [view ">="]) (juxt :path :op)) existing-constraints))
            existing-to? (not-empty (filter (comp (partial = [view "<="]) (juxt :path :op)) existing-constraints))]
-       {:db (update-in db [:query :where] #(cond->> %
-                                             (and from existing-from?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op ">=")) (assoc c :value from) c)))
-                                             (and from (not existing-from?)) (cons {:path view :op ">=" :value from})
-                                             (and to existing-to?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op "<=")) (assoc c :value to) c)))
-                                             (and to (not existing-to?)) (cons {:path view :op "<=" :value to})))
+       {:db (update db :query
+                    #(cond-> %
+                       (and from existing-from?)
+                       (update :where
+                               (partial mapv
+                                 (fn [{:keys [path op] :as c}]
+                                   (if (and (= path view) (= op ">="))
+                                     (assoc c :value from)
+                                     c))))
+
+                       (and from (not existing-from?))
+                       (constraint-append {:path view
+                                           :op ">="
+                                           :value from})
+
+                       (and to existing-to?)
+                       (update :where
+                               (partial mapv
+                                 (fn [{:keys [path op] :as c}]
+                                   (if (and (= path view) (= op "<="))
+                                     (assoc c :value to)
+                                     c))))
+
+                       (and to (not existing-to?))
+                       (constraint-append {:path view
+                                           :op "<="
+                                           :value to})))
         :dispatch [:im-tables.main/run-query loc]
         :undo {:location loc
                :message [:div
