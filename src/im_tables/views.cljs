@@ -98,6 +98,8 @@
 
 ; Increase this range to produce N number of tables on the same page
 ; (useful for stress testing)
+
+
 (def number-of-tables 1)
 (defn reboot-tables-fn []
   (dotimes [n number-of-tables]

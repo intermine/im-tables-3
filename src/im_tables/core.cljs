@@ -16,7 +16,8 @@
             [cljsjs.highlight.langs.perl]
             [cljsjs.highlight.langs.python]
             [cljsjs.highlight.langs.ruby]
-            [cljsjs.highlight.langs.java]))
+            [cljsjs.highlight.langs.java]
+            [cljsjs.highlight.langs.xml]))
 
 (defn dev-setup []
   (when config/debug?

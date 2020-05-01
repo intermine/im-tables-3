@@ -11,4 +11,8 @@
 (reg-fx
  :im-tables/im-operation-chan
  (fn [{:keys [on-success on-failure response-format channel params]}]
-   (go (dispatch (conj on-success (<! channel))))))
+   (go
+     (let [{:keys [status] :as response} (<! channel)]
+       (cond
+         (< status 400) (dispatch (conj on-success response))
+         :else (dispatch (conj (or on-failure on-success) response)))))))

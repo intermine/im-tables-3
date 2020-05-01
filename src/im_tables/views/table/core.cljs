@@ -4,8 +4,8 @@
             [im-tables.views.table.head.main :as table-head]
             [im-tables.views.table.body.main :as table-body]
             [im-tables.views.dashboard.main :as dashboard]
-            [imcljs.query :as q]
-            [clojure.string :refer [split starts-with?]]))
+            [im-tables.views.table.error :as error]
+            [imcljs.query :as q]))
 
 (defn table-head [loc]
   (let [dragging-item (subscribe [:style/dragging-item loc])
@@ -27,15 +27,25 @@
                                    :col-count (count @collapsed-views)
                                    :view h}]))))])))
 
-(defn main [loc]
-  (let [dragging-item (subscribe [:style/dragging-item loc])
-        dragging-over (subscribe [:style/dragging-over loc])
-        collapsed-views (subscribe [:query-response/views-collapsed-by-joins loc])]
-    (fn [loc {:keys [results views]} {:keys [limit start] :or {limit 10 start 0}}]
-      [:div.table-container
-       [:table.table.table-condensed.table-bordered.table-striped
-        [table-head loc views]
-        (into [:tbody]
-              (->>
-               (map second (into (sorted-map) (select-keys results (range start (+ start limit)))))
-               (map (fn [r] [table-body/table-row loc r]))))]])))
+(defn handle-states
+  "Depending on the response, other states may be displayed instead of children."
+  [loc {:keys [results success] :as res} & children]
+  (cond
+    (seq results) children
+    success       [error/no-results loc res]
+    (nil? res)    nil
+    :else         [error/failure loc res]))
+
+(defn main [loc
+            {:keys [results views] :as res}
+            {:keys [limit start] :or {limit 10 start 0}}]
+  [handle-states loc res
+   [:div.table-container
+    [:table.table.table-condensed.table-bordered.table-striped
+     [table-head loc views]
+     (into [:tbody]
+           (->> (range start (+ start limit))
+                (select-keys results)
+                (into (sorted-map))
+                (map second)
+                (map (fn [r] [table-body/table-row loc r]))))]]])

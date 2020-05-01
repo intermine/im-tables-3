@@ -182,7 +182,6 @@
               (assoc-in [:temp-query :where] constraints')
               (assoc-in [:temp-query :constraintLogic] const-logic))})))
 
-
 (reg-event-fx
  :filters/save-changes
  [(sandbox) (undoable)]
