@@ -630,11 +630,13 @@
                                             :size (* limit (get-in db [:settings :buffer]))}))
        {:db (assoc-in db [:cache :column-summary] {})
         :dispatch [:main/deconstruct loc :force? true]
-        :im-tables/im-operation-chan {:on-success (if merge?
-                                                    ^:flush-dom [:main/merge-query-response loc pagination]
-                                                    ^:flush-dom [:main/replace-query-response loc pagination])
-                                       ; Hand the request atom off to the effect that takes from it
-                                      :channel (get @previous-requests loc)}}))))
+        :im-tables/im-operation-chan
+        {; Hand the request atom off to the effect that takes from it
+         :channel (get @previous-requests loc)
+         :on-success (if merge?
+                       ^:flush-dom [:main/merge-query-response loc pagination]
+                       ^:flush-dom [:main/replace-query-response loc pagination])
+         :on-failure ^:flush-dom [:error/network loc]}}))))
 
 (reg-event-db
  :main/save-decon-count
@@ -705,3 +707,25 @@
  (fn [db [_ loc value]]
    (assoc-in db [:temp-query :constraintLogic] value)))
 
+(reg-event-fx
+ :main/retry-failure
+ (sandbox)
+ (fn [{db :db} [_ loc]]
+   {:db (dissoc db :error)
+    :dispatch [:im-tables/reload loc]}))
+
+(reg-event-fx
+ :error/network
+ (sandbox)
+ (fn [{db :db} [_ loc res]]
+   {:db (assoc db :error {:type :network
+                          :response res})
+    :im-tables/log-error ["Network error" {:response res}]}))
+
+(reg-event-db
+ :error/boundary-catch
+ (sandbox)
+ (fn [db [_ loc error info]]
+   (assoc db :error {:type :boundary
+                     :error error
+                     :info info})))

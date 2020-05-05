@@ -33,6 +33,11 @@
    (get-in db (glue prefix [:query-parts-counts]))))
 
 (reg-sub
+ :main/error
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:error]))))
+
+(reg-sub
  :summary/item-details
  (fn [db [_ loc id]]
    (get-in db (glue loc [:cache :item-details id]))))

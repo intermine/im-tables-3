@@ -30,11 +30,13 @@
 (defn handle-states
   "Depending on the response, other states may be displayed instead of children."
   [loc {:keys [results success] :as res} & children]
-  (cond
-    (seq results) children
-    success       [error/no-results loc res]
-    (nil? res)    nil
-    :else         [error/failure loc res]))
+  (let [error @(subscribe [:main/error loc])]
+    (cond
+      error         [error/failure loc res]
+      (seq results) children
+      success       [error/no-results loc res]
+      (nil? res)    nil
+      :else         [error/failure loc res])))
 
 (defn main [loc
             {:keys [results views] :as res}
