@@ -28,9 +28,12 @@
                                    :view h}]))))])))
 
 (defn handle-states
-  "Depending on the response, other states may be displayed instead of children."
+  "Depending on the response, other states may be displayed instead of children.
+  Note that `res` might not hold the latest response if it failed, as in this
+  case the `on-failure` event would fire instead."
   [loc {:keys [results success] :as res} & children]
-  (let [error @(subscribe [:main/error loc])]
+  (let [error @(subscribe [:main/error loc])
+        res (or (:response error) res)]
     (cond
       error         [error/failure loc res]
       (seq results) children

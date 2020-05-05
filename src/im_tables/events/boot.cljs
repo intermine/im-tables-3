@@ -28,7 +28,6 @@
                      :imt.main/save-summary-fields]
             :dispatch [:im-tables/query loc]
             :halt? true}]})
-;; TODO handle failures in the three fetch
 
 (reg-event-fx
  :im-tables/load
@@ -64,7 +63,7 @@
       {:channel (fetch/table-rows service query {:start start
                                                  :size (* limit buffer)})
        :on-success ^:flush-dom [:main/replace-query-response loc pagination]
-       :on-failure ^:flush-dom [:error/network loc]}})))
+       :on-failure ^:flush-dom [:error/response loc]}})))
 
 (reg-event-db
  :initialize-db
@@ -97,7 +96,7 @@
     :im-tables/im-operation-chan
     {:channel (fetch/session (:service db))
      :on-success [:imt.auth/store-token loc]
-     :on-failure [:error/network loc]}}))
+     :on-failure [:error/response loc]}}))
 
 ; Store an auth token for a given mine
 (reg-event-db
@@ -117,7 +116,7 @@
       {:im-tables/im-operation-chan
        {:channel (fetch/model (:service db))
         :on-success [:imt.main/save-model loc]
-        :on-failure [:error/network loc]}}))))
+        :on-failure [:error/response loc]}}))))
 
 (reg-event-fx
  :imt.main/fetch-summary-fields
@@ -130,7 +129,7 @@
       {:im-tables/im-operation-chan
        {:channel (fetch/summary-fields (:service db))
         :on-success [:imt.main/save-summary-fields loc]
-        :on-failure [:error/network loc]}}))))
+        :on-failure [:error/response loc]}}))))
 
 (reg-event-db
  :imt.main/save-model

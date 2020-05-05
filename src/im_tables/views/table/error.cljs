@@ -83,11 +83,12 @@ ERROR: " query-error)))))
    [:h2 [:i.fa.fa-bug] " Server error"]
    [:p "You have received an invalid response from the server. This can be a sign of network issues or problems with the server itself. If the issue persists, please use the button below to send an email with a pre-filled bug report to the maintainers."]
    [:div.button-group
-    [:button.btn.btn-default
-     {:type "button"
-      :on-click toggle-query
-      :class (when show-query? "active")}
-     [:i.fa.fa-code] " Show query"]
+    (when (not-empty query-xml)
+      [:button.btn.btn-default
+       {:type "button"
+        :on-click toggle-query
+        :class (when show-query? "active")}
+       [:i.fa.fa-code] " Show query"])
     [:button.btn.btn-info
      {:type "button"
       :on-click #(dispatch [:main/retry-failure loc])}
@@ -108,19 +109,19 @@ ERROR: " query-error)))))
             mailto (mailto-string loc query-xml query-error)
             toggle-query #(swap! show-query not)
             toggle-error #(swap! show-error not)]
-       (if query-error
-          [query-failure
-           {:loc loc
-            :show-query? @show-query
-            :show-error? @show-error
-            :toggle-query toggle-query
-            :toggle-error toggle-error
-            :mailto mailto
-            :query-xml query-xml
-            :query-error query-error}]
-          [server-failure
-           {:loc loc
-            :show-query? @show-query
-            :toggle-query toggle-query
-            :mailto mailto
-            :query-xml query-xml}])))))
+        (if query-error
+           [query-failure
+            {:loc loc
+             :show-query? @show-query
+             :show-error? @show-error
+             :toggle-query toggle-query
+             :toggle-error toggle-error
+             :mailto mailto
+             :query-xml query-xml
+             :query-error query-error}]
+           [server-failure
+            {:loc loc
+             :show-query? @show-query
+             :toggle-query toggle-query
+             :mailto mailto
+             :query-xml query-xml}])))))

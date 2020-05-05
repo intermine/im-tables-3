@@ -30,7 +30,7 @@
               ;; of this effect pass a `loc` key.
               (when (sequential? loc)
                 ;; Dispatch generic network error event if no `on-failure` defined.
-                (dispatch [:error/network loc response])))
+                (dispatch [:error/response loc response])))
             (.error js/console "Failed imcljs request" response))))))
 
 (reg-fx

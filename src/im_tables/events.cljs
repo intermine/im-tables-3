@@ -636,7 +636,7 @@
          :on-success (if merge?
                        ^:flush-dom [:main/merge-query-response loc pagination]
                        ^:flush-dom [:main/replace-query-response loc pagination])
-         :on-failure ^:flush-dom [:error/network loc]}}))))
+         :on-failure ^:flush-dom [:error/response loc]}}))))
 
 (reg-event-db
  :main/save-decon-count
@@ -715,12 +715,14 @@
     :dispatch [:im-tables/reload loc]}))
 
 (reg-event-fx
- :error/network
+ :error/response
  (sandbox)
  (fn [{db :db} [_ loc res]]
-   {:db (assoc db :error {:type :network
-                          :response res})
-    :im-tables/log-error ["Network error" {:response res}]}))
+   (let [error-type (if (get-in res [:body :error]) :query :network)]
+     (cond-> {:db (assoc db :error {:type error-type
+                                    :response res})}
+       (= error-type :network)
+       (assoc :im-tables/log-error ["Network error" {:response res}])))))
 
 (reg-event-db
  :error/boundary-catch
