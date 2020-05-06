@@ -5,7 +5,8 @@
             [im-tables.views.table.body.main :as table-body]
             [im-tables.views.dashboard.main :as dashboard]
             [im-tables.views.table.error :as error]
-            [imcljs.query :as q]))
+            [imcljs.query :as q]
+            [im-tables.utils :refer [response->error]]))
 
 (defn table-head [loc]
   (let [dragging-item (subscribe [:style/dragging-item loc])
@@ -32,14 +33,14 @@
   Note that `res` might not hold the latest response if it failed, as in this
   case the `on-failure` event would fire instead."
   [loc {:keys [results success] :as res} & children]
-  (let [error @(subscribe [:main/error loc])
-        res (or (:response error) res)]
+  (let [error @(subscribe [:main/error loc])]
     (cond
-      error         [error/failure loc res]
+      error         [error/failure loc error]
       (seq results) children
-      success       [error/no-results loc res]
+      success       [error/no-results loc]
       (nil? res)    nil
-      :else         [error/failure loc res])))
+      ;; The else case shouldn't occur, but we leave it just in case!
+      :else         [error/failure loc (response->error res)])))
 
 (defn main [loc
             {:keys [results views] :as res}

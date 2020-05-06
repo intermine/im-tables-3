@@ -64,3 +64,12 @@
        (string/join " ")
        plural))
 
+(defn response->error
+  "Convert an HTTP response to an error map."
+  [response]
+  (let [error-msg (or (get-in response [:body :error])
+                      (:body response))
+        error-type (if (string? error-msg) :query :network)]
+    {:type error-type
+     :message (when (= error-type :query) error-msg)
+     :response response}))

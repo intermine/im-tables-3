@@ -19,7 +19,8 @@
             [clojure.string :as string :refer [split join starts-with?]]
             [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [im-tables.utils :refer [response->error]]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -718,16 +719,7 @@
  :error/response
  (sandbox)
  (fn [{db :db} [_ loc res]]
-   (let [error-type (if (get-in res [:body :error]) :query :network)]
-     (cond-> {:db (assoc db :error {:type error-type
-                                    :response res})}
+   (let [{error-type :type :as error-map} (response->error res)]
+     (cond-> {:db (assoc db :error error-map)}
        (= error-type :network)
        (assoc :im-tables/log-error ["Network error" {:response res}])))))
-
-(reg-event-db
- :error/boundary-catch
- (sandbox)
- (fn [db [_ loc error info]]
-   (assoc db :error {:type :boundary
-                     :error error
-                     :info info})))

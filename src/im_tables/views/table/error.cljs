@@ -7,15 +7,21 @@
             [cljs-time.format :refer [unparse formatters]]
             [goog.string :as gstring]))
 
-(defn mailto-string [loc query-xml query-error]
+;; This email is used if no maintainerEmail is available, or when we wish to
+;; CC support (ie. when the failure is caused by a software problem).
+(def support-email "info@intermine.org")
+
+(defn mailto-string [loc query-xml query-error & {:keys [cc-support?]}]
   (let [maintainer-email (get-in @(subscribe [:settings/settings loc])
                                  [:mine :maintainerEmail]
-                                 "info@intermine.org")
+                                 support-email)
         current-url (oget js/window :location :href)
         service-url (:root @(subscribe [:assets/service loc]))
         current-date (unparse (formatters :rfc822) (time/now))]
     (str "mailto:" maintainer-email
          "?subject=" (gstring/urlEncode "[IMTABLES] - Error running query")
+         (when cc-support?
+           (str "&cc=" support-email))
          "&body=" (gstring/urlEncode
                     (str "We encountered an error running a query from an embedded result table.
 
@@ -27,7 +33,7 @@ QUERY: " query-xml "
 -------------------------------
 ERROR: " query-error)))))
 
-(defn no-results [loc res]
+(defn no-results [loc]
   [:div.alert.alert-info {:role "alert"}
    [:h2 "No results"]])
 
@@ -99,29 +105,66 @@ ERROR: " query-error)))))
    (when show-query?
      [:pre.well [code-block loc query-xml]])])
 
-(defn failure [loc res]
+(defn boundary-failure
+  "Failure message when catching uncaught error with Error Boundary."
+  [{:keys [loc
+           show-error?
+           toggle-error
+           mailto
+           error
+           clear-error!]}]
+  [:div.alert.alert-warning.table-error {:role "alert"}
+   [:h2 [:i.fa.fa-bug] " im-tables crashed"]
+   [:p "Something unexpected happened that im-tables wasn't able to handle. If you have a moment, we would appreciate it if you used the button below to send an email with a pre-filled bug report to the maintainers. Any description of what you were doing before this happened would be very helpful."]
+   [:div.button-group
+    (when (not-empty error)
+      [:button.btn.btn-default
+       {:type "button"
+        :on-click toggle-error
+        :class (when show-error? "active")}
+       [:i.fa.fa-code] " Show error"])
+    [:button.btn.btn-info
+     {:type "button"
+      :on-click clear-error!}
+     [:i.fa.fa-refresh] " Restart"]
+    [:a.btn.btn-primary.pull-right
+     {:href mailto}
+     [:i.fa.fa-envelope] " Send a bug report"]]
+   (when show-error?
+     [:pre.well.text-danger error])])
+
+(defn failure [loc error]
   (let [show-query (reagent/atom false)
         show-error (reagent/atom false)]
-    (fn [loc res]
-      (let [model @(subscribe [:assets/model loc])
-            query-xml (when model (->xml model @(subscribe [:main/query loc])))
-            query-error (get-in res [:body :error])
-            mailto (mailto-string loc query-xml query-error)
+    (fn [loc {error-type :type :as error} & {:keys [clear-error!]}]
+      (let [query-xml (when-let [model @(subscribe [:assets/model loc])]
+                        (->xml model @(subscribe [:main/query loc])))
             toggle-query #(swap! show-query not)
             toggle-error #(swap! show-error not)]
-        (if query-error
-           [query-failure
-            {:loc loc
-             :show-query? @show-query
-             :show-error? @show-error
-             :toggle-query toggle-query
-             :toggle-error toggle-error
-             :mailto mailto
-             :query-xml query-xml
-             :query-error query-error}]
-           [server-failure
-            {:loc loc
-             :show-query? @show-query
-             :toggle-query toggle-query
-             :mailto mailto
-             :query-xml query-xml}])))))
+        (case error-type
+          :query [query-failure
+                  {:loc loc
+                   :show-query? @show-query
+                   :show-error? @show-error
+                   :toggle-query toggle-query
+                   :toggle-error toggle-error
+                   :mailto (mailto-string loc query-xml (:message error))
+                   :query-xml query-xml
+                   :query-error (:message error)}]
+          :network [server-failure
+                    {:loc loc
+                     :show-query? @show-query
+                     :toggle-query toggle-query
+                     :mailto (mailto-string loc query-xml (:message error))
+                     :query-xml query-xml}]
+          :boundary (let [error-string (str (:error error)
+                                            \newline
+                                            (or (oget (:info error) :componentStack)
+                                                (ocall js/JSON :stringify (:info error))))]
+                      [boundary-failure
+                       {:loc loc
+                        :show-error? @show-error
+                        :toggle-error toggle-error
+                        :mailto (mailto-string loc query-xml error-string :cc-support? true)
+                        :error error-string
+                        :clear-error! clear-error!}]))))))

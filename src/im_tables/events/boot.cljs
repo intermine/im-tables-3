@@ -33,9 +33,23 @@
  :im-tables/load
  (sandbox)
  (fn [{db :db} [_ loc {:keys [query service location response settings] :as args}]]
-   {:db (assoc args :settings (deep-merge (:settings db/default-db) settings))
-    :async-flow (boot-flow loc)}))
+   (let [init-db (assoc args :settings
+                        (deep-merge (:settings db/default-db) settings))]
+     ;; We keep a copy of the initial database in `:init`, so that it can be
+     ;; restored to get the fresh state of an im-table.
+     {:db (assoc init-db :init init-db)
+      :async-flow (boot-flow loc)})))
 
+;; Used to recover after an uncaught error (resets db to initial state).
+(reg-event-fx
+ :im-tables/restart
+ (sandbox)
+ (fn [{db :db} [_ loc]]
+   (let [init-db (:init db)]
+     {:db (assoc init-db :init init-db)
+      :async-flow (boot-flow loc)})))
+
+;; Used to recover after a network error (doesn't touch db).
 (reg-event-fx
  :im-tables/reload
  (sandbox)
