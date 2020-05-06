@@ -32,12 +32,13 @@
   "Depending on the response, other states may be displayed instead of children.
   Note that `res` might not hold the latest response if it failed, as in this
   case the `on-failure` event would fire instead."
-  [loc {:keys [results success] :as res} & children]
-  (let [error @(subscribe [:main/error loc])]
+  [loc {:keys [results success wasSuccessful] :as res} & children]
+  (let [error @(subscribe [:main/error loc])
+        successful? (or success wasSuccessful)]
     (cond
       error         [error/failure loc error]
       (seq results) (into [:<>] children)
-      success       [error/no-results loc]
+      successful?   [error/no-results loc]
       (nil? res)    nil
       ;; The else case shouldn't occur, but we leave it just in case!
       :else         [error/failure loc (response->error res)])))

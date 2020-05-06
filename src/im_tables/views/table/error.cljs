@@ -34,8 +34,9 @@ QUERY: " query-xml "
 ERROR: " query-error)))))
 
 (defn no-results [loc]
-  [:div.alert.alert-info {:role "alert"}
-   [:h2 "No results"]])
+  [:div.alert.alert-warning.table-error {:role "alert"}
+   [:h4 "No results"]
+   [:p "You can use the buttons above to adjust your " [:em "filters"] " or " [:em "undo"] " the last change."]])
 
 (defn code-block [loc code-string]
   (let [!code (atom nil)]
