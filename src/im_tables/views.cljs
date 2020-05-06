@@ -59,15 +59,12 @@
   {:service {:root "https://test.intermine.org/covidmine"}
    :query {:from "Distribution"
            :select ["date"
-                    "totalConfirmed"
-                    "totalActive"
+                    "totalCases"
                     "totalDeaths"
-                    "totalRecovered"
-                    "geoLocation.state"
-                    "geoLocation.country"]
-           :where [{:path "Distribution.geoLocation.country"
-                    :op "="
-                    :value "US"}]}
+                    "newCases"
+                    "newDeaths"
+                    "geoLocation.country"
+                    "geoLocation.state"]}
    :settings {:pagination {:limit 10}
               :links {:vocab {:mine "covidmine"}
                       :url (fn [{:keys [mine class objectId] :as _vocab}]

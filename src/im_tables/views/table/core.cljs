@@ -36,7 +36,7 @@
   (let [error @(subscribe [:main/error loc])]
     (cond
       error         [error/failure loc error]
-      (seq results) children
+      (seq results) (into [:<>] children)
       success       [error/no-results loc]
       (nil? res)    nil
       ;; The else case shouldn't occur, but we leave it just in case!
