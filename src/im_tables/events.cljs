@@ -141,7 +141,7 @@
   (let [letter (consts->letter (:where query))
         constraint+code (assoc constraint :code letter)]
     (-> query
-        (update :where conj constraint+code)
+        (update :where (fnil conj []) constraint+code)
         (update :constraintLogic logic-append letter))))
 
 (reg-event-db

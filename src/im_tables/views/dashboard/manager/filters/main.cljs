@@ -1,8 +1,10 @@
 (ns im-tables.views.dashboard.manager.filters.main
   (:require [re-frame.core :refer [subscribe dispatch]]
+            [reagent.core :as r]
             [imcljs.path :as path]
             [oops.core :refer [oget]]
-            [im-tables.views.table.head.controls :as controls]))
+            [im-tables.views.table.head.controls :as controls]
+            [clojure.string :as str]))
 
 (defn join-with-arrows
   "Make a friendly HTML path name: Gene >> Data Sets >> Publications"
@@ -20,11 +22,35 @@
            (conj [:span.text-muted (str " (" code ")")]))
        [controls/constraint loc path const]])))
 
+(defn new-constraint [loc]
+  (let [model (subscribe [:assets/model loc])
+        query (subscribe [:main/temp-query loc])
+        !path (r/atom (-> @query :select first))]
+    (fn [loc]
+      [:li.list-group-item.add-filter-item
+       [:div.filter-name
+        [:em "Add a new filter"]]
+       [:div.add-filter-controls
+        (into [:select.form-control
+               {:value @!path
+                :on-change (fn [e]
+                             (reset! !path (oget e :target :value)))}]
+              (for [path (:select @query)]
+                [:option {:value path}
+                 (str/join " » " (path/display-name @model path))]))
+        [:button.btn.btn-info.constraint-add
+         {:on-click #(dispatch [:filters/add-constraint loc {:path @!path
+                                                             :op "="
+                                                             :value nil}])
+          :type "button"}
+         [:i.fa.fa-plus]]]])))
+
 (defn constraint-form [loc]
-  (into [:ul.list-group.filter-manager]
-        (for [const @(subscribe [:filter-manager/filters loc])]
-          ^{:key (:code const)}
-          [constraint loc const])))
+  (-> [:ul.list-group.filter-manager]
+      (into (for [const @(subscribe [:filter-manager/filters loc])]
+              ^{:key (:code const)}
+              [constraint loc const]))
+      (conj [new-constraint loc])))
 
 (defn constraint-logic [loc]
   (let [constraint-logic @(subscribe [:filter-manager/constraint-logic loc])
@@ -40,7 +66,8 @@
 (defn modal-body [loc]
   [:div
    [constraint-form loc]
-   [constraint-logic loc]])
+   (when (seq @(subscribe [:filter-manager/filters loc]))
+     [constraint-logic loc])])
 
 (defn modal-footer [loc]
   [:div.btn-toolbar.pull-right
