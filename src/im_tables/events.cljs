@@ -629,7 +629,9 @@
                                            (get db :query)
                                            {:start start
                                             :size (* limit (get-in db [:settings :buffer]))}))
-       {:db (assoc-in db [:cache :column-summary] {})
+       {:db (-> db
+                (assoc-in [:cache :column-summary] {})
+                (dissoc :error))
         :dispatch [:main/deconstruct loc :force? true]
         :im-tables/im-operation-chan
         {; Hand the request atom off to the effect that takes from it
