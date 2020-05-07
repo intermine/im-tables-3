@@ -110,18 +110,22 @@
                          :data-content (when (not-empty item-details)
                                          (->html (summary-table item-details)))}
 
-               [:a {:href link
-                    :on-click (fn []
-                                (when (and on-click value)
-                                  (do
-                                    ; Call the provided on-click
-                                    (on-click link)
-                                    ; Side effect!!
-                                    ; Destroy the popover in case the table is embedded in an SPA
-                                    ; otherwise it will stick after page routes
-                                    (-> @pop-el js/$
-                                        (ocall :find "[data-trigger='hover']")
-                                        (ocall :popover "destroy")))))}
+               [:a (merge
+                    {:on-click (fn []
+                                 (when (and on-click value)
+                                   (do
+                                     ; Call the provided on-click
+                                     (on-click link)
+                                     ; Side effect!!
+                                     ; Destroy the popover in case the table is embedded in an SPA
+                                     ; otherwise it will stick after page routes
+                                     (-> @pop-el js/$
+                                         (ocall :find "[data-trigger='hover']")
+                                         (ocall :popover "destroy")))))}
+                    ;; URL is incomplete until summary has been fetched and
+                    ;; `:value` key added, so avoid pointing to wrong URL.
+                    (when (contains? item-details :value)
+                      {:href link}))
                 (or value [no-value])]]]))]))))
 
 (defn table-row [loc row]
