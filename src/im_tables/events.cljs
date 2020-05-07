@@ -74,7 +74,15 @@
 (reg-event-db
  :imt.io/save-list-success
  (fn [db [_ response]]
-   (.debug js/console "List Saved" response)
+   ;; This event only exists so it can be intercepted by BlueGenes to display
+   ;; an alert. So do not delete it even if it looks like a noop!
+   db))
+
+(reg-event-db
+ :imt.io/save-list-failure
+ (fn [db [_ response]]
+   ;; This event only exists so it can be intercepted by BlueGenes to display
+   ;; an alert. So do not delete it even if it looks like a noop!
    db))
 
 (reg-event-fx
@@ -83,6 +91,7 @@
  (fn [{db :db} [_ loc name query options]]
    {:db db
     :im-tables/im-operation {:on-success [:imt.io/save-list-success]
+                             :on-failure [:imt.io/save-list-failure]
                              :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins) options)}}))
 
 (reg-event-db
