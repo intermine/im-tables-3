@@ -73,3 +73,11 @@
     {:type error-type
      :message (when (= error-type :query) error-msg)
      :response response}))
+
+(defn constraints->logic
+  "Generates the default 'A and B and ...' constraint logic string from a
+  sequence of constraints. Note that `:code` needs to be present on all
+  constraint maps."
+  [constraints]
+  (->> (map :code constraints)
+       (string/join " and ")))

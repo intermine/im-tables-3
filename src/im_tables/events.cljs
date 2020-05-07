@@ -16,11 +16,11 @@
             [imcljs.query :as query]
             [imcljs.internal.utils :refer [scrub-url]]
             [oops.core :refer [oapply ocall oget]]
-            [clojure.string :as string :refer [split join starts-with?]]
+            [clojure.string :as string :refer [split join starts-with? trim]]
             [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
             [reagent.core :as r]
-            [im-tables.utils :refer [response->error]]))
+            [im-tables.utils :refer [response->error constraints->logic]]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -156,10 +156,10 @@
  (fn [{db :db} [_ loc new-constraint]]
    {:db (update-in db [:temp-query :where]
                    (fn [constraints]
-                     (map (fn [constraint]
-                            (if (= (:code new-constraint) (:code constraint))
-                              new-constraint
-                              constraint)) constraints)))}))
+                     (mapv (fn [constraint]
+                             (if (= (:code new-constraint) (:code constraint))
+                               new-constraint
+                               constraint)) constraints)))}))
      ;:undo {:message [:div
      ;                 (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
      ;                 (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
@@ -177,8 +177,7 @@
  (fn [{db :db} [_ loc const]]
    (let [constraints  (get-in db [:temp-query :where])
          constraints' (filterv #(not= const %) constraints)
-         const-logic  (->> (map :code constraints')
-                           (join " and "))]
+         const-logic  (constraints->logic constraints')]
      {:db (-> db
               (assoc-in [:temp-query :where] constraints')
               (assoc-in [:temp-query :constraintLogic] const-logic))})))
@@ -187,7 +186,12 @@
  :filters/save-changes
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc]]
-   (let [added (not-empty (set/difference (set (:where (:temp-query db)))
+   (let [db (update-in db [:temp-query :constraintLogic]
+                       ;; Recompute the constraintLogic if it's empty.
+                       ;; (Can only occur if the user was evil and deleted it.)
+                       (comp #(or % (constraints->logic (get-in db [:temp-query :where])))
+                             not-empty trim))
+         added (not-empty (set/difference (set (:where (:temp-query db)))
                                           (set (:where (:query db)))))
          removed (not-empty (set/difference (set (:where (:query db)))
                                             (set (:where (:temp-query db)))))

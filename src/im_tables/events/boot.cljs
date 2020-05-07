@@ -7,7 +7,8 @@
             [im-tables.interceptors :refer [sandbox]]
             [imcljs.fetch :as fetch]
             [imcljs.auth :as auth]
-            [imcljs.query :as im-query]))
+            [imcljs.query :as im-query]
+            [im-tables.utils :refer [constraints->logic]]))
 
 (defn deep-merge
   "Recursively merges maps. If keys are not maps, the last value wins."
@@ -69,11 +70,15 @@
          {:keys [start limit]}       pagination
          query (im-query/sterilize-query (:query db))]
      {:db (assoc db
+                 ;; Here we can perform additional purifying to accomodate
+                 ;; requirements im-tables has on the query data.
                  :query (cond-> query
+                          ;; constraintLogic should always be defined.
                           (not (contains? query :constraintLogic))
-                          (assoc :constraintLogic (->> (:where query)
-                                                       (map :code)
-                                                       (str/join " and ")))))
+                          (assoc :constraintLogic (constraints->logic (:where query)))
+                          ;; constraints should be a vector
+                          (list? (:where query))
+                          (update :where vec)))
       :dispatch [:main/deconstruct loc]
       :im-tables/im-operation-chan
       {:channel (fetch/table-rows service query {:start start

@@ -39,9 +39,11 @@
                 [:option {:value path}
                  (str/join " » " (path/display-name @model path))]))
         [:button.btn.btn-info.constraint-add
-         {:on-click #(dispatch [:filters/add-constraint loc {:path @!path
-                                                             :op "="
-                                                             :value nil}])
+         {:on-click #(when-let [path @!path]
+                       (dispatch [:main/fetch-possible-values loc path])
+                       (dispatch [:filters/add-constraint loc {:path path
+                                                               :op "="
+                                                               :value nil}]))
           :type "button"}
          [:i.fa.fa-plus]]]])))
 
