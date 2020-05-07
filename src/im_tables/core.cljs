@@ -36,8 +36,8 @@
   `:query` keys, or a location vector. In the latter case you will need to
   dispatch `:im-tables/load` yourself, with the location and map as arguments."
   [{:keys [location] :as args}]
-  (when (map? args))
-    (re-frame/dispatch [:im-tables/load location (dissoc args :location)])
+  (when (map? args)
+    (re-frame/dispatch [:im-tables/load location (dissoc args :location)]))
   (fn [{:keys [location] :as loc}]
     [main (or location loc)]))
 
