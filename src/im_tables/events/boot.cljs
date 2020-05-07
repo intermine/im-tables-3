@@ -72,22 +72,25 @@
          {:keys [pagination buffer]} (:settings db)
          {:keys [start limit]}       pagination
          query (im-query/sterilize-query (:query db))]
-     {:db (assoc db
-                 ;; Here we can perform additional purifying to accomodate
-                 ;; requirements im-tables has on the query data.
-                 :query (cond-> query
-                          ;; constraintLogic should always be defined.
-                          (not (contains? query :constraintLogic))
-                          (assoc :constraintLogic (constraints->logic (:where query)))
-                          ;; constraints should be a vector
-                          (list? (:where query))
-                          (update :where vec)))
-      :dispatch [:main/deconstruct loc]
-      :im-tables/im-operation-chan
-      {:channel (fetch/table-rows service query {:start start
-                                                 :size (* limit buffer)})
-       :on-success ^:flush-dom [:main/replace-query-response loc pagination]
-       :on-failure ^:flush-dom [:error/response loc]}})))
+     (merge
+      {:db (assoc db
+                  ;; Here we can perform additional purifying to accomodate
+                  ;; requirements im-tables has on the query data.
+                  :query (cond-> query
+                           ;; constraintLogic should always be defined.
+                           (not (contains? query :constraintLogic))
+                           (assoc :constraintLogic (constraints->logic (:where query)))
+                           ;; constraints should be a vector
+                           (list? (:where query))
+                           (update :where vec)))
+       :dispatch [:main/deconstruct loc]}
+      (when (empty? (:response db))
+        ;; Do not run query if response has been passed to im-tables in load.
+        {:im-tables/im-operation-chan
+         {:channel (fetch/table-rows service query {:start start
+                                                    :size (* limit buffer)})
+          :on-success ^:flush-dom [:main/replace-query-response loc pagination]
+          :on-failure ^:flush-dom [:error/response loc]}})))))
 
 (reg-event-db
  :initialize-db
