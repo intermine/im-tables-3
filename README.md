@@ -12,25 +12,49 @@ Development goals
 
 ## Usage from within ClojureScript
 
-To render an im-table, simply mount the component and pass in the relevant values:
+There are two ways to render an im-table. You can mount the component passing a location vector and dispatching the *load* event yourself.
 
 ```clojure
-[im-tables.views.core/main {:location [:some-location :within-app-db :to-store-values]
-                            :service {:root "beta.flymine.org/beta"
-                                      :model some-intermine-model         ; Optional
-                                      :summary-fields some-summary-fields ; Optional
-                                      }
-                            :settings {:pagination {:limit 10}}
-                            :response some-response-of-tablerows          ; Optional
-                            :query {:from "Gene"
-                                    :select ["symbol"
-                                             "secondaryIdentifier"
-                                             "primaryIdentifier"
-                                             "organism.name"
-                                             "dataSets.name"]
-                                    :where [{:path "Gene.symbol"
-                                             :op "LIKE"
-                                             :value "M*"}]}}]
+[im-tables.core/table [:some-location :within-app-db :to-store-values]]
+
+;; In the `:component-did-mount` lifecycle or other suitable place.
+(re-frame.core/dispatch [:im-tables/load [:some-location :within-app-db :to-store-values]
+                         {:service {:root "beta.flymine.org/beta"
+                                    :model some-intermine-model         ; Optional
+                                    :summary-fields some-summary-fields ; Optional
+                                    }
+                          :settings {:pagination {:limit 10}}
+                          :response some-response-of-tablerows          ; Optional
+                          :query {:from "Gene"
+                                  :select ["symbol"
+                                           "secondaryIdentifier"
+                                           "primaryIdentifier"
+                                           "organism.name"
+                                           "dataSets.name"]
+                                  :where [{:path "Gene.symbol"
+                                           :op "LIKE"
+                                           :value "M*"}]}}])
+```
+
+The other way is to pass in the entire map to have the im-table dispatch the *load* event automatically on mount.
+
+```clojure
+[im-tables.core/table {:location [:some-location :within-app-db :to-store-values]
+                       :service {:root "beta.flymine.org/beta"
+                                 :model some-intermine-model         ; Optional
+                                 :summary-fields some-summary-fields ; Optional
+                                 }
+                       :settings {:pagination {:limit 10}}
+                       :response some-response-of-tablerows          ; Optional
+                       :query {:from "Gene"
+                               :select ["symbol"
+                                        "secondaryIdentifier"
+                                        "primaryIdentifier"
+                                        "organism.name"
+                                        "dataSets.name"]
+                               :where [{:path "Gene.symbol"
+                                        :op "LIKE"
+                                        :value "M*"}]}}]
 ```
 
 Some of the values are optional, and if supplied they will not be fetched when the component is mounted. This allows you to fetch a resource once and share it across components, or to render a table of query results that have already been fetched.

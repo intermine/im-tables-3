@@ -6,6 +6,7 @@
             [im-tables.subs]
             [im-tables.db :as db]
             [im-tables.views :as views]
+            [im-tables.views.core :refer [main]]
             [im-tables.config :as config]
             [imcljs.query :as query]
             [cljsjs.react-transition-group]
@@ -28,6 +29,17 @@
   (re-frame/clear-subscription-cache!)
   (dom/render [views/main-panel]
               (.getElementById js/document "app")))
+
+(defn table
+  "This is the primary means of including an im-table in a re-frame project.
+  Argument can be either a map with at minimum `:location`, `:service` and
+  `:query` keys, or a location vector. In the latter case you will need to
+  dispatch `:im-tables/load` yourself, with the location and map as arguments."
+  [{:keys [location] :as args}]
+  (when (map? args))
+    (re-frame/dispatch [:im-tables/load location (dissoc args :location)])
+  (fn [{:keys [location] :as loc}]
+    [main (or location loc)]))
 
 (defn ^:export init []
   (views/reboot-tables-fn)
