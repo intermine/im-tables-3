@@ -40,7 +40,8 @@
      {:db (assoc init-db :init init-db)
       :async-flow (boot-flow loc)})))
 
-;; Used to recover after an uncaught error (resets db to initial state).
+;; Used to reboot after an uncaught error (resets db to initial state).
+;; This will throw away any changes the user has made to the original query.
 (reg-event-fx
  :im-tables/restart
  (sandbox)
@@ -49,7 +50,8 @@
      {:db (assoc init-db :init init-db)
       :async-flow (boot-flow loc)})))
 
-;; Used to recover after a network error (doesn't touch db).
+;; Used to reboot after a network error (doesn't touch db).
+;; This will keep any changes the user has made to the original query.
 (reg-event-fx
  :im-tables/reload
  (sandbox)

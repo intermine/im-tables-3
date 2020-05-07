@@ -23,14 +23,20 @@
              (< s 400)) (dispatch (conj on-success response))
         on-failure (dispatch (conj on-failure response))
         :else
-        (do (when-let [loc (second on-success)]
-              ;; We are being sneaky in taking advantage of `loc` always being
-              ;; passed as the first event handler argument. If we find this
-              ;; fallback error event useful, we should require that all uses
-              ;; of this effect pass a `loc` key.
-              (when (sequential? loc)
-                ;; Dispatch generic network error event if no `on-failure` defined.
-                (dispatch [:error/response loc response])))
+        (do ;; I commented this out since in some cases, like fetching a
+            ;; column summary, you don't want the table to be replaced with
+            ;; an error message should it fail. Instead we need a less
+            ;; intrusive way of indicating failure for these cases, while
+            ;; `:error/response` should be reserved for when a query or its
+            ;; dependents fail.
+            #_(when-let [loc (second on-success)]
+                ;; We are being sneaky in taking advantage of `loc` always being
+                ;; passed as the first event handler argument. If we find this
+                ;; fallback error event useful, we should require that all uses
+                ;; of this effect pass a `loc` key.
+                (when (sequential? loc)
+                  ;; Dispatch generic network error event if no `on-failure` defined.
+                  (dispatch [:error/response loc response])))
             (.error js/console "Failed imcljs request" response))))))
 
 (reg-fx
