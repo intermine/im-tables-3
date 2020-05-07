@@ -5,7 +5,9 @@
             [oops.core :refer [ocall oget]]
             [cljs-time.core :as time]
             [cljs-time.format :refer [unparse formatters]]
-            [goog.string :as gstring]))
+            [goog.string :as gstring]
+            [goog.json :as json]
+            [im-tables.utils :refer [clj->json]]))
 
 ;; This email is used if no maintainerEmail is available, or when we wish to
 ;; CC support (ie. when the failure is caused by a software problem).
@@ -162,12 +164,18 @@ ERROR: " query-error)))))
                     {:loc loc
                      :show-query? @show-query
                      :toggle-query toggle-query
-                     :mailto (mailto-string loc query-xml (:message error))
+                     :mailto (mailto-string loc
+                                            ;; Fallback values in case we're missing stuff.
+                                            (or query-xml
+                                                (clj->json @(subscribe [:main/query loc])))
+                                            (or (:message error)
+                                                (clj->json (:response error))
+                                                "Request timed out"))
                      :query-xml query-xml}]
           :boundary (let [error-string (str (:error error)
                                             \newline
                                             (or (oget (:info error) :componentStack)
-                                                (ocall js/JSON :stringify (:info error))))]
+                                                (json/serialize (:info error))))]
                       [boundary-failure
                        {:loc loc
                         :show-error? @show-error

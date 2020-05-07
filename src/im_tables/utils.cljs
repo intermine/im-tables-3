@@ -3,6 +3,7 @@
             [inflections.core :refer [plural]]
             [imcljs.path :as path]
             [clojure.string :as string]
+            [goog.json :as json]
             [goog.i18n.NumberFormat.Format])
   (:import [goog.i18n NumberFormat]
            [goog.i18n.NumberFormat Format]))
@@ -81,3 +82,10 @@
   [constraints]
   (->> (map :code constraints)
        (string/join " and ")))
+
+(defn clj->json
+  "Converts a Clojure data structure to JSON."
+  [x]
+  (some-> x
+          (clj->js)
+          (json/serialize)))
