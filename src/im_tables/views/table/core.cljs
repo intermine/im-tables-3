@@ -39,6 +39,7 @@
       error         [error/failure loc error]
       (seq results) (into [:<>] children)
       successful?   [error/no-results loc]
+      ;; Usually means a query is in progress (ie. loading case).
       (nil? res)    nil
       ;; The else case shouldn't occur, but we leave it just in case!
       :else         [error/failure loc (response->error res)])))

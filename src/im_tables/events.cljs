@@ -735,6 +735,9 @@
  (sandbox)
  (fn [{db :db} [_ loc res]]
    (let [{error-type :type :as error-map} (response->error res)]
-     (cond-> {:db (assoc db :error error-map)}
+     (cond-> {:db (-> db
+                      (assoc :error error-map)
+                      ;; We also want to remove any previous successful response.
+                      (dissoc :response))}
        (= error-type :network)
        (assoc :im-tables/log-error ["Network error" {:response res}])))))
