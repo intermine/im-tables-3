@@ -28,6 +28,9 @@
             :events [:imt.main/save-model
                      :imt.main/save-summary-fields]
             :dispatch [:im-tables/query loc]
+            :halt? true}
+           {:when :seen?
+            :events :error/response
             :halt? true}]})
 
 (reg-event-fx
@@ -91,24 +94,19 @@
  (sandbox)
  (fn [_] db/default-db))
 
-;; Suggestion: Instead of verifying that the token is valid, we could trust
-;; that it is, to save an extraneous HTTP request (we would instead have to
-;; handle getting a token at a later point, should it turn out to be invalid).
+;; We trust that if im-tables is passed a token,
+;; it is valid (as the parent UI should handle this).
 (reg-event-fx
  :imt.auth/init
  (sandbox)
  (fn [{db :db} [_ loc]]
    (let [token (get-in db [:service :token])]
-     (merge
-      {:db db}
-      (if (empty? token)
-        {:dispatch [:imt.auth/fetch-anonymous-token loc]}
-        {:im-tables/im-operation-chan
-         {:channel (auth/who-am-i? (:service db) token)
-          :on-success [:imt.auth/store-token loc token]
-          :on-failure [:imt.auth/fetch-anonymous-token loc]}})))))
+     {:db db
+      :dispatch (if (empty? token)
+                  [:imt.auth/fetch-anonymous-token loc]
+                  [:imt.auth/store-token loc token])})))
 
-; Fetch an anonymous token for a give
+; Fetch an anonymous token for a given mine
 (reg-event-fx
  :imt.auth/fetch-anonymous-token
  (sandbox)
