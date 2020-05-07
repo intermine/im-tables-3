@@ -29,15 +29,15 @@
             ;; intrusive way of indicating failure for these cases, while
             ;; `:error/response` should be reserved for when a query or its
             ;; dependents fail.
-            #_(when-let [loc (second on-success)]
+          #_(when-let [loc (second on-success)]
                 ;; We are being sneaky in taking advantage of `loc` always being
                 ;; passed as the first event handler argument. If we find this
                 ;; fallback error event useful, we should require that all uses
                 ;; of this effect pass a `loc` key.
-                (when (sequential? loc)
+              (when (sequential? loc)
                   ;; Dispatch generic network error event if no `on-failure` defined.
-                  (dispatch [:error/response loc response])))
-            (.error js/console "Failed imcljs request" response))))))
+                (dispatch [:error/response loc response])))
+          (.error js/console "Failed imcljs request" response))))))
 
 (reg-fx
  :im-tables/im-operation

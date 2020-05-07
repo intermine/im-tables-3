@@ -255,7 +255,7 @@
   (cond-> constraint
     (contains? new-const :op)
     (as-> const
-      (assoc const :op new-op)
+          (assoc const :op new-op)
       (case [(op-type old-op) (op-type new-op)]
         [:single :multi] (-> const
                              (set/rename-keys {:value :values})
@@ -266,9 +266,9 @@
         const))
     (contains? new-const :value)
     (as-> const
-      (case (op-type (:op const))
-        :single (assoc const :value new-value)
-        :multi (assoc const :values new-value)))))
+          (case (op-type (:op const))
+            :single (assoc const :value new-value)
+            :multi (assoc const :values new-value)))))
 
 (defn blank-constraint [loc view]
   (let [possible-values (subscribe [:selection/possible-values loc view])
@@ -576,14 +576,14 @@
                     ;; has actually changed before rerunning the query
                    (dispatch [:filters/save-changes loc])))
                 (on-event
-                  "show.bs.dropdown"
-                  (fn []
-                    (when (nil? @possible-values)
-                      (dispatch [:main/fetch-possible-values loc view]))
-                    (when-let [dropdown @!dropdown-menu]
-                      (when-let [toggle @!filter-dropdown]
-                        (place-below! dropdown toggle
-                                      :right? right?))))))}
+                 "show.bs.dropdown"
+                 (fn []
+                   (when (nil? @possible-values)
+                     (dispatch [:main/fetch-possible-values loc view]))
+                   (when-let [dropdown @!dropdown-menu]
+                     (when-let [toggle @!filter-dropdown]
+                       (place-below! dropdown toggle
+                                     :right? right?))))))}
          [:i.fa.fa-filter.dropdown-toggle.filter-icon
           {:on-click (fn [] (dispatch [:main/set-temp-query loc]))
            :data-toggle "dropdown"

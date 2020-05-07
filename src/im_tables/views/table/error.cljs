@@ -25,7 +25,7 @@
          (when cc-support?
            (str "&cc=" support-email))
          "&body=" (gstring/urlEncode
-                    (str "We encountered an error running a query from an embedded result table.
+                   (str "We encountered an error running a query from an embedded result table.
 
 page: " current-url "
 service: " service-url "

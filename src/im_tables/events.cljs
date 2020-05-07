@@ -495,10 +495,10 @@
                        (and from existing-from?)
                        (update :where
                                (partial mapv
-                                 (fn [{:keys [path op] :as c}]
-                                   (if (and (= path view) (= op ">="))
-                                     (assoc c :value from)
-                                     c))))
+                                        (fn [{:keys [path op] :as c}]
+                                          (if (and (= path view) (= op ">="))
+                                            (assoc c :value from)
+                                            c))))
 
                        (and from (not existing-from?))
                        (constraint-append {:path view
@@ -508,10 +508,10 @@
                        (and to existing-to?)
                        (update :where
                                (partial mapv
-                                 (fn [{:keys [path op] :as c}]
-                                   (if (and (= path view) (= op "<="))
-                                     (assoc c :value to)
-                                     c))))
+                                        (fn [{:keys [path op] :as c}]
+                                          (if (and (= path view) (= op "<="))
+                                            (assoc c :value to)
+                                            c))))
 
                        (and to (not existing-to?))
                        (constraint-append {:path view
