@@ -1,5 +1,7 @@
 # im-tables
 
+Travis: [![Build Status](https://travis-ci.org/intermine/im-tables-3.svg?branch=dev)](https://travis-ci.org/intermine/im-tables-3)
+
 [![Clojars Project](https://img.shields.io/clojars/v/org.intermine/im-tables.svg)](https://clojars.org/org.intermine/im-tables)
 
 A result viewer for Intermine data.
