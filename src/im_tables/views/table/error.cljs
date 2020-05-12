@@ -38,7 +38,7 @@ ERROR: " query-error)))))
 (defn no-results [loc]
   [:div.alert.alert-warning.table-error {:role "alert"}
    [:h4 "No results"]
-   [:p "You can use the buttons above to adjust your " [:em "filters"] " or " [:em "undo"] " the last change."]])
+   [:p "Your query produced no results. You can use the buttons above to adjust your " [:em "filters"] " or " [:em "undo"] " the last change."]])
 
 (defn code-block [loc code-string]
   (let [!code (atom nil)]
@@ -60,8 +60,8 @@ ERROR: " query-error)))))
            query-xml query-error]}]
   [:div.alert.alert-warning.table-error {:role "alert"}
    [:h2 [:i.fa.fa-bug] " Invalid query"]
-   [:p "The server response indicates that there is something wrong with the query XML. You will likely have to modify the query to fix this error. If you built this query with the " [:em "query builder"] " you can return to it using your browser's back button. If you have made changes to the query using the table controls, you can " [:em "undo"] " with the button above. You can also use the " [:em "reset"] " button below to revert all changes done."]
-   [:p "If you did not make this query (i.e. it's a public list, template or part of a report page) or you believe there is something wrong on the server end, please use the button below to send an email with a pre-filled bug report to the maintainers."]
+   [:p "There is something wrong with your query. Please correct it by going back to the " [:em "query builder"] ". If you have modified the query using the table controls, you can " [:em "undo"] " with the button above. You can also use the " [:em "Reset"] " button below to revert all changes done."]
+   [:p "If you did not make this query (i.e. it's a public list, template or part of a report page) or you believe there is something wrong on the server end, please send a pre-filled bug report by clicking the button below."]
    [:div.button-group
     [:button.btn.btn-default
      {:type "button"
@@ -94,8 +94,8 @@ ERROR: " query-error)))))
            query-xml]}]
   [:div.alert.alert-warning.table-error {:role "alert"}
    [:h2 [:i.fa.fa-bug] " Server error"]
-   [:p "You have received an invalid response from the server. This can be a sign of network issues or problems with the server itself. If the issue persists, please use the button below to send an email with a pre-filled bug report to the maintainers."]
-   [:p "Use the " [:em "retry"] " button below to attempt the query again."]
+   [:p "You have received an invalid response from the server. This can be a sign of network issues or problems with the server itself. If the issue persists, please send a pre-filled bug report by clicking the button below."]
+   [:p "Use the " [:em "Retry"] " button below to attempt the query again."]
    [:div.button-group
     (when (not-empty query-xml)
       [:button.btn.btn-default
@@ -122,9 +122,9 @@ ERROR: " query-error)))))
            error
            clear-error!]}]
   [:div.alert.alert-warning.table-error {:role "alert"}
-   [:h2 [:i.fa.fa-bug] " im-tables crashed"]
-   [:p "Something unexpected happened that im-tables wasn't able to handle. If you have a moment, we would appreciate it if you used the button below to send an email with a pre-filled bug report to the maintainers. Any description of what you were doing before this happened would be very helpful."]
-   [:p "Use the " [:em "reset"] " button below to restore the table's initial state."]
+   [:h2 [:i.fa.fa-bug] " Client error"]
+   [:p "There was an error in handling your request. Please send a pre-filled bug report by clicking the button below. Any description of what you were doing before this happened would be very helpful."]
+   [:p "Use the " [:em "Reset"] " button below to restore the table's initial state."]
    [:div.button-group
     (when (not-empty error)
       [:button.btn.btn-default
