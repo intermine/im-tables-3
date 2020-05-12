@@ -70,9 +70,12 @@
   [response]
   (let [error-msg (or (get-in response [:body :error])
                       (:body response))
-        error-type (if (string? error-msg) :query :network)]
+        error-type (cond
+                     (nil? response)            :network
+                     (< (:status response) 500) :query
+                     :else                      :network)]
     {:type error-type
-     :message (when (= error-type :query) error-msg)
+     :message (when (string? error-msg) error-msg)
      :response response}))
 
 (defn constraints->logic
