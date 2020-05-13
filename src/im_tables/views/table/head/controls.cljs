@@ -394,7 +394,7 @@
         human-name (display-name model view)]
     [:h4.title
      (cond
-       numerical? (str "Showing numerical distribution for " (pretty-number (count results)) " " human-name)
+       numerical? (str "Showing numerical distribution for " (pretty-number uniqueValues) " " human-name)
        :else (if (< (count results) uniqueValues)
                (str "Showing " (pretty-number (count results)) " of "
                     (pretty-number uniqueValues) " " human-name)
