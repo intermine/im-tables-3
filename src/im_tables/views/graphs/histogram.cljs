@@ -24,12 +24,12 @@
       :title (str item ": " count)}]))
 
 (defn main []
-  (fn [points]
+  (fn [points scale-type]
     (let [only-one-column? (= (count (distinct points)) 1)
           unique-results (reduce (fn [new-set point] (conj new-set (:count point))) #{} points)
           only-one-count-result? (= (count unique-results) 1)
           show-graph? (not (or only-one-column? only-one-count-result?))
-          height-scale (linear-scale (apply max (map :count points)) 50)]
+          height-scale (scale scale-type (apply max (map :count points)) 50)]
       (if show-graph?
         (into [:div.graph.histogram]
               (map-indexed (fn [idx d]
