@@ -9,7 +9,7 @@
 
 (use-fixtures :each utils/fixtures)
 
-(def im-config {:service {:root "beta.humanmine.org/beta"}
+(def im-config {:service {:root "http://localhost:9999/biotestmine"}
                 :query {:from "Gene"
                         :select ["symbol"
                                  "secondaryIdentifier"
@@ -47,7 +47,8 @@
         (testing "response can be sorted by column"
           (let [response @(rf/subscribe [:main/query-response loc])
                 result (get-in response [:results 0])]
-            (is (= "1" (->> result
-                            (filter #(= (:column %) "Gene.primaryIdentifier"))
-                            first
-                            :value)))))))))
+            (is (= "1396.pre-tRNA-Met-1"
+                   (->> result
+                        (filter #(= (:column %) "Gene.primaryIdentifier"))
+                        first
+                        :value)))))))))

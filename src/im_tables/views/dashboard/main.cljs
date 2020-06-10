@@ -2,6 +2,7 @@
   (:require [im-tables.views.dashboard.pagination :as pager]
             [im-tables.views.dashboard.manager.columns.main :as column-manager]
             [im-tables.views.dashboard.manager.relationships.main :as rel-manager]
+            [im-tables.views.dashboard.manager.filters.main :as filter-manager]
             [im-tables.views.dashboard.undo :as undo]
             [im-tables.views.dashboard.save :as save]
             [im-tables.views.dashboard.manager.columns.main :as saver]
@@ -25,6 +26,7 @@
                        (dispatch [:tree-view/clear-state loc])
                        (dispatch [:modal/open loc (saver/make-modal loc)]))}
           [:i.fa.fa-columns] " Add Columns"]]
+        [:div.btn-group [filter-manager/main loc]]
         [:div.btn-group [rel-manager/main loc]]
         [:div.btn-group [save/main loc]]
         [:div.btn-group [exporttable/exporttable loc]]

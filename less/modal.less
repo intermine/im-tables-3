@@ -65,3 +65,57 @@
     }
 }
 
+.filter-manager {
+    .filter-item {
+        display: flex;
+        flex-flow: column;
+
+        .filter-name {
+            margin-bottom: 0.5em;
+        }
+
+        .imtable-constraint {
+            display: flex;
+            margin-bottom: 0.25em;
+
+            .constraint-operator {
+                margin-right: 1em;
+                min-width: 110px;
+
+                .form-control {
+                    height: 38px;
+                }
+            }
+
+            .constraint-input {
+                width: 100%;
+                margin-right: 1em;
+
+                .DayPickerInput {
+                    width: 175px;
+                }
+
+                .form-control {
+                    height: 38px;
+                }
+            }
+        }
+    }
+
+    .add-filter-item {
+        display: flex;
+        flex-flow: column;
+
+        .filter-name {
+            margin-bottom: 0.5em;
+        }
+
+        .add-filter-controls {
+            display: flex;
+
+            .constraint-add {
+                margin-left: 1em;
+            }
+        }
+    }
+}

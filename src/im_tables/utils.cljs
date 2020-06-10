@@ -3,6 +3,7 @@
             [inflections.core :refer [plural]]
             [imcljs.path :as path]
             [clojure.string :as string]
+            [goog.json :as json]
             [goog.i18n.NumberFormat.Format])
   (:import [goog.i18n NumberFormat]
            [goog.i18n.NumberFormat Format]))
@@ -64,3 +65,30 @@
        (string/join " ")
        plural))
 
+(defn response->error
+  "Convert an HTTP response to an error map."
+  [response]
+  (let [error-msg (or (get-in response [:body :error])
+                      (:body response))
+        error-type (cond
+                     (nil? response)            :network
+                     (< (:status response) 500) :query
+                     :else                      :network)]
+    {:type error-type
+     :message (when (string? error-msg) error-msg)
+     :response response}))
+
+(defn constraints->logic
+  "Generates the default 'A and B and ...' constraint logic string from a
+  sequence of constraints. Note that `:code` needs to be present on all
+  constraint maps."
+  [constraints]
+  (->> (map :code constraints)
+       (string/join " and ")))
+
+(defn clj->json
+  "Converts a Clojure data structure to JSON."
+  [x]
+  (some-> x
+          (clj->js)
+          (json/serialize)))

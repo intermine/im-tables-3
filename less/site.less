@@ -17,6 +17,7 @@
 @import "tooltip";
 @import "modal";
 @import "highlight";
+@import "calendar";
 
 .force-wrap {
 
@@ -185,6 +186,10 @@
         transition: opacity 50ms ease-in;
     }
 
+    .table-container {
+        overflow: auto;
+    }
+
     .relative {
         position: relative;
     }
@@ -246,21 +251,47 @@
 
     .column-summary .main-view,
     .filter-view {
-        max-height: 60vh;
-        overflow: auto;
+        padding: @spacer/2;
 
         .imtable-constraint {
             display: flex;
+            margin-bottom: @spacer/2;
+        }
+
+        .constraint-operator {
+            margin-right: @spacer/2;
+
+            .form-control {
+                height: 38px;
+            }
         }
 
         .constraint-input {
             flex-grow: 1;
-            padding: 0 0.3em;
+            // Remove green color from active filter.
+            color: rgb(51, 51, 51);
+
+            .DayPickerInput {
+                width: 175px;
+            }
+
+            .form-control {
+                height: 38px;
+            }
         }
 
-        .toolbar {
-            margin: 0 0.3em 0.3em;
+        .constraint-delete {
+            margin-left: @spacer/2;
         }
+
+        .btn-toolbar {
+            margin-right: @spacer/3;
+            margin-bottom: @spacer/3;
+        }
+    }
+
+    .column-summary .main-view {
+        overflow: hidden;
     }
 
     .column-summary .title {
@@ -372,9 +403,12 @@
         border-right: solid 1px @histogram-bg;
     }
 
-    .dropdown-right {
-        right: 100%;
-        left: auto;
+    .dropdown {
+        // This would normally be `relative` so the dropdown can be positioned
+        // directly below it. However, we want the dropdown to escape the
+        // overflow which means we can't use `relative` and have to position
+        // it manually with JS instead.
+        position: unset;
     }
 
     .summary-toolbar {
@@ -384,7 +418,10 @@
 
         .dropdown-menu {
             min-width: 360px;
+            max-width: 600px;
             padding: 0;
+
+            position: absolute;
         }
 
         .filter-icon.active-filter {
@@ -450,6 +487,38 @@
         .table-condensed > thead > tr > td,
         .table-condensed > thead > tr > th {
             padding: 4px;
+        }
+
+        table.table-scrollable {
+            margin-bottom: 0;
+
+            tbody {
+                display: block;
+                overflow-y: auto;
+                overflow-x: hidden;
+                max-height: 50vh;
+                max-width: 586px;
+            }
+
+            thead tr,
+            tbody tr {
+                display: table;
+            }
+
+            thead tr th:first-of-type,
+            tbody tr td:first-of-type {
+                width: 25px;
+            }
+
+            thead tr th.data-item,
+            tbody tr td.data-item {
+                width: 100%;
+            }
+
+            thead tr th:last-of-type,
+            tbody tr td:last-of-type {
+                padding-right: 1.2*@spacer;
+            }
         }
     }
 
@@ -574,10 +643,6 @@
     .ontop {
         background-color: @highlightcolor;
     }
-    .modal-body {
-        max-height: 70vh;
-        overflow: auto;
-    }
     .modal-header h3 {margin:0;}
 
     .table-history-detail {
@@ -614,5 +679,57 @@
     }
     .numerical-content-wrapper {
         padding: 10px;
+    }
+
+    // Applies to react-select third-party component.
+    .constraint-select {
+        width: 100%;
+        font-size: 14px;
+
+        // The following nested selectors are for setting the height.
+        // Yes, it's this hard.
+        // EDIT: I commented it out since it's working fine for single values,
+        // but it won't grow in height if you select 2+ multiple values.
+        // Leaving this arduous task for a future endeavour.
+        // .constraint-select__control {
+        //     height: 34px;
+
+        //     .constraint-select__value-container {
+        //         height: 34px;
+        //         align-items: baseline;
+        //         padding: 0.5px 8px;
+        //     }
+
+        //     .constraint-select__placeholder {
+        //         line-height: 30px;
+        //     }
+
+        //     .constraint-select__value {
+        //         line-height: 30px !important;
+
+        //         .constraint-select__value-label {
+        //             line-height: 30px;
+        //         }
+        //     }
+
+        //     .constraint-select__input {
+        //         height: 30px;
+        //     }
+
+        //     .constraint-select__indicators {
+        //         height: 34px;
+        //     }
+        // }
+    }
+
+    .table-error {
+        .button-group {
+            margin-top: @spacer;
+            margin-bottom: @spacer;
+
+            button {
+                margin-right: @spacer/2;
+            }
+        }
     }
 }

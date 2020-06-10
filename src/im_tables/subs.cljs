@@ -33,6 +33,11 @@
    (get-in db (glue prefix [:query-parts-counts]))))
 
 (reg-sub
+ :main/error
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:error]))))
+
+(reg-sub
  :summary/item-details
  (fn [db [_ loc id]]
    (get-in db (glue loc [:cache :item-details id]))))
@@ -81,6 +86,11 @@
  :selection/text-filter
  (fn [db [_ prefix view]]
    (get-in db (glue prefix [:cache :column-summary view :filters :text]))))
+
+(reg-sub
+ :selection/possible-values
+ (fn [db [_ prefix view]]
+   (get-in db (glue prefix [:cache :possible-values view]))))
 
 (reg-sub
  :assets/model
@@ -263,3 +273,17 @@
      (when (and sortm (= (string/join "." (drop 1 (string/split view ".")))
                          (:path sortm)))
        (:direction sortm)))))
+
+(reg-sub
+ :filter-manager/filters
+ (fn [[_ loc]]
+   (subscribe [:main/temp-query loc]))
+ (fn [query [_ loc]]
+   (:where query)))
+
+(reg-sub
+ :filter-manager/constraint-logic
+ (fn [[_ loc]]
+   (subscribe [:main/temp-query loc]))
+ (fn [query [_ loc]]
+   (:constraintLogic query)))

@@ -1,23 +1,26 @@
 (defproject org.intermine/im-tables "0.9.0"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.520"]
-                 [org.clojure/core.async "0.4.500"]
-                 [re-frame "0.10.8"]
+                 [org.clojure/core.async "1.1.587"]
+                 [re-frame "0.12.0"]
                  [day8.re-frame/async-flow-fx "0.1.0"]
                  [day8.re-frame/forward-events-fx "0.0.6"]
-                 [reagent "0.8.1"]
+                 [reagent "0.10.0"]
                  [cljsjs/react-transition-group "1.2.0-0"
                   :exclusions [cljsjs/react cljsjs/react-dom]]
                  [cljsjs/highlight "9.12.0-2"]
                  [compojure "1.6.1"]
-                 [ring "1.7.1"]
+                 [ring "1.8.0"]
                  [cljs-http "0.1.46"]
                  [joshkh/ctrlz "0.3.0"]
                  [binaryage/oops "0.7.0"]
                  [inflections "0.13.2"]
                  [criterium "0.4.5"]
-                 [org.intermine/imcljs "1.0.2"]
-                 [day8.re-frame/test "0.1.5"]]
+                 [org.intermine/imcljs "1.1.0"]
+                 [day8.re-frame/test "0.1.5"]
+                 [cljsjs/react-day-picker "7.3.0-1"]
+                 [cljsjs/react-select "2.4.4-0"]
+                 [com.andrewmcveigh/cljs-time "0.5.2"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-less "1.7.5"]
@@ -62,16 +65,16 @@
 
   :main im-tables.core
 
-  :profiles {:dev {:dependencies [[binaryage/devtools "0.9.10"]
-                                  [day8.re-frame/re-frame-10x "0.4.4"]
+  :profiles {:dev {:dependencies [[binaryage/devtools "1.0.0"]
+                                  [day8.re-frame/re-frame-10x "0.6.2"]
                                   [day8.re-frame/tracing "0.5.3"]
                                   [figwheel-sidecar "0.5.19"]
-                                  [cider/piggieback "0.4.1"]]
+                                  [cider/piggieback "0.4.2"]]
                    :plugins [[lein-figwheel "0.5.19"]]}
              :repl {:source-paths ["dev"]}
              :uberjar {:prep-tasks ["build"]}
-             :kaocha {:dependencies [[lambdaisland/kaocha "0.0-554"]
-                                     [lambdaisland/kaocha-cljs "0.0-59"]]}}
+             :kaocha {:dependencies [[lambdaisland/kaocha "1.0-612"]
+                                     [lambdaisland/kaocha-cljs "0.0-71"]]}}
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src"]

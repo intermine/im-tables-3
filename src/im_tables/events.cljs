@@ -16,9 +16,11 @@
             [imcljs.query :as query]
             [imcljs.internal.utils :refer [scrub-url]]
             [oops.core :refer [oapply ocall oget]]
-            [clojure.string :as string :refer [split join starts-with?]]
+            [clojure.string :as string :refer [split join starts-with? trim]]
+            [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [im-tables.utils :refer [response->error constraints->logic]]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -72,7 +74,15 @@
 (reg-event-db
  :imt.io/save-list-success
  (fn [db [_ response]]
-   (.debug js/console "List Saved" response)
+   ;; This event only exists so it can be intercepted by BlueGenes to display
+   ;; an alert. So do not delete it even if it looks like a noop!
+   db))
+
+(reg-event-db
+ :imt.io/save-list-failure
+ (fn [db [_ response]]
+   ;; This event only exists so it can be intercepted by BlueGenes to display
+   ;; an alert. So do not delete it even if it looks like a noop!
    db))
 
 (reg-event-fx
@@ -81,6 +91,7 @@
  (fn [{db :db} [_ loc name query options]]
    {:db db
     :im-tables/im-operation {:on-success [:imt.io/save-list-success]
+                             :on-failure [:imt.io/save-list-failure]
                              :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins) options)}}))
 
 (reg-event-db
@@ -116,6 +127,32 @@
 (defn first-letter [letters]
   (first (drop-while (partial haystack-has? letters) alphabet)))
 
+(defn consts->letter
+  "Takes a sequence of constraints and returns the first unused letter.
+  Expects all constraints to have a `:code` key so make sure the query has been
+  run through `imcljs.query/sterilize-query`."
+  [consts]
+  (->> consts
+       (map :code)
+       (first-letter)))
+
+(defn logic-append
+  "Appends a new letter to a possibly empty constraint logic string."
+  [constlogic letter]
+  (if (empty? constlogic)
+    letter
+    (str constlogic " and " letter)))
+
+(defn constraint-append
+  "Append a new constraint to a query map. Computes the next letter to be assoced
+  as `:code` on the constraint, and appends it to the `:constraintLogic` string."
+  [query constraint]
+  (let [letter (consts->letter (:where query))
+        constraint+code (assoc constraint :code letter)]
+    (-> query
+        (update :where (fnil conj []) constraint+code)
+        (update :constraintLogic logic-append letter))))
+
 (reg-event-db
  :main/set-temp-query
  (sandbox)
@@ -128,10 +165,10 @@
  (fn [{db :db} [_ loc new-constraint]]
    {:db (update-in db [:temp-query :where]
                    (fn [constraints]
-                     (map (fn [constraint]
-                            (if (= (:code new-constraint) (:code constraint))
-                              new-constraint
-                              constraint)) constraints)))}))
+                     (mapv (fn [constraint]
+                             (if (= (:code new-constraint) (:code constraint))
+                               new-constraint
+                               constraint)) constraints)))}))
      ;:undo {:message [:div
      ;                 (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
      ;                 (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
@@ -141,51 +178,71 @@
  :filters/add-constraint
  (sandbox)
  (fn [{db :db} [_ loc new-constraint]]
-   {:db (update-in db [:temp-query :where]
-                   (fn [constraints]
-                     (conj constraints (assoc new-constraint :code (first-letter (map :code constraints))))))}))
+   {:db (update db :temp-query constraint-append new-constraint)}))
 
 (reg-event-fx
  :filters/remove-constraint
  (sandbox)
- (fn [{db :db} [_ loc new-constraint]]
-   {:db (update-in db [:temp-query :where]
-                   (fn [constraints]
-                     (remove nil? (map (fn [constraint]
-                                         (if (= constraint new-constraint)
-                                           nil
-                                           constraint)) constraints))))}))
+ (fn [{db :db} [_ loc const]]
+   (let [constraints  (get-in db [:temp-query :where])
+         constraints' (filterv #(not= const %) constraints)
+         const-logic  (constraints->logic constraints')]
+     {:db (-> db
+              (assoc-in [:temp-query :where] constraints')
+              (assoc-in [:temp-query :constraintLogic] const-logic))})))
 
 (reg-event-fx
  :filters/save-changes
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc]]
-   (let [added (not-empty (clojure.set/difference (set (:where (:temp-query db))) (set (:where (:query db)))))
-         removed (not-empty (clojure.set/difference (set (:where (:query db))) (set (:where (:temp-query db)))))
+   (let [db (update-in db [:temp-query :constraintLogic]
+                       ;; Recompute the constraintLogic if it's empty.
+                       ;; (Can only occur if the user was evil and deleted it.)
+                       (comp #(or % (constraints->logic (get-in db [:temp-query :where])))
+                             not-empty trim))
+         added (not-empty (set/difference (set (:where (:temp-query db)))
+                                          (set (:where (:query db)))))
+         removed (not-empty (set/difference (set (:where (:query db)))
+                                            (set (:where (:temp-query db)))))
+         changed-logic (not= (get-in db [:temp-query :constraintLogic])
+                             (get-in db [:query :constraintLogic]))
          model (get-in db [:service :model])]
       ; This event is usually fired when the filter dropdown closed which means it's fired
       ; a lot even when not necessary. To prevent multiple blank undos from piling up, we only
       ; attach the :undo side effect when something was actually added or removed from the query
      (cond-> {:db (assoc db :query (get db :temp-query))}
-       (or added removed) (assoc :undo {:message [:div
-                                                  (when added
-                                                    [:div
-                                                     [:div "Added filters"]
-                                                     (into [:span]
-                                                           (map (fn [{:keys [path op value]}]
-                                                                  [:div.table-history-detail
-                                                                   [:div (str (im-path/friendly model path))]
-                                                                   [:div (str op " " value)]]) added))])
-                                                  (when removed
-                                                    [:div
-                                                     [:div "Removed filters"]
-                                                     (into [:span]
-                                                           (map (fn [{:keys [path op value]}]
-                                                                  [:div.table-history-detail
-                                                                   [:div (str (im-path/friendly model path))]
-                                                                   [:div (str op " " value)]]) removed))])]
-                                        :location loc})
-       (or added removed) (assoc :dispatch [:im-tables.main/run-query loc])))))
+       (or added removed changed-logic)
+       (assoc
+        :undo {:message [:div
+                         (when added
+                           [:div
+                            [:div "Added filters"]
+                            (into [:span]
+                                  (map (fn [{:keys [path op value]}]
+                                         [:div.table-history-detail
+                                          [:div (str (im-path/friendly model path))]
+                                          [:div (str op " " value)]])
+                                       added))])
+                         (when removed
+                           [:div
+                            [:div "Removed filters"]
+                            (into [:span]
+                                  (map (fn [{:keys [path op value]}]
+                                         [:div.table-history-detail
+                                          [:div (str (im-path/friendly model path))]
+                                          [:div (str op " " value)]])
+                                       removed))])
+                         (when changed-logic
+                           [:div
+                            [:div "Changed logic"]
+                            [:span
+                             [:div.table-history-detail
+                              [:div (get-in db [:query :constraintLogic])]]
+                             [:div "to"]
+                             [:div.table-history-detail
+                              [:div (get-in db [:temp-query :constraintLogic])]]]])]
+               :location loc}
+        :dispatch [:im-tables.main/run-query loc])))))
 
 ;;;; TRANSIENT VALUES
 
@@ -266,8 +323,8 @@
  (fn [{db :db} [_ loc]]
    (let [pre-joins (set (get-in db [:query :joins]))
          post-joins (set (get-in db [:cache :rel-manager :joins]))
-         added (not-empty (clojure.set/difference post-joins pre-joins))
-         removed (not-empty (clojure.set/difference pre-joins post-joins))
+         added (not-empty (set/difference post-joins pre-joins))
+         removed (not-empty (set/difference pre-joins post-joins))
          model (get-in db [:service :model])]
      {:db (assoc db :query (get-in db [:cache :rel-manager]))
       :dispatch [:im-tables.main/run-query loc]
@@ -364,6 +421,29 @@
 ;;;;; MANIPULATE QUERY
 
 (reg-event-db
+ :main/store-possible-values
+ (sandbox)
+ (fn [db [_ loc view res]]
+   (let [items (->> res :results (map :item) (remove nil?) sort)]
+     (assoc-in db [:cache :possible-values view] items))))
+
+(reg-event-fx
+ :main/fetch-possible-values
+ (sandbox)
+ (fn [{db :db} [_ loc view]]
+   (let [model (get-in db [:service :model])
+         summary-path (im-path/adjust-path-to-last-class model view)
+         [class path] (split summary-path ".")]
+     {:db db
+      :im-tables/im-operation {:on-success [:main/store-possible-values loc view]
+                               :op (partial fetch/unique-values
+                                            (get db :service)
+                                            {:from class
+                                             :select [path]}
+                                            summary-path
+                                            1000)}})))
+
+(reg-event-db
  :main/save-column-summary
  (sandbox)
  (fn [db [_ loc view summary-response]]
@@ -388,9 +468,9 @@
  (fn [{db :db} [_ loc view]]
    (let [model (get-in db [:service :model])]
      (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
-       {:db (update-in db [:query :where] conj {:path view
-                                                :op "ONE OF"
-                                                :values current-selection})
+       {:db (update db :query constraint-append {:path view
+                                                 :op "ONE OF"
+                                                 :values current-selection})
         :dispatch [:im-tables.main/run-query loc]
         :undo {:location loc
                :message [:div
@@ -410,11 +490,33 @@
      (let [existing-constraints (get-in db [:query :where])
            existing-from? (not-empty (filter (comp (partial = [view ">="]) (juxt :path :op)) existing-constraints))
            existing-to? (not-empty (filter (comp (partial = [view "<="]) (juxt :path :op)) existing-constraints))]
-       {:db (update-in db [:query :where] #(cond->> %
-                                             (and from existing-from?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op ">=")) (assoc c :value from) c)))
-                                             (and from (not existing-from?)) (cons {:path view :op ">=" :value from})
-                                             (and to existing-to?) (map (fn [{:keys [path op] :as c}] (if (and (= path view) (= op "<=")) (assoc c :value to) c)))
-                                             (and to (not existing-to?)) (cons {:path view :op "<=" :value to})))
+       {:db (update db :query
+                    #(cond-> %
+                       (and from existing-from?)
+                       (update :where
+                               (partial mapv
+                                        (fn [{:keys [path op] :as c}]
+                                          (if (and (= path view) (= op ">="))
+                                            (assoc c :value from)
+                                            c))))
+
+                       (and from (not existing-from?))
+                       (constraint-append {:path view
+                                           :op ">="
+                                           :value from})
+
+                       (and to existing-to?)
+                       (update :where
+                               (partial mapv
+                                        (fn [{:keys [path op] :as c}]
+                                          (if (and (= path view) (= op "<="))
+                                            (assoc c :value to)
+                                            c))))
+
+                       (and to (not existing-to?))
+                       (constraint-append {:path view
+                                           :op "<="
+                                           :value to})))
         :dispatch [:im-tables.main/run-query loc]
         :undo {:location loc
                :message [:div
@@ -540,13 +642,17 @@
                                            (get db :query)
                                            {:start start
                                             :size (* limit (get-in db [:settings :buffer]))}))
-       {:db (assoc-in db [:cache :column-summary] {})
+       {:db (-> db
+                (assoc-in [:cache :column-summary] {})
+                (dissoc :error))
         :dispatch [:main/deconstruct loc :force? true]
-        :im-tables/im-operation-chan {:on-success (if merge?
-                                                    ^:flush-dom [:main/merge-query-response loc pagination]
-                                                    ^:flush-dom [:main/replace-query-response loc pagination])
-                                       ; Hand the request atom off to the effect that takes from it
-                                      :channel (get @previous-requests loc)}}))))
+        :im-tables/im-operation-chan
+        {; Hand the request atom off to the effect that takes from it
+         :channel (get @previous-requests loc)
+         :on-success (if merge?
+                       ^:flush-dom [:main/merge-query-response loc pagination]
+                       ^:flush-dom [:main/replace-query-response loc pagination])
+         :on-failure ^:flush-dom [:error/response loc]}}))))
 
 (reg-event-db
  :main/save-decon-count
@@ -610,3 +716,28 @@
  (sandbox)
  (fn [db [_ loc lang response]]
    (update db :codegen assoc :code response :lang lang)))
+
+(reg-event-db
+ :filter-manager/change-constraint
+ (sandbox)
+ (fn [db [_ loc value]]
+   (assoc-in db [:temp-query :constraintLogic] value)))
+
+(reg-event-fx
+ :main/retry-failure
+ (sandbox)
+ (fn [{db :db} [_ loc]]
+   {:db (dissoc db :error)
+    :dispatch [:im-tables/reload loc]}))
+
+(reg-event-fx
+ :error/response
+ (sandbox)
+ (fn [{db :db} [_ loc res]]
+   (let [{error-type :type :as error-map} (response->error res)]
+     (cond-> {:db (-> db
+                      (assoc :error error-map)
+                      ;; We also want to remove any previous successful response.
+                      (dissoc :response))}
+       (= error-type :network)
+       (assoc :im-tables/log-error ["Network error" {:response res}])))))
