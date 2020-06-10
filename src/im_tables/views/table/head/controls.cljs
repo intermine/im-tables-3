@@ -11,7 +11,8 @@
             [im-tables.utils :refer [on-event pretty-number display-name]]
             [cljs-time.coerce :as time-coerce]
             [cljs-time.format :as time-format]
-            [goog.style :as gstyle]))
+            [goog.style :as gstyle]
+            [goog.dom :as gdom]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
@@ -547,7 +548,7 @@
                               (oget (gstyle/getSize below) :width))
                             above-w))
                    0)
-        pos (-> (gstyle/getClientPosition above)
+        pos (-> (gstyle/getRelativePosition above (gdom/getAncestorByClass above "im-table"))
                 (ocall :translate offset-x offset-y))]
     (gstyle/setPosition below pos)))
 
