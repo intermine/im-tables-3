@@ -69,6 +69,9 @@
     .filter-item {
         display: flex;
         flex-flow: column;
+        // Bluegenes' CSS sets this to hidden, causing selector and calendar
+        // component to not be visible.
+        overflow: visible;
 
         .filter-name {
             margin-bottom: 0.5em;
