@@ -44,8 +44,8 @@
   [:div.histo-bucket
    {:title (when data
              (let [base-amount (/ (- max min) buckets)
-                   low-interval (+ (* base-amount (dec bucket)) 364)
-                   high-interval (+ (* base-amount bucket) 364)]
+                   low-interval (+ (* base-amount (dec bucket)) min)
+                   high-interval (+ (* base-amount bucket) min)]
                (str (pretty-number low-interval) " to " (pretty-number high-interval)
                     ": " count (if (> count 1) " values" " value"))))
     :class (if data "full" "empty")
