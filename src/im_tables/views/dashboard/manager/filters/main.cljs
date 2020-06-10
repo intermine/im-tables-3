@@ -38,7 +38,7 @@
               (for [path (:select @query)]
                 [:option {:value path}
                  (str/join " » " (path/display-name @model path))]))
-        [:button.btn.btn-info.constraint-add
+        [:button.btn.btn-raised.btn-info.constraint-add
          {:on-click #(when-let [path @!path]
                        (dispatch [:main/fetch-possible-values loc path])
                        (dispatch [:filters/add-constraint loc {:path path
@@ -76,7 +76,7 @@
    [:button.btn.btn-default
     {:on-click #(dispatch [:modal/close loc])}
     "Cancel"]
-   [:button.btn.btn-success
+   [:button.btn.btn-raised.btn-success
     {:on-click (fn []
                  ; Apply the changes
                  (dispatch [:filters/save-changes loc])

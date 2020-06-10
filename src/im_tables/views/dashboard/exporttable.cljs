@@ -46,7 +46,9 @@
    :body [:div.modal-body
           [:form [:label "Select a format" [modal-body loc]]]
           [:a {:id "hiddendownloadlink" :download "download"}]]
-   :footer [:button.btn.btn-primary {:on-click (fn [] (dispatch [:exporttable/download loc]))} "Download now!"]})
+   :footer [:button.btn.btn-raised.btn-primary
+            {:on-click (fn [] (dispatch [:exporttable/download loc]))}
+            "Download now!"]})
 
 (defn exporttable [loc]
   [:button.btn.btn-default

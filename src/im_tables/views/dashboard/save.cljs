@@ -32,7 +32,7 @@
      [:button.btn.btn-default
       {:on-click #(dispatch [:modal/close loc])}
       "Cancel"]
-     [:button.btn.btn-success
+     [:button.btn.btn-raised.btn-success
       {:on-click on-submit}
       "Save"]]))
 

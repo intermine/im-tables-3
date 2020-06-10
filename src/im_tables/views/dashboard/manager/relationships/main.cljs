@@ -26,8 +26,9 @@
          [:div
           (into [:span] (join-with-arrows (path/display-name model view)))
           [:div.btn-group.pull-right
-           [:button.btn {:class (if (not is-join?) "btn-primary" "btn-default")
-                         :on-click rmv-join-fn}
+           [:button.btn.btn-raised
+            {:class (if (not is-join?) "btn-primary" "btn-default")
+             :on-click rmv-join-fn}
             ; You may ask why there are so many invisible icons here - it's (unfortunately)
             ; a hack to keep things visually aligned when switching from selected to unselected.
             ; We need the checkmarks to indicate clearly which is selected!
@@ -36,8 +37,9 @@
             [:i {:class (if (not is-join?) "fa fa-check" "fa fa-check invisible") :aria-hidden true}]
             " Required"
             [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]]
-           [:button.btn {:class (if is-join? "btn-primary" "btn-default")
-                         :on-click add-join-fn}
+           [:button.btn.btn-raised
+            {:class (if is-join? "btn-primary" "btn-default")
+             :on-click add-join-fn}
             [:i {:class (if is-join? "fa fa-check" "fa fa-check invisible") :aria-hidden true}]
             " Optional"
             [:i {:class "fa fa-check invisible fa-fw" :aria-hidden true}]]]]
@@ -69,7 +71,7 @@
        [:button.btn.btn-default
         {:on-click #(dispatch [:modal/close loc])}
         "Cancel"]
-       [:button.btn.btn-success
+       [:button.btn.btn-raised.btn-success
         {:on-click (fn []
                      ; Apply the changes
                      (dispatch [:rel-manager/apply-changes loc])

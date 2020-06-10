@@ -72,7 +72,7 @@
              [:button.btn.btn-default
               {:data-dismiss "modal"}
               "Cancel"]
-             [:button.btn.btn-success
+             [:button.btn.btn-raised.btn-success
               {:data-dismiss "modal"
                :disabled (< (count @selected) 1)
                :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
@@ -95,7 +95,7 @@
        [:button.btn.btn-default
         {:on-click #(dispatch [:modal/close loc])}
         "Cancel"]
-       [:button.btn.btn-success
+       [:button.btn.btn-raised.btn-success
         {:data-dismiss "modal"
          :disabled (< (count @selected) 1)
          :on-click (fn []

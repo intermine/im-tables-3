@@ -54,6 +54,7 @@
     @histogram-bg: aliceblue;
     min-height: 200px;
     padding-bottom: 40px;
+    position: relative;
 
     .hljs {
         white-space: pre;
@@ -700,6 +701,10 @@
                 margin-right: @spacer/8;
             }
         }
+
+        .histo-scale {
+            display: flex;
+        }
     }
 
     .numerical-content-wrapper {
@@ -749,11 +754,16 @@
 
     .table-error {
         .button-group {
+            display: flex;
             margin-top: @spacer;
             margin-bottom: @spacer;
 
             button {
                 margin-right: @spacer/2;
+            }
+
+            .pull-right {
+                margin-left: auto;
             }
         }
     }
