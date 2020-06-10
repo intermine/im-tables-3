@@ -337,7 +337,7 @@
            :possible-values @possible-values
            :disabled false
            :op op]]
-         [:button.btn.btn-danger.constraint-delete
+         [:button.btn.btn-raised.btn-danger.constraint-delete
           {:on-click (fn [] (dispatch [:filters/remove-constraint loc const]))
            :type "button"} [:i.fa.fa-times]]]))))
 

@@ -90,7 +90,7 @@
        [:button.btn.btn-default
         {:on-click #(dispatch [:modal/close loc])}
         "Close"]
-       [:button.btn.btn-primary
+       [:button.btn.btn-raised.btn-primary
         {:on-click (fn [] (save-to-disk "query" @code (:lang @options)))}
         [:i.fa.fa-save] " Download"]])))
 
