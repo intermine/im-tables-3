@@ -75,11 +75,11 @@ ERROR: " query-error)))))
         :on-click toggle-error
         :class (when show-error? "active")}
        [:i.fa.fa-bug] " Show error"])
-    [:button.btn.btn-info
+    [:button.btn.btn-raised.btn-info
      {:type "button"
       :on-click #(dispatch [:im-tables/restart loc])}
      [:i.fa.fa-refresh] " Reset"]
-    [:a.btn.btn-primary.pull-right
+    [:a.btn.btn-raised.btn-primary.pull-right
      {:href mailto}
      [:i.fa.fa-envelope] " Send a bug report"]]
    (when show-query?
@@ -114,11 +114,11 @@ ERROR: " query-error)))))
         :on-click toggle-error
         :class (when show-error? "active")}
        [:i.fa.fa-code] " Show error"])
-    [:button.btn.btn-info
+    [:button.btn.btn-raised.btn-info
      {:type "button"
       :on-click #(dispatch [:main/retry-failure loc])}
      [:i.fa.fa-refresh] " Retry"]
-    [:a.btn.btn-primary.pull-right
+    [:a.btn.btn-raised.btn-primary.pull-right
      {:href mailto}
      [:i.fa.fa-envelope] " Send a bug report"]]
    (when show-query?
@@ -145,11 +145,11 @@ ERROR: " query-error)))))
         :on-click toggle-error
         :class (when show-error? "active")}
        [:i.fa.fa-code] " Show error"])
-    [:button.btn.btn-info
+    [:button.btn.btn-raised.btn-info
      {:type "button"
       :on-click clear-error!}
      [:i.fa.fa-refresh] " Reset"]
-    [:a.btn.btn-primary.pull-right
+    [:a.btn.btn-raised.btn-primary.pull-right
      {:href mailto}
      [:i.fa.fa-envelope] " Send a bug report"]]
    (when show-error?
