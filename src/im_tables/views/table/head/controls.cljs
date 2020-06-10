@@ -70,8 +70,9 @@
                  :no-value? true}])
 
 (defn filter-input []
-  (fn [loc view val]
-    [:div.inline-filter [:i.fa.fa-filter]
+  (fn [loc view val !scale-type]
+    [:div.inline-filter
+     [:i.fa.fa-filter]
      [:input.form-control
       {:type "text"
        :value val
@@ -80,7 +81,12 @@
                     (dispatch [:select/set-text-filter
                                loc
                                view
-                               (oget e :target :value)]))}]]))
+                               (oget e :target :value)]))}]
+     [:button.btn.btn-default.btn-sm
+      {:type "button"
+       :on-click #(reset! !scale-type
+                          (if (= @!scale-type :linear) :log :linear))}
+      (name @!scale-type)]]))
 
 (defn force-close
   "Force a dropdown to close "
@@ -394,7 +400,7 @@
         human-name (display-name model view)]
     [:h4.title
      (cond
-       numerical? (str "Showing numerical distribution for " (pretty-number (count results)) " " human-name)
+       numerical? (str "Showing numerical distribution for " (pretty-number uniqueValues) " " human-name)
        :else (if (< (count results) uniqueValues)
                (str "Showing " (pretty-number (count results)) " of "
                     (pretty-number uniqueValues) " " human-name)
@@ -468,7 +474,8 @@
 (defn column-summary [loc view local-state !dropdown]
   (let [response (subscribe [:selection/response loc view])
         selections (subscribe [:selection/selections loc view])
-        text-filter (subscribe [:selection/text-filter loc view])]
+        text-filter (subscribe [:selection/text-filter loc view])
+        !scale-type (reagent/atom :linear)]
     (fn [loc view local-state !dropdown]
       (cond
         (nil? @response)
@@ -484,8 +491,8 @@
         [:form.form.column-summary
          [column-summary-title loc view @response]
          [:div.main-view
-          [histogram/main (:results @response)]
-          [filter-input loc view @text-filter]
+          [histogram/main (:results @response) @!scale-type]
+          [filter-input loc view @text-filter !scale-type]
           [:table.table.table-striped.table-condensed.table-scrollable
            [:thead [:tr [:th
                          (if (empty? @selections)
