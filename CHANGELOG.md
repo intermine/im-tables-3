@@ -1,3 +1,34 @@
+## 0.10.0 (2020-06-11)
+
+- Make im-tables-3 more feature complete [#79](https://github.com/intermine/im-tables-3/pull/79)
+    - Project setup
+        - Update dependencies
+        - Run tests against local biotestmine
+        - Improve dev experience by not rebooting table on changes
+        - Fix README code example
+    - Constraints
+        - New searchable dropdown and calendar components
+        - Filter constraint ops to those applicable to data type
+        - Add IS NULL and IS NOT NULL
+        - Filter manager for adding and modifying constraints and logic
+    - Interface
+        - Handle overly wide tables by displaying scrollbar
+        - Fix numerical column summary title pluralisation
+        - Column summary scrollbar for tbody instead of entire body
+        - Do not add href to cells until we are sure URL is complete
+    - Error handling
+        - Views for No Results, Invalid Query, Server Error and Im-tables Crashed (error boundary)
+        - Use async-flow for booting and handle invalid responses
+        - Add save-list-failure event to be intercepted by BlueGenes
+- Fix and improve histogram in numeric column summary [#82](https://github.com/intermine/im-tables-3/pull/82)
+    - Linear/log scale toggle buttons (also added to regular column summary)
+    - Min and max labels for X axis
+    - Average line (with tooltip showing average)
+    - Tooltips for buckets showing interval and count of values
+- Fix styling problems when used in Bluegenes [#86](https://github.com/intermine/im-tables-3/pull/86)
+    - Buttons with unreadable text
+- Modals need a max height and scrollbar [#84](https://github.com/intermine/im-tables-3/issues/84)
+
 ## 0.9.0 (2019-11-01)
 
 - Only show summary fields instead of all attributes in cell popovers [#56](https://github.com/intermine/im-tables-3/pull/56)
