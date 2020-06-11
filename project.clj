@@ -1,4 +1,7 @@
 (defproject org.intermine/im-tables "0.10.0"
+  :licence "LGPL-2.1-only"
+  :description "ClojureScript library to display and manipulate InterMine query results on a webpage"
+  :url "http://www.intermine.org"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.520"]
                  [org.clojure/core.async "1.1.587"]
