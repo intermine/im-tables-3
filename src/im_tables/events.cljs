@@ -1,6 +1,5 @@
 (ns im-tables.events
   (:require [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx dispatch]]
-            [day8.re-frame.async-flow-fx]
     ;[day8.re-frame.undo :as undo :refer [undoable]]
             [joshkh.undo :as undo :refer [undoable]]
     ;[joshkh.re-frame.undo :as undo :refer [undoable]]
