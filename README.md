@@ -221,6 +221,7 @@ lein cljsbuild once min
 The release process is a combination of the above commands, with some additional steps. Generally, you'll want to do the following.
 
 1. Update the version number in **project.clj**.
+1. Prepend changes since previous version to **CHANGELOG.md**.
 1. Commit this change and tag it using `git tag -a v1.0.0 -m "Release v1.0.0"`, replacing *1.0.0* with your version number.
 1. Push your commit and tag using `git push origin` followed by `git push origin v1.0.0` (again replace *1.0.0* with your version number). Make sure that you push to the intermine repository, not just your fork!
 1. Deploy a new uberjar to Clojars with `lein deploy`.
