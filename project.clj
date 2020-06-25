@@ -1,4 +1,4 @@
-(defproject org.intermine/im-tables "0.10.0"
+(defproject org.intermine/im-tables "0.10.1"
   :licence "LGPL-2.1-only"
   :description "ClojureScript library to display and manipulate InterMine query results on a webpage"
   :url "http://www.intermine.org"

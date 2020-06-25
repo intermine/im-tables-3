@@ -1,3 +1,7 @@
+## 0.10.1 (2020-06-25)
+
+- Fix interleaved booting causing performance issues and race conditions in specific scenarios [#92](https://github.com/intermine/im-tables-3/pull/92)
+
 ## 0.10.0 (2020-06-11)
 
 - Make im-tables-3 more feature complete [#79](https://github.com/intermine/im-tables-3/pull/79)
