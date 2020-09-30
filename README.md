@@ -135,7 +135,7 @@ If you want to run the unit tests, you'll need Node.js and npm. Once these have 
 npm install
 ```
 
-### Quickstart
+### Quickstart:
 
 These commands are explained in more depth below, but if you know what you want here's a quick reference of the most useful ones.
 
