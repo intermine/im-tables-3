@@ -68,7 +68,7 @@
               :cdn "http://cdn.intermine.org"
               :pagination {:start 0
                            :limit 20}
-              :codegen {:lang "js"
+              :codegen {:lang "py"
                         :comments? true
                         :html? true
                         :highlight? true}
