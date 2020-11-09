@@ -3,7 +3,7 @@
             [clojure.string :refer [split]]
             [oops.core :refer [oget]]))
 
-(def show-amounts (list 10 20 50 100 250))
+(def amounts #{10 20 50 100 250})
 
 (defn main []
   (fn [loc {:keys [start limit total]}]
@@ -11,12 +11,17 @@
      [:div.btn-group
       [:label "Rows per page"]]
      [:div.btn-group
-      (into [:select.form-control
-             {:value     (or limit "")
-              :on-change (fn [e]
-                           (dispatch [:imt.settings/update-pagination-limit loc (js/parseInt (oget e :target :value))]))}]
-            (cond-> (map (fn [a] [:option {:value a} a]) (take-while (partial > total) show-amounts))
-              (and total (< total 250)) (concat (list [:option {:value total} (str "All (" total ")")]))))]
+      (let [all-amounts (sort (some->> limit (conj amounts)))
+            highest (last all-amounts)]
+        (into [:select.form-control
+               {:value     (or limit "")
+                :on-change (fn [e]
+                             (dispatch [:imt.settings/update-pagination-limit loc (js/parseInt (oget e :target :value))]))}]
+              (cond-> (mapv (fn [a]
+                              [:option {:value a} a])
+                            (take-while #(< % total) all-amounts))
+                (and (number? total) (< total highest))
+                (conj [:option {:value total} (str "All (" total ")")]))))]
      [:div.btn-group
       [:button.btn.btn-default
        {:disabled (< start 1)
@@ -37,7 +42,3 @@
        {:disabled (<= (- total start) limit)
         :on-click (fn [] (dispatch [:imt.settings/update-pagination-fullinc loc]))}
        [:span.glyphicon.glyphicon-step-forward]]]]))
-
-
-
-
