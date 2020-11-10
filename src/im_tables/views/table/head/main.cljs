@@ -15,13 +15,14 @@
 
 (defn header [loc]
   (let [model (subscribe [:assets/model loc])
+        query (subscribe [:main/query loc])
         draggable? (reagent/atom true)]
-    (fn [loc {:keys [idx header view dragging-over dragging-item col-count] :as data}]
+    (fn [loc {:keys [idx view dragging-over dragging-item col-count]}]
       (let [drag-class (cond
                          (and (= idx dragging-over) (< idx dragging-item)) "drag-left"
                          (and (= idx dragging-over) (> idx dragging-item)) "drag-right")
-            [class & path] (split header " > ")
-            display-name (when (and @model view) (impath/display-name @model view))]
+            [attrib-name parent-name] (when (and @model view)
+                                        (rseq (impath/display-name (assoc @model :type-constraints (:where @query)) view)))]
         [:th
          {:class drag-class
           :draggable @draggable?
@@ -43,5 +44,5 @@
           :on-drag-end (fn [] (dispatch ^:flush-dom [:style/dragging-finished loc]))}
          [controls/toolbar loc view idx col-count]
          [:div
-          [:div (last (drop-last display-name))]
-          [:div (last display-name)]]]))))
+          [:div parent-name]
+          [:div attrib-name]]]))))

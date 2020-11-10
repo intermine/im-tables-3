@@ -86,7 +86,8 @@
                  (into [:tr]
                        (->> @collapsed-views
                             (map-indexed (fn [idx h]
-                                           (let [display-name (when (and @model h) (impath/display-name @model h))
+                                           (let [[attrib-name parent-name] (when (and @model h)
+                                                                             (rseq (impath/display-name (assoc @model :type-constraints (:where @query)) h)))
                                                  active-filters (not-empty (filter (partial constraint-has-path? h) (:where @query)))]
                                              ; This is a simple HTML representation of
                                              ; im-tables.views.table.head.controls/toolbar
@@ -100,8 +101,8 @@
                                                 {:class (when active-filters "active-filter")}]
                                                [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]]
                                               [:div
-                                               [:div (last (drop-last display-name))]
-                                               [:div (last display-name)]]])))))]
+                                               [:div parent-name]
+                                               [:div attrib-name]]])))))]
                 (into [:tbody] (map (fn [row]
                                       (into [:tr] (map (fn [cell]
                                                          [:td

@@ -70,6 +70,28 @@
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
                              (string/join "/" [nil mine "report" class objectId]))}}})
 
+;; Query with subclass constraint
+(def subclass-config
+  {:service {:root "https://www.flymine.org/flymine"}
+   :query {:from "Gene"
+           :select ["Gene.secondaryIdentifier",
+                    "Gene.symbol",
+                    "Gene.primaryIdentifier",
+                    "Gene.organism.name",
+                    "Gene.interactions.participant2.alleles.primaryIdentifier",
+                    "Gene.interactions.participant2.alleles.symbol",
+                    "Gene.interactions.participant2.alleles.alleleClass",
+                    "Gene.interactions.participant2.alleles.organism.name"]
+           :where [{:path "Gene"
+                    :op "LOOKUP"
+                    :value "eve"}
+                   {:path "Gene.interactions.participant2"
+                    :type "Gene"}]}
+   :settings {:pagination {:limit 10}
+              :links {:vocab {:mine "flymine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
+
 ;; This query has a very wide column, making it great for testing overflow.
 (def flymine-config
   {:service {:root "https://www.flymine.org/flymine"}
@@ -100,7 +122,7 @@
 (def number-of-tables 1)
 (defn reboot-tables-fn []
   (dotimes [n number-of-tables]
-    (re-frame/dispatch-sync [:im-tables/load [:test :location n] flymine-config])))
+    (re-frame/dispatch-sync [:im-tables/load [:test :location n] subclass-config])))
 
 (defn main-panel []
   (let [show? (r/atom true)]
