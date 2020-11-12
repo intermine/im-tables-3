@@ -14,16 +14,18 @@
        (interpose [:span [:i.fa.fa-angle-double-right.fa-fw]])))
 
 (defn constraint [loc]
-  (let [model (subscribe [:assets/model loc])]
-    (fn [loc {:keys [path op value code] :as const}]
+  (let [model (subscribe [:assets/model loc])
+        consts (subscribe [:filter-manager/filters loc])]
+    (fn [loc {:keys [path op value code] :as const} index]
       [:li.list-group-item.filter-item
        (-> [:div.filter-name]
-           (into (join-with-arrows (path/display-name @model path)))
-           (conj [:span.text-muted (str " (" code ")")]))
-       [controls/constraint loc path const]])))
+           (into (join-with-arrows (path/display-name (assoc @model :type-constraints @consts) path)))
+           (cond-> code (conj [:span.text-muted (str " (" code ")")])))
+       [controls/constraint loc path const index]])))
 
 (defn new-constraint [loc]
   (let [model (subscribe [:assets/model loc])
+        consts (subscribe [:filter-manager/filters loc])
         query (subscribe [:main/temp-query loc])
         !path (r/atom (-> @query :select first))]
     (fn [loc]
@@ -37,10 +39,10 @@
                              (reset! !path (oget e :target :value)))}]
               (for [path (:select @query)]
                 [:option {:value path}
-                 (str/join " » " (path/display-name @model path))]))
+                 (str/join " » " (path/display-name (assoc @model :type-constraints @consts) path))]))
         [:button.btn.btn-raised.btn-info.constraint-add
          {:on-click #(when-let [path @!path]
-                       (dispatch [:main/fetch-possible-values loc path])
+                       (dispatch [:main/fetch-possible-values loc path true])
                        (dispatch [:filters/add-constraint loc {:path path
                                                                :op "="
                                                                :value nil}]))
@@ -49,9 +51,8 @@
 
 (defn constraint-form [loc]
   (-> [:ul.list-group.filter-manager]
-      (into (for [const @(subscribe [:filter-manager/filters loc])]
-              ^{:key (:code const)}
-              [constraint loc const]))
+      (into (for [[i const] (map-indexed vector @(subscribe [:filter-manager/filters loc]))]
+              [constraint loc const i]))
       (conj [new-constraint loc])))
 
 (defn constraint-logic [loc]
@@ -99,7 +100,7 @@
                   ; Fetch possible values for all filters present
                   (doseq [view (->> @(subscribe [:filter-manager/filters loc])
                                     (map :path))]
-                    (dispatch [:main/fetch-possible-values loc view]))
+                    (dispatch [:main/fetch-possible-values loc view true]))
                   ; Build the modal markup and send it to app-db
                   (dispatch [:modal/open loc (build-modal loc)]))}
      [:i.fa.fa-filter] " Manage Filters"]]])

@@ -26,6 +26,9 @@
                 {:op "NOT IN"
                  :label "Not in list"
                  :applies-to #{nil}}
+                {:op "ISA"
+                 :label "Is a"
+                 :applies-to #{nil}}
                 {:op "="
                  :label "="
                  :applies-to #{"java.lang.String" "java.lang.Boolean" "java.lang.Integer" "java.lang.Double" "java.lang.Float" "java.util.Date"}}
@@ -254,87 +257,109 @@
          (zipmap (map :op (filter :multiple-values? operators))
                  (repeat :multi))))
 
+;; This won't add/remove :code if you switch from/to a type constraint. We just
+;; want to support showing them and changing their value; it's currently not
+;; possible to add a new type constraint. Once we support that in the future,
+;; we can handle the forementioned case.
 (defn update-constraint
   "Takes a constraint map and a map with a new value and/or operation, and
   updates the original constraint map, making sure to update the value key if
-  switching between single and multi constraints."
+  switching between single and multi constraints. Also handles type constraints."
   [{old-op :op :as constraint} {new-op :op new-value :value :as new-const}]
-  (cond-> constraint
-    (contains? new-const :op)
-    (as-> const
-          (assoc const :op new-op)
-      (case [(op-type old-op) (op-type new-op)]
-        [:single :multi] (-> const
-                             (set/rename-keys {:value :values})
-                             (update :values #(if (empty? %) (list) (list %))))
-        [:multi :single] (-> const
-                             (set/rename-keys {:values :value})
-                             (update :value first))
-        const))
-    (contains? new-const :value)
-    (as-> const
+  (let [old-op (if (contains? constraint :type) "ISA" old-op)] ; Type constraints have no op.
+    (cond-> constraint
+      (contains? new-const :op)
+      (as-> const
+        (cond-> const
+          (and (= old-op "ISA") (not= new-op "ISA")) ; Changed away from type constraint.
+          (set/rename-keys {:type :value})) ; Type constraints are :single op.
+        (case [(op-type old-op) (op-type new-op)]
+          [:single :multi] (-> const
+                               (set/rename-keys {:value :values})
+                               (update :values #(if (empty? %) (list) (list %))))
+          [:multi :single] (-> const
+                               (set/rename-keys {:values :value})
+                               (update :value first))
+          const)
+        (cond-> const
+          (not= new-op "ISA")
+          (assoc :op new-op))
+        (cond-> const
+          (and (not= old-op "ISA") (= new-op "ISA")) ; Changed to a type constraint.
+          (-> (dissoc :op) (set/rename-keys {:value :type}))))
+      (contains? new-const :value)
+      (as-> const
+        (if (contains? const :type)
+          (assoc const :type new-value)
           (case (op-type (:op const))
             :single (assoc const :value new-value)
-            :multi (assoc const :values new-value)))))
+            :multi (assoc const :values new-value)))))))
 
 (defn blank-constraint [loc view]
   (let [possible-values (subscribe [:selection/possible-values loc view])
-        model (subscribe [:assets/model loc])]
+        model (subscribe [:assets/model loc])
+        consts (subscribe [:filter-manager/filters loc])]
     (fn [loc view state]
-      (let [submit-constraint (fn [] (dispatch
+      (let [model (assoc @model :type-constraints @consts)
+            submit-constraint (fn [] (dispatch
                                       [:filters/add-constraint loc @state]
                                       (reset! state {:path view :op "=" :value nil})))
             on-constraint-change (fn [new-const]
                                    (swap! state update-constraint new-const))
             on-change (fn [v]
                         (swap! state update-constraint {:value v}))
-            type (path/data-type @model view)]
-        [:div.imtable-constraint
-         [:div.constraint-operator
-          [constraint-dropdown
-           {:value (:op @state)
-            :on-change on-constraint-change
-            :data-type type}]]
-         [:div.constraint-input
-          [constraint-input
-           :model @model
-           :path view
-           :value (or (:value @state)
-                      (:values @state))
-           :typeahead? true
-           :on-change on-change
-           :on-blur on-change
-           :type type
-           :possible-values @possible-values
-           :disabled false
-           :op (:op @state)]]]))))
-
-(defn constraint [loc view]
-  (let [possible-values (subscribe [:selection/possible-values loc view])
-        model (subscribe [:assets/model loc])]
-    (fn [loc view {:keys [path op value values code] :as const}]
-      (let [on-constraint-change (fn [new-const]
-                                   (dispatch [:filters/update-constraint loc
-                                              (update-constraint const new-const)]))
-            on-change (fn [v]
-                        (dispatch [:filters/update-constraint loc
-                                   (update-constraint const {:value v})]))
-            type (path/data-type @model view)]
+            data-type (path/data-type model view)
+            op (if (:type @state) "ISA" (:op @state))]
         [:div.imtable-constraint
          [:div.constraint-operator
           [constraint-dropdown
            {:value op
             :on-change on-constraint-change
-            :data-type type}]]
+            :data-type data-type}]]
          [:div.constraint-input
           [constraint-input
-           :model @model
-           :path path
-           :value (or value values)
+           :model model
+           :path view
+           :value (or (:value @state)
+                      (:values @state)
+                      (:type @state))
            :typeahead? true
            :on-change on-change
            :on-blur on-change
-           :type type
+           :type data-type
+           :possible-values @possible-values
+           :disabled false
+           :op op]]]))))
+
+(defn constraint [loc view]
+  (let [possible-values (subscribe [:selection/possible-values loc view])
+        model (subscribe [:assets/model loc])
+        consts (subscribe [:filter-manager/filters loc])]
+    (fn [loc view {:keys [path op value values type code] :as const} index]
+      (let [model (assoc @model :type-constraints @consts)
+            on-constraint-change (fn [new-const]
+                                   (dispatch [:filters/update-constraint loc index
+                                              (update-constraint const new-const)]))
+            on-change (fn [v]
+                        (dispatch [:filters/update-constraint loc index
+                                   (update-constraint const {:value v})]))
+            data-type (path/data-type model view)
+            op (if type "ISA" op)]
+        [:div.imtable-constraint
+         [:div.constraint-operator
+          [constraint-dropdown
+           {:value op
+            :on-change on-constraint-change
+            :data-type data-type}]]
+         [:div.constraint-input
+          [constraint-input
+           :model model
+           :path path
+           :value (or value values type) ; Type is used by type constraints.
+           :typeahead? true
+           :on-change on-change
+           :on-blur on-change
+           :type data-type
            :possible-values @possible-values
            :disabled false
            :op op]]
@@ -345,10 +370,10 @@
 (defn filter-view [loc view blank-constraint-atom]
   (let [query (subscribe [:main/temp-query loc view])]
     (fn [loc view]
-      (let [active-filters (map (fn [c]
-                                  [constraint loc view c])
-                                (filter (partial constraint-has-path? view)
-                                        (:where @query)))
+      (let [active-filters (map-indexed (fn [i c]
+                                          [constraint loc view c i])
+                                        (filter (partial constraint-has-path? view)
+                                                (:where @query)))
             dropdown (reagent/current-component)]
         [:form.form.filter-view {:on-submit (fn [e]
                                               (ocall e "preventDefault")
@@ -587,7 +612,7 @@
                  "show.bs.dropdown"
                  (fn []
                    (when (nil? @possible-values)
-                     (dispatch [:main/fetch-possible-values loc view]))
+                     (dispatch [:main/fetch-possible-values loc view false]))
                    (when-let [dropdown @!dropdown-menu]
                      (when-let [toggle @!filter-dropdown]
                        (place-below! dropdown toggle

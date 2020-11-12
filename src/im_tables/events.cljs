@@ -128,11 +128,11 @@
 
 (defn consts->letter
   "Takes a sequence of constraints and returns the first unused letter.
-  Expects all constraints to have a `:code` key so make sure the query has been
-  run through `imcljs.query/sterilize-query`."
+  Expects all applicable constraints to have a `:code` key so make sure the
+  query has been run through `imcljs.query/sterilize-query`."
   [consts]
   (->> consts
-       (map :code)
+       (keep :code)
        (first-letter)))
 
 (defn logic-append
@@ -146,11 +146,13 @@
   "Append a new constraint to a query map. Computes the next letter to be assoced
   as `:code` on the constraint, and appends it to the `:constraintLogic` string."
   [query constraint]
-  (let [letter (consts->letter (:where query))
-        constraint+code (assoc constraint :code letter)]
-    (-> query
-        (update :where (fnil conj []) constraint+code)
-        (update :constraintLogic logic-append letter))))
+  (if (contains? constraint :type) ; Type constraints don't have a code.
+    (update query :where (fnil conj []) constraint)
+    (let [letter (consts->letter (:where query))
+          constraint+code (assoc constraint :code letter)]
+      (-> query
+          (update :where (fnil conj []) constraint+code)
+          (update :constraintLogic logic-append letter)))))
 
 (reg-event-db
  :main/set-temp-query
@@ -160,18 +162,13 @@
 
 (reg-event-fx
  :filters/update-constraint
- [(sandbox) (undoable)]
- (fn [{db :db} [_ loc new-constraint]]
-   {:db (update-in db [:temp-query :where]
-                   (fn [constraints]
-                     (mapv (fn [constraint]
-                             (if (= (:code new-constraint) (:code constraint))
-                               new-constraint
-                               constraint)) constraints)))}))
-     ;:undo {:message [:div
-     ;                 (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
-     ;                 (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
-     ;       :location loc}
+ (sandbox)
+ (fn [{db :db} [_ loc index new-constraint]]
+   (let [constraints (get-in db [:temp-query :where])
+         const-logic (constraints->logic constraints)]
+     {:db (-> db
+              (assoc-in [:temp-query :where index] new-constraint)
+              (assoc-in [:temp-query :constraintLogic] const-logic))})))
 
 (reg-event-fx
  :filters/add-constraint
@@ -429,18 +426,17 @@
 (reg-event-fx
  :main/fetch-possible-values
  (sandbox)
- (fn [{db :db} [_ loc view]]
-   (let [model (get-in db [:service :model])
-         summary-path (im-path/adjust-path-to-last-class model view)
-         [class path] (split summary-path ".")]
-     {:db db
-      :im-tables/im-operation {:on-success [:main/store-possible-values loc view]
-                               :op (partial fetch/unique-values
-                                            (get db :service)
-                                            {:from class
-                                             :select [path]}
-                                            summary-path
-                                            1000)}})))
+ (fn [{db :db} [_ loc view temp-query?]]
+   (let [query (get db (if temp-query? :temp-query :query))
+         model (assoc (get-in db [:service :model]) :type-constraints (:where query))]
+     (cond-> {:db db}
+       (not (im-path/class? model view))
+       (assoc :im-tables/im-operation {:on-success [:main/store-possible-values loc view]
+                                       :op (partial fetch/unique-values
+                                                    (get db :service)
+                                                    (assoc query :select [view])
+                                                    view
+                                                    1000)})))))
 
 (reg-event-db
  :main/save-column-summary

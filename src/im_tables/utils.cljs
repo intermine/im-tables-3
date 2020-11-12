@@ -81,9 +81,9 @@
 (defn constraints->logic
   "Generates the default 'A and B and ...' constraint logic string from a
   sequence of constraints. Note that `:code` needs to be present on all
-  constraint maps."
+  applicable constraint maps, which `imcljs.query/sterilize-query` ensures."
   [constraints]
-  (->> (map :code constraints)
+  (->> (keep :code constraints)
        (string/join " and ")))
 
 (defn clj->json
