@@ -423,8 +423,10 @@
  :main/store-possible-values
  (sandbox)
  (fn [db [_ loc view res]]
-   (let [items (->> res :results (map :item) (remove nil?) sort)]
-     (assoc-in db [:cache :possible-values view] items))))
+   (assoc-in db [:cache :possible-values view]
+             (if (map? res)
+               (->> res :results (map :item) (remove nil?) sort)
+               res)))) ; false when too many results and empty list when no possible values.
 
 (reg-event-fx
  :main/fetch-possible-values
