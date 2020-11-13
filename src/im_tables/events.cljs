@@ -669,7 +669,9 @@
     :im-tables/im-operation {:on-success [:main/save-decon-count loc path]
                              :op (partial fetch/row-count
                                           (get db :service)
-                                          (dissoc (get details :query) :joins))}}))
+                                          (dissoc (get details :query)
+                                                  ;; These have no effect on the count, and might cause an error if InterMine determines them to be irrelevant.
+                                                  :joins :sortOrder :orderBy))}}))
 
 (reg-event-fx
  :main/deconstruct
