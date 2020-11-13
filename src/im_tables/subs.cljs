@@ -2,7 +2,8 @@
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :as re-frame :refer [reg-sub subscribe]]
             [clojure.string :as string]
-            [imcljs.internal.utils :refer [scrub-url]]))
+            [imcljs.internal.utils :refer [scrub-url]]
+            [imcljs.query :as im-query]))
 
 (defn glue [path remainder-vec]
   (reduce conj (or path []) remainder-vec))
@@ -73,6 +74,11 @@
  :settings/settings
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:settings]))))
+
+(reg-sub
+ :settings/cdn
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:settings :cdn]))))
 
 (reg-sub
  :summaries/column-summaries
@@ -248,6 +254,7 @@
   (cond
     (= "js" lang) (when (and query service) (generate-javascript options))
     (= "java" lang) (cond-> code (not comments?) remove-java-comments)
+    (= "xml" lang) code
     (or
      (= "rb" lang)
      (= "py" lang)
@@ -266,11 +273,14 @@
 
 (reg-sub
  :codegen/formatted-code
- (fn [db [_ loc]]
-   (let [{:keys [html? comments? lang]} (get-in db (glue loc [:settings :codegen]))
-         code (get-in db (glue loc [:codegen :code]))
-         cdn (get-in db (glue loc [:settings :cdn]))
-         {:keys [query service]} (get-in db (glue loc nil))]
+ (fn [[_ loc]]
+   [(subscribe [:settings/cdn loc])
+    (subscribe [:codegen/code loc])
+    (subscribe [:codegen/options loc])
+    (subscribe [:main/query loc])
+    (subscribe [:assets/service loc])])
+ (fn [[cdn code options query service] [_ _loc]]
+   (let [{:keys [html? comments? lang]} options]
      (when code
        (format-code {:lang lang
                      :code code

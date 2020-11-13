@@ -696,8 +696,15 @@
  :main/set-codegen-option
  (sandbox)
  (fn [{db :db} [_ loc option value run?]]
-   (cond-> {:db (assoc-in db [:settings :codegen option] value)}
-     run? (assoc :dispatch [:main/generate-code loc]))))
+   (let [gen-xml? (= [option value] [:lang "xml"])]
+     (cond-> {:db (assoc-in db [:settings :codegen option] value)}
+       (and run? (not gen-xml?)) (assoc :dispatch [:main/generate-code loc])
+       gen-xml? (update-in [:db :codegen] assoc
+                           :code (query/->xml (assoc (get-in db [:service :model])
+                                                     :type-constraints (get-in db [:query :where]))
+                                              (get-in db [:query]))
+                           :lang "xml")))))
+
 
 (reg-event-fx
  :main/generate-code
