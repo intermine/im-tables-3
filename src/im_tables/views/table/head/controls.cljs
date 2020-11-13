@@ -447,7 +447,7 @@
     (let [results (:results response)
           {:keys [min max average stdev]} (first results)
           close-fn (partial force-close (reagent/current-component))]
-      [:form.form.column-summary
+      [:form.form.column-summary {:on-submit (fn [e] (ocall e "preventDefault"))}
        [column-summary-title loc view response :numerical? true]
        [histogram/numerical-histogram results @trimmer]
        [:div.main-view
@@ -524,7 +524,7 @@
         [numerical-column-summary loc view @response local-state]
 
         :else
-        [:form.form.column-summary
+        [:form.form.column-summary {:on-submit (fn [e] (ocall e "preventDefault"))}
          [column-summary-title loc view @response]
          [:div.main-view
           [histogram/main (:results @response) @!scale-type]
