@@ -87,7 +87,7 @@
                        (->> @collapsed-views
                             (map-indexed (fn [idx h]
                                            (let [[attrib-name parent-name] (when (and @model h)
-                                                                             (rseq (impath/display-name (assoc @model :type-constraints (:where @query)) h)))
+                                                                             (rseq (impath/display-name @model h)))
                                                  active-filters (not-empty (filter (partial constraint-has-path? h) (:where @query)))]
                                              ; This is a simple HTML representation of
                                              ; im-tables.views.table.head.controls/toolbar

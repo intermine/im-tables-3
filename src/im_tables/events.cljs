@@ -202,7 +202,8 @@
                                             (set (:where (:temp-query db)))))
          changed-logic (not= (get-in db [:temp-query :constraintLogic])
                              (get-in db [:query :constraintLogic]))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:temp-query :where]))]
       ; This event is usually fired when the filter dropdown closed which means it's fired
       ; a lot even when not necessary. To prevent multiple blank undos from piling up, we only
       ; attach the :undo side effect when something was actually added or removed from the query
@@ -288,7 +289,8 @@
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc]]
    (let [columns-to-add (map (partial clojure.string/join ".") (get-in db [:cache :tree-view :selection]))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      {:db (-> db
               (update-in [:query :select] #(apply conj % columns-to-add))
               (assoc-in [:cache :tree-view :selection] #{}))
@@ -321,7 +323,8 @@
          post-joins (set (get-in db [:cache :rel-manager :joins]))
          added (not-empty (set/difference post-joins pre-joins))
          removed (not-empty (set/difference pre-joins post-joins))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      {:db (assoc db :query (get-in db [:cache :rel-manager]))
       :dispatch [:im-tables.main/run-query loc]
       :undo {:location loc
@@ -461,7 +464,8 @@
  :main/apply-summary-filter
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc view]]
-   (let [model (get-in db [:service :model])]
+   (let [model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
        {:db (update db :query constraint-append {:path view
                                                  :op "ONE OF"
@@ -481,7 +485,8 @@
  :main/apply-numerical-filter
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc view {:keys [from to]}]]
-   (let [model (get-in db [:service :model])]
+   (let [model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      (let [existing-constraints (get-in db [:query :where])
            existing-from? (not-empty (filter (comp (partial = [view ">="]) (juxt :path :op)) existing-constraints))
            existing-to? (not-empty (filter (comp (partial = [view "<="]) (juxt :path :op)) existing-constraints))]
@@ -525,7 +530,8 @@
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc view]]
    (let [path-is-join? (some? (some #{view} (get-in db [:query :joins])))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      {:db (cond-> db
             (not path-is-join?) (update-in [:query :select] (partial remove (fn [v] (= v view))))
             path-is-join? (update-in [:query :select] (partial remove (fn [v] (starts-with? v view))))
@@ -670,7 +676,8 @@
  (sandbox)
  (fn [{db :db} [_ loc & {:keys [force?]}]]
    (let [deconstructed-query (->> (query/deconstruct-by-class
-                                   (get-in db [:service :model])
+                                   (assoc (get-in db [:service :model])
+                                          :type-constraints (get-in db [:query :where]))
                                    (get-in db [:query]))
                                   vals
                                   (apply merge))]

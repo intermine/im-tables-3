@@ -33,34 +33,11 @@
             (ocall :on trigger callback))
     event))
 
-(defn path->displaynames
-  "Takes a path as the `view` argument and returns the corresponding vector of
-  display names. Will prioritise the displayName of the referencedType class
-  (instead of the displayName in the references/collections/attributes map).
-  This makes a difference with eg. `Gene.dataSets.name`, where
-  `classes.Gene.collections.dataSets.displayName` is `Data Sets` while
-  `classes.DataSet.displayName` is `Data Set`."
-  [model view]
-  (let [[head & tail] (path/split-path view)]
-    (loop [names []
-           paths tail
-           class (get-in model [:classes head])]
-      (let [new-names (conj names (:displayName class))]
-        (if (seq paths)
-          (recur new-names
-                 (next paths)
-                 (let [subclasses (apply merge
-                                         ((juxt :references :collections :attributes) class))
-                       subclass   (subclasses (first paths))]
-                   (if-let [reference (:referencedType subclass)]
-                     (get-in model [:classes (keyword reference)])
-                     subclass)))
-          new-names)))))
-
 (defn display-name
   "Takes a view path and returns a human-readable name string."
   [model view]
-  (->> (path->displaynames model view)
+  (->> (path/walk model view)
+       (map :displayName)
        (take-last 2) ;; Last two names of the path are most descriptive.
        (string/join " ")
        plural))

@@ -18,6 +18,13 @@
    (get-in db (glue prefix [:query]))))
 
 (reg-sub
+ :main/query-constraints
+ (fn [[_ prefix]]
+   (subscribe [:main/query prefix]))
+ (fn [query [_ _prefix]]
+   (:where query)))
+
+(reg-sub
  :main/temp-query
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:temp-query]))))
@@ -93,14 +100,21 @@
    (get-in db (glue prefix [:cache :possible-values view]))))
 
 (reg-sub
- :assets/model
- (fn [db [_ prefix]]
-   (get-in db (glue prefix [:service :model]))))
-
-(reg-sub
  :assets/service
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:service]))))
+
+;; We add `:type-constraints` to the model right here in case it is used to
+;; traverse a subclass. In some places the constraints of `:temp-query` will be
+;; used instead, in which case they assoc `:type-constraints` themselves.
+(reg-sub
+ :assets/model
+ (fn [[_ prefix]]
+   [(subscribe [:assets/service prefix])
+    (subscribe [:main/query-constraints prefix])])
+ (fn [[service constraints] [_ _prefix]]
+   (assoc (:model service)
+          :type-constraints constraints)))
 
 (reg-sub
  :tree-view/selection

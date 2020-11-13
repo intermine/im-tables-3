@@ -103,6 +103,7 @@
 (defn main [loc]
   (let [query (subscribe [:main/query loc])
         service (subscribe [:assets/service loc])
+        model (subscribe [:assets/model loc])
         options (subscribe [:codegen/options loc])]
     (fn [loc]
       [:div
@@ -110,7 +111,7 @@
         [:button.btn.btn-default
          {:on-click (fn []
                       (dispatch [:modal/open loc (build-modal loc)])
-                      (dispatch [:main/generate-code loc @service (:model @service) @query (:lang @options)]))}
+                      (dispatch [:main/generate-code loc @service @model @query (:lang @options)]))}
          [:i.fa.fa-code] (str " " (get-in languages [(:lang @options) :label]))]
         [:button.btn.btn-default.dropdown-toggle
          {:data-toggle "dropdown"} [:span.caret]]
