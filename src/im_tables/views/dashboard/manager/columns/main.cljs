@@ -3,12 +3,12 @@
             [reagent.core :as reagent]
             [imcljs.query :as query]
             [imcljs.path :as impath]
-            [clojure.string :refer [join]]
+            [clojure.string :refer [join split]]
             [inflections.core :refer [plural]]))
 
 (defn tree-node []
   (let [expanded-map (reagent/atom {})]
-    (fn [loc class details model current-path selected views]
+    (fn [loc class details model current-path selected views path->subclass]
       (let [attributes     (vals (get details :attributes))
             collections    (vals (get details :collections))
             references     (vals (get details :references))
@@ -21,9 +21,8 @@
 
                         [:li
                          {:on-click (fn [e]
-                                      (if-not original-view?
-                                        (do
-                                          (dispatch [:tree-view/toggle-selection loc (conj current-path name)])))
+                                      (when-not original-view?
+                                        (dispatch [:tree-view/toggle-selection loc (conj current-path name)]))
                                       (.stopPropagation e))}
                          [:span
                           {:class (cond
@@ -33,23 +32,33 @@
                           (when (and model current-path name)
                             (last (impath/display-name model (join "." (conj current-path name)))))]])) attributes))
          (into [:ul.collections.list-unstyled]
-               (map (fn [{:keys [name referencedType name] :as collection}]
-                      (let [referenced-class (get-in model [:classes (keyword referencedType)])]
+               (map (fn [{:keys [referencedType name]}]
+                      (let [next-class (get path->subclass (conj current-path name) (keyword referencedType))
+                            referenced-class (get-in model [:classes next-class])]
                         [:li
                          {:on-click (fn [e] (.stopPropagation e) (swap! expanded-map update name not))}
                          [:span [:i.fa.fa-plus-square]
                           (when (and model current-path name)
                             (plural (last (impath/display-name model (join "." (conj current-path name))))))]
-                         (if (get @expanded-map name)
-                           [tree-node loc (keyword referencedType) referenced-class model (conj current-path name) selected views])]))
+                         (when (get @expanded-map name)
+                           [tree-node loc next-class referenced-class model (conj current-path name) selected views path->subclass])]))
                     (sort-by (comp clojure.string/upper-case :displayName) colls-and-refs)))]))))
 
 (defn tree-view []
   (fn [loc model query selected]
-    (let [sterilized-query (query/sterilize-query query)
-          views (into #{} (map (fn [v] (apply conj [] (clojure.string/split v "."))) (:select sterilized-query)))]
+    (let [{root-class :from} query
+          sterilized-query (query/sterilize-query query)
+          views (into #{}
+                      (map (fn [path]
+                             (split path #"\."))
+                           (:select sterilized-query)))
+          path->subclass (->> (:type-constraints model)
+                              (filter #(contains? % :type))
+                              (reduce (fn [m {:keys [path type]}]
+                                        (assoc m (split path #"\.") (keyword type)))
+                                      {}))]
       [:div
-       [tree-node loc (keyword (:from query)) (get-in model [:classes (keyword (:from query))]) model [(:from query)] selected views]])))
+       [tree-node loc (keyword root-class) (get-in model [:classes (keyword root-class)]) model [root-class] selected views path->subclass]])))
 
 (defn my-modal []
   (fn [loc]
