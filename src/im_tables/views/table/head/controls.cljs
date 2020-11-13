@@ -7,7 +7,7 @@
             [imcljs.path :as path]
             [clojure.string :as string]
             [clojure.set :as set]
-            [oops.core :refer [oget ocall ocall! oget+]]
+            [oops.core :refer [oget ocall ocall! oget+ oset!]]
             [im-tables.utils :refer [on-event pretty-number display-name]]
             [cljs-time.coerce :as time-coerce]
             [cljs-time.format :as time-format]
@@ -176,6 +176,11 @@
   [:> js/Select
    {:className "constraint-select"
     :classNamePrefix "constraint-select"
+    ;; The two lines below makes it use a React portal to attach the element to
+    ;; the document body. This means it won't disappear at modal-body edges,
+    ;; which are set to overflow:auto to facilitate scrolling.
+    :styles {:menuPortal (fn [base] (oset! base :zIndex 9999))}
+    :menuPortalTarget js/document.body
     :placeholder (select-placeholder model path)
     :isDisabled disabled
     ;; Leaving the line below as it can be useful in the future.
@@ -192,6 +197,11 @@
   [:> js/Select
    {:className "constraint-select"
     :classNamePrefix "constraint-select"
+    ;; The two lines below makes it use a React portal to attach the element to
+    ;; the document body. This means it won't disappear at modal-body edges,
+    ;; which are set to overflow:auto to facilitate scrolling.
+    :styles {:menuPortal (fn [base] (oset! base :zIndex 9999))}
+    :menuPortalTarget js/document.body
     :placeholder (select-placeholder model path)
     :isMulti true
     :isDisabled disabled
