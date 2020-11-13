@@ -7,58 +7,72 @@
             [inflections.core :refer [plural]]))
 
 (defn tree-node []
-  (let [expanded-map (reagent/atom {})]
-    (fn [loc class details model current-path selected views path->subclass]
-      (let [attributes     (vals (get details :attributes))
-            collections    (vals (get details :collections))
-            references     (vals (get details :references))
-            colls-and-refs (concat collections references)]
-        [:ul.tree-view.list-unstyled.no-select
-         (into [:ul.attributes.list-unstyled]
-               (map (fn [{:keys [name type]}]
-                      (let [original-view? (some? (some #{(conj current-path name)} views))
-                            selected? (some? (some #{(conj current-path name)} selected))]
+  (fn [loc expanded-paths* details model current-path selected views path->subclass]
+    (let [attributes     (vals (get details :attributes))
+          collections    (vals (get details :collections))
+          references     (vals (get details :references))
+          colls-and-refs (concat collections references)]
+      [:ul.tree-view.list-unstyled.no-select
+       (into [:ul.attributes.list-unstyled]
+             (map (fn [{:keys [name type]}]
+                    (let [original-view? (some? (some #{(conj current-path name)} views))
+                          selected? (some? (some #{(conj current-path name)} selected))]
 
-                        [:li
-                         {:on-click (fn [e]
-                                      (when-not original-view?
-                                        (dispatch [:tree-view/toggle-selection loc (conj current-path name)]))
-                                      (.stopPropagation e))}
-                         [:span
-                          {:class (cond
-                                    original-view? "label label-default"
-                                    selected? "label label-success disabled")}
-                          [:i.fa.fa-tag]
-                          (when (and model current-path name)
-                            (last (impath/display-name model (join "." (conj current-path name)))))]])) attributes))
-         (into [:ul.collections.list-unstyled]
-               (map (fn [{:keys [referencedType name]}]
-                      (let [next-class (get path->subclass (conj current-path name) (keyword referencedType))
-                            referenced-class (get-in model [:classes next-class])]
-                        [:li
-                         {:on-click (fn [e] (.stopPropagation e) (swap! expanded-map update name not))}
-                         [:span [:i.fa.fa-plus-square]
-                          (when (and model current-path name)
-                            (plural (last (impath/display-name model (join "." (conj current-path name))))))]
-                         (when (get @expanded-map name)
-                           [tree-node loc next-class referenced-class model (conj current-path name) selected views path->subclass])]))
-                    (sort-by (comp clojure.string/upper-case :displayName) colls-and-refs)))]))))
+                      [:li
+                       {:on-click (fn [e]
+                                    (when-not original-view?
+                                      (dispatch [:tree-view/toggle-selection loc (conj current-path name)]))
+                                    (.stopPropagation e))}
+                       [:span
+                        {:class (cond
+                                  original-view? "label label-default"
+                                  selected? "label label-success disabled")}
+                        [:i.fa.fa-tag]
+                        (when (and model current-path name)
+                          (last (impath/display-name model (join "." (conj current-path name)))))]]))
+                  attributes))
+       (into [:ul.collections.list-unstyled]
+             (map (fn [{:keys [referencedType name]}]
+                    (let [this-path (conj current-path name)
+                          is-expanded (get @expanded-paths* this-path)
+                          next-class (get path->subclass this-path (keyword referencedType))
+                          referenced-class (get-in model [:classes next-class])]
+                      [:li
+                       {:on-click (fn [e] (.stopPropagation e) (swap! expanded-paths* (if is-expanded disj conj) this-path))}
+                       [:span [:i.fa.fa-plus-square]
+                        (when (and model current-path name)
+                          (plural (last (impath/display-name model (join "." (conj current-path name))))))]
+                       (when is-expanded
+                         [tree-node loc expanded-paths* referenced-class model (conj current-path name) selected views path->subclass])]))
+                  (sort-by (comp clojure.string/upper-case :displayName) colls-and-refs)))])))
 
-(defn tree-view []
-  (fn [loc model query selected]
-    (let [{root-class :from} query
-          sterilized-query (query/sterilize-query query)
-          views (into #{}
-                      (map (fn [path]
-                             (split path #"\."))
-                           (:select sterilized-query)))
-          path->subclass (->> (:type-constraints model)
-                              (filter #(contains? % :type))
-                              (reduce (fn [m {:keys [path type]}]
-                                        (assoc m (split path #"\.") (keyword type)))
-                                      {}))]
-      [:div
-       [tree-node loc (keyword root-class) (get-in model [:classes (keyword root-class)]) model [root-class] selected views path->subclass]])))
+(defn pre-expanded-paths
+  "Returns a set of paths corresponding to all parent paths of `views`, in effect, expanding them."
+  [views]
+  (into #{}
+       (mapcat (fn [path]
+                 (->> (split path #"\.")
+                      (iterate drop-last)
+                      (take-while seq)
+                      (next))))
+       views))
+
+(defn tree-view [loc model query]
+  (let [expanded-paths* (reagent/atom (->> query query/sterilize-query :select pre-expanded-paths))]
+    (fn [loc model query selected]
+      (let [{root-class :from} query
+            sterilized-query (query/sterilize-query query)
+            views (into #{}
+                        (map (fn [path]
+                               (split path #"\."))
+                             (:select sterilized-query)))
+            path->subclass (->> (:type-constraints model)
+                                (filter #(contains? % :type))
+                                (reduce (fn [m {:keys [path type]}]
+                                          (assoc m (split path #"\.") (keyword type)))
+                                        {}))]
+        [:div
+         [tree-node loc expanded-paths* (get-in model [:classes (keyword root-class)]) model [root-class] selected views path->subclass]]))))
 
 (defn my-modal []
   (fn [loc]
