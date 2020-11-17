@@ -98,9 +98,9 @@
                   ; Reset temp query
                   (dispatch [:main/set-temp-query loc])
                   ; Fetch possible values for all filters present
-                  (doseq [view (->> @(subscribe [:filter-manager/filters loc])
+                  (doseq [view (->> @(subscribe [:main/query-constraints loc])
                                     (map :path))]
-                    (dispatch [:main/fetch-possible-values loc view true]))
+                    (dispatch [:main/fetch-possible-values loc view false]))
                   ; Build the modal markup and send it to app-db
                   (dispatch [:modal/open loc (build-modal loc)]))}
      [:i.fa.fa-filter] " Manage Filters"]]])
