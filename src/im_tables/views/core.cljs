@@ -10,9 +10,11 @@
             [im-tables.views.table.error :as error]))
 
 (defn custom-modal []
-  (fn [loc {:keys [header body footer extra-class]}]
+  (fn [loc {:keys [header body footer extra-class no-fade]}]
     [:div.im-modal
-     {:on-mouse-down #(dispatch [:modal/close loc])}
+     (if no-fade
+       {:class :no-fade}
+       {:on-mouse-down #(dispatch [:modal/close loc])})
      [:div.im-modal-content
       {:class extra-class
        :on-mouse-down (fn [e]

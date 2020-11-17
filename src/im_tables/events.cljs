@@ -19,7 +19,8 @@
             [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
             [reagent.core :as r]
-            [im-tables.utils :refer [response->error constraints->logic]]))
+            [im-tables.utils :refer [response->error constraints->logic]]
+            [im-tables.views.dashboard.save :refer [generate-dialog]]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -754,3 +755,51 @@
                       (dissoc :response))}
        (= error-type :network)
        (assoc :im-tables/log-error ["Network error" {:response res}])))))
+
+(reg-event-db
+ :pick-items/start
+ (sandbox)
+ (fn [db [_ loc]]
+   (assoc-in db [:pick-items :picked] #{})))
+
+(reg-event-db
+ :pick-items/stop
+ (sandbox)
+ (fn [db [_ loc]]
+   (dissoc db :pick-items)))
+
+(defn pick-items->dialog-details [{:keys [picked class]}]
+  {:query {:from class
+           :select [(str class ".id")]
+           :where [{:path (str class ".id") :op "ONE OF" :values (vec picked)}]}
+   :type class
+   :count (count picked)
+   :picking? true})
+
+(reg-event-fx
+ :pick-items/pick
+ (sandbox)
+ (fn [{db :db} [_ loc id class]]
+   (let [db (-> db
+                (update-in [:pick-items :picked] (fnil conj #{}) id)
+                (assoc-in [:pick-items :class] class))]
+     {:db db
+      :dispatch [:modal/open loc (->> (get db :pick-items)
+                                      (pick-items->dialog-details)
+                                      (generate-dialog loc))]})))
+
+(reg-event-fx
+ :pick-items/drop
+ (sandbox)
+ (fn [{db :db} [_ loc id _class]]
+   (let [picked' ((fnil disj #{}) (get-in db [:pick-items :picked]) id)
+         db (-> db
+                (assoc-in [:pick-items :picked] picked')
+                (cond->
+                  (empty? picked') (assoc-in [:pick-items :class] nil)))]
+     {:db db
+      :dispatch (if (empty? picked')
+                  [:modal/close loc]
+                  [:modal/open loc (->> (get db :pick-items)
+                                        (pick-items->dialog-details)
+                                        (generate-dialog loc))])})))

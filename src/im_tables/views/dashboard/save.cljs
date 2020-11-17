@@ -27,22 +27,25 @@
                                   (-> @dom-node js/$ (ocall :closest ".modal") (ocall :modal "hide")))))}]]]])))
 
 (defn save-footer []
-  (fn [loc state details on-submit]
+  (fn [loc state {:keys [picking?] :as details} on-submit]
     [:div.btn-toolbar.pull-right
      [:button.btn.btn-default
-      {:on-click #(dispatch [:modal/close loc])}
+      {:on-click (fn [_evt]
+                   (dispatch [:modal/close loc])
+                   (when picking?
+                     (dispatch [:pick-items/stop loc])))}
       "Cancel"]
      [:button.btn.btn-raised.btn-success
       {:on-click on-submit}
       "Save"]]))
 
-(defn generate-dialog [loc {:keys [type count query] :as details}]
+(defn generate-dialog [loc {:keys [type count query picking?] :as details}]
   (let [state (reagent/atom {:name (str (name type) " List (" (.toString (js/Date.)) ")")})
         on-submit (fn []
-                    ; Save the list
                     (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state])
-                    ; Close the modal by clearing the modal markup in app-db
-                    (dispatch [:modal/close loc]))]
+                    (dispatch [:modal/close loc])
+                    (when picking?
+                      (dispatch [:pick-items/stop loc])))]
 
     {:header [:h4 (str "Save a list of " (:count details) " "
                        ;; It's possible that `count` is the string "..." if
@@ -51,7 +54,8 @@
                          (name type)
                          (plural (name type))))]
      :body [save-dialog state details on-submit]
-     :footer [save-footer loc state details on-submit]}))
+     :footer [save-footer loc state details on-submit]
+     :no-fade picking?}))
 
 (defn serialize-path [model path]
   (let [[root & remaining] (remove nil? (map :displayName (walk model path)))]
@@ -84,7 +88,7 @@
                                            {:query query
                                             :count count
                                             :type (name (path/class model path))})])}
-         [:a (str (serialize-path model path) " (" count ")")]]))))
+         [:a [:strong (serialize-path model path)] (str " (" count ")")]]))))
 
 (defn main [loc]
   (let [model       (subscribe [:assets/model loc])
@@ -104,7 +108,10 @@
                    (dispatch event))))}
        [:button.btn.btn-default.dropdown-toggle
         {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
-       (into [:ul.dropdown-menu]
-             (->> @query-parts
-                  (map-indexed (fn [idx [path details]]
-                                 [save-menu loc @model path details]))))])))
+       (-> [:ul.dropdown-menu]
+           (into (map-indexed (fn [idx [path details]]
+                                [save-menu loc @model path details])
+                              @query-parts))
+           (conj [:hr]
+                 [:li {:on-click #(dispatch [:pick-items/start loc])}
+                  [:a "Pick items from the table"]]))])))

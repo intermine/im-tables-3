@@ -311,3 +311,20 @@
    (subscribe [:main/temp-query loc]))
  (fn [query [_ loc]]
    (:constraintLogic query)))
+
+(reg-sub
+ :pick-items/picked
+ (fn [db [_ loc]]
+   (get-in db (glue loc [:pick-items :picked]))))
+
+(reg-sub
+ :pick-items/is-picked?
+ (fn [[_ loc]]
+   (subscribe [:pick-items/picked loc]))
+ (fn [picked [_ _loc id]]
+   (contains? picked id)))
+
+(reg-sub
+ :pick-items/class
+ (fn [db [_ loc]]
+   (get-in db (glue loc [:pick-items :class]))))
