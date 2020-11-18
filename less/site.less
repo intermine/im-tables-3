@@ -525,6 +525,22 @@
         hr {
             margin: @spacer/2 0 @spacer/2 0;
         }
+
+        a.disabled {
+            &, &:link, &:visited, &:focus, &:hover, &:active {
+                color: #666;
+            }
+        }
+
+        a.section-heading {
+            margin-top: @spacer;
+            border-bottom: 1px solid #c4c4c4;
+        }
+
+        &.source-dropdown {
+            max-height: 80vh;
+            overflow: auto;
+        }
     }
 
     .more-below {

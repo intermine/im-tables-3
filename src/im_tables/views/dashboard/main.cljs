@@ -8,6 +8,7 @@
             [im-tables.views.dashboard.manager.columns.main :as saver]
             [im-tables.views.dashboard.manager.codegen.main :as codegen]
             [im-tables.views.dashboard.exporttable :as exporttable]
+            [im-tables.views.dashboard.source :as source]
             [re-frame.core :refer [dispatch]]
             [oops.core :refer [ocall]]))
 
@@ -31,6 +32,7 @@
         [:div.btn-group [save/main loc]]
         [:div.btn-group [exporttable/exporttable loc]]
         [:div.btn-group [codegen/main loc]]
+        [:div.btn-group [source/main loc]]
         [undo/main loc]]
        [:div.row.pagination-bar.pull-left
         [:div.pull-left

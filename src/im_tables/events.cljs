@@ -803,3 +803,57 @@
                   [:modal/open loc (->> (get db :pick-items)
                                         (pick-items->dialog-details)
                                         (generate-dialog loc))])})))
+
+(defn part-query->dataset-query [model path part-query]
+  ;; If the class has no datasets, it could throw here.
+  (try
+    (let [dataset-path (str path ".dataSets")
+          attribs (some-> (im-path/attributes model dataset-path)
+                          (filter [:description :url :name :id]))]
+      (when (seq attribs)
+        (assoc part-query :select (mapv #(str dataset-path "." (name %)) attribs))))
+    (catch :default _)))
+
+(reg-event-fx
+ :source/fetch-parts
+ (sandbox)
+ (fn [{db :db} [_ loc]]
+   (let [model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
+     {:db db
+      :dispatch-n (keep (fn [[path {:keys [query]}]]
+                          (when-let [dataset-query (part-query->dataset-query model path query)]
+                            [:source/fetch-part-dataset loc path dataset-query]))
+                        (get-in db [:query-parts]))})))
+
+(reg-event-fx
+ :source/fetch-part-dataset
+ (sandbox)
+ (fn [{db :db} [_ loc path query]]
+   {:db db
+    :im-tables/im-operation {:on-success [:source/fetch-part-dataset-success loc path]
+                             :on-failure [:source/fetch-part-dataset-failure loc path]
+                             :op (partial fetch/rows
+                                          (get db :service)
+                                          query)}}))
+
+(defn rows->maps
+  "Takes an `imcljs.fetch/rows` response and transforms it into a vector of
+  maps, with the last portion of the path as keyword keys ('Gene.symbol' -> :symbol)."
+  [res]
+  (let [views (map (comp keyword #(re-find #"[^\.]+$" %)) (:views res))]
+    (mapv (fn [result]
+            (zipmap views result))
+          (:results res))))
+
+(reg-event-db
+ :source/fetch-part-dataset-success
+ (sandbox)
+ (fn [db [_ loc path res]]
+   (assoc-in db [:cache :data-sources path] (not-empty (rows->maps res)))))
+
+(reg-event-db
+ :source/fetch-part-dataset-failure
+ (sandbox)
+ (fn [db [_ loc path _res]]
+   (assoc-in db [:cache :data-sources path] false)))
