@@ -108,7 +108,15 @@
    (let [service (:service db)
          {:keys [pagination buffer]} (:settings db)
          {:keys [start limit]}       pagination
-         query (im-query/sterilize-query (:query db))]
+         query (select-keys (im-query/sterilize-query (:query db))
+                            ;; Some queries like templates have a lot of fields we don't care about.
+                            ;; e.g. :tags :rank :comment :model
+                            ;; This is where we only grab what we want!
+                            [:description :where :name :title :from :select :sortOrder :joins :constraintLogic])]
+     ;; If you're wondering if `select-keys` should be done as part of `imcljs.query/sterilize-query`, here are some points against it:
+     ;; - Sterilization is used lots of places (probably even on template queries where we want to keep the extra data)
+     ;; - Sterilization is mostly about preparing a query to be converted to XML so it can be run
+     ;; - The main reason for selecting keys is to provide a cleaner output for *Generate JavaScript Code*
      (merge
       {:db (assoc db
                   ;; Here we can perform additional purifying to accomodate
