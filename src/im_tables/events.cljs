@@ -19,7 +19,7 @@
             [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
             [reagent.core :as r]
-            [im-tables.utils :refer [response->error constraints->logic]]
+            [im-tables.utils :refer [response->error constraints->logic clean-derived-query]]
             [im-tables.views.dashboard.save :refer [generate-dialog]]))
 
 (joshkh.undo/undo-config!
@@ -92,7 +92,7 @@
    {:db db
     :im-tables/im-operation {:on-success [:imt.io/save-list-success]
                              :on-failure [:imt.io/save-list-failure]
-                             :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins) options)}}))
+                             :op (partial save/im-list-from-query (get db :service) name (clean-derived-query query) options)}}))
 
 (reg-event-db
  :modal/open
@@ -672,9 +672,7 @@
     :im-tables/im-operation {:on-success [:main/save-decon-count loc path]
                              :op (partial fetch/row-count
                                           (get db :service)
-                                          (dissoc (get details :query)
-                                                  ;; These have no effect on the count, and might cause an error if InterMine determines them to be irrelevant.
-                                                  :joins :sortOrder :orderBy))}}))
+                                          (clean-derived-query (get details :query)))}}))
 
 (reg-event-fx
  :main/deconstruct
@@ -811,7 +809,9 @@
           attribs (some-> (im-path/attributes model dataset-path)
                           (filter [:description :url :name :id]))]
       (when (seq attribs)
-        (assoc part-query :select (mapv #(str dataset-path "." (name %)) attribs))))
+        (-> part-query
+            (clean-derived-query)
+            (assoc :select (mapv #(str dataset-path "." (name %)) attribs)))))
     (catch :default _)))
 
 (reg-event-fx

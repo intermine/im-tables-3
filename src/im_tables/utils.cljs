@@ -69,3 +69,13 @@
   (some-> x
           (clj->js)
           (json/serialize)))
+
+(defn clean-derived-query
+  "New queries are sometimes derived from an existing query, to fulfill an
+  auxilliary purpose. The InterMine backend will in some cases return 'Service
+  failed' if a query specifies sorting for a column that isn't part of the
+  view, or joins that isn't relevant to the results. In most cases, these
+  properties won't have an effect on the result and can safely be removed."
+  [query]
+  (dissoc query
+          :joins :sortOrder :orderBy))
