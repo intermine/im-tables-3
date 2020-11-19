@@ -215,8 +215,8 @@
                     (and html? comments?) (conj "<!-- The Element we will target -->")
                     html? (conj "<div id=\"some-elem\"></div>\n")
                     (and html? comments?) (conj "<!-- The imtables source -->")
-                    html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/2.0.0-beta/imtables.js\" charset=\"UTF8\"></script>"))
-                    html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/2.0.0-beta/main.sandboxed.css\" rel=\"stylesheet\">\n"))
+                    html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/latest/imtables.js\" charset=\"UTF8\"></script>"))
+                    html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/latest/main.sandboxed.css\" rel=\"stylesheet\">\n"))
                     html? (conj "<script>")
 
                     (and (not html?) comments?) (conj "/* Install from npm: npm install imtables\n * This snippet assumes the presence on the page of an element like:\n * <div id=\"some-elem\"></div>\n */")
