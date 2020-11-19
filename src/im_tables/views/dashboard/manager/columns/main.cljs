@@ -74,33 +74,6 @@
         [:div
          [tree-node loc expanded-paths* (get-in model [:classes (keyword root-class)]) model [root-class] selected views path->subclass]]))))
 
-(defn my-modal []
-  (fn [loc]
-    (let [model (subscribe [:assets/model loc])
-          selected (subscribe [:tree-view/selection loc])
-          query (subscribe [:main/query loc])]
-
-      {:header []
-       :body [:h1 "I am the body"]
-       :footer []}
-
-      #_[:div#myModal.modal.fade {:role "dialog"}
-         [:div.modal-dialog
-          [:div.modal-content
-           [:div.modal-header [:h3 "Add Columns"]]
-           [:div.modal-body
-            [tree-view loc @model @query @selected]]
-           [:div.modal-footer
-            [:div.btn-toolbar.pull-right
-             [:button.btn.btn-default
-              {:data-dismiss "modal"}
-              "Cancel"]
-             [:button.btn.btn-raised.btn-success
-              {:data-dismiss "modal"
-               :disabled (< (count @selected) 1)
-               :on-click (fn [] (dispatch [:tree-view/merge-new-columns loc]))}
-              (str "Add " (if (> (count @selected) 0) (str (count @selected) " ")) "columns")]]]]]])))
-
 (defn modal-body []
   (fn [loc]
     (let [model (subscribe [:assets/model loc])
@@ -132,7 +105,3 @@
   {:header [:h3 "Add Columns"]
    :body [modal-body loc]
    :footer [modal-footer loc]})
-
-(defn main []
-  (fn [loc]
-    [my-modal loc]))

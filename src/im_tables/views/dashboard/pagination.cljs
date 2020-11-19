@@ -7,13 +7,13 @@
 
 (defn main []
   (fn [loc {:keys [start limit total]}]
-    [:div.btn-toolbar
+    [:div.btn-toolbar.pagination-buttons
      [:div.btn-group
-      [:label "Rows per page"]]
+      [:label "Rows per page:"]]
      [:div.btn-group
       (let [all-amounts (sort (some->> limit (conj amounts)))
             highest (last all-amounts)]
-        (into [:select.form-control
+        (into [:select.form-control.input-sm
                {:value     (or limit "")
                 :on-change (fn [e]
                              (dispatch [:imt.settings/update-pagination-limit loc (js/parseInt (oget e :target :value))]))}]
