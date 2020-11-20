@@ -730,6 +730,12 @@
    (update db :codegen assoc :code response :lang lang)))
 
 (reg-event-db
+ :main/expand-compact
+ (sandbox)
+ (fn [db [_ loc]]
+   (assoc-in db [:settings :compact] false)))
+
+(reg-event-db
  :filter-manager/change-constraint
  (sandbox)
  (fn [db [_ loc value]]

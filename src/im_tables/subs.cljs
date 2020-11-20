@@ -81,6 +81,11 @@
    (get-in db (glue prefix [:settings :cdn]))))
 
 (reg-sub
+ :settings/compact
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:settings :compact]))))
+
+(reg-sub
  :summaries/column-summaries
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:cache :column-summary]))))

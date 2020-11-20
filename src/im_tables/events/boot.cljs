@@ -100,7 +100,6 @@
                    [:imt.main/fetch-model loc]
                    [:imt.main/fetch-summary-fields loc]]})))
 
-;; Suggestion: Re-use `:im-tables.main/run-query` instead, if suitable.
 (reg-event-fx
  :im-tables/query
  (sandbox)

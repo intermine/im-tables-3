@@ -81,7 +81,12 @@
                       :url (fn [vocab] (str "#/reportpage/"
                                             (:mine vocab) "/"
                                             (:class vocab) "/"
-                                            (:objectId vocab)))}}
+                                            (:objectId vocab)))}
+
+              ;; Whether the dashboard buttons should be hidden on
+              ;; initialisation and need to be expanded with a button.
+              :compact false}
+
    :cache {:summaries {}
            :summary {}
            :selection {}

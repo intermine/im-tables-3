@@ -61,13 +61,24 @@
     }
 
     .dashboard {
-        padding: 0 @spacer/2;
+        padding: @spacer/2 @spacer/2 0 @spacer/2;
 
         .dashboard-buttons {
             display: flex;
             justify-content: space-between;
 
             margin-bottom: @spacer;
+        }
+
+        .dashboard-expand {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+
+            border-top: none;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
         }
 
         .pagination-bar {
