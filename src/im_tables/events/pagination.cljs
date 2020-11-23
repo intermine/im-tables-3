@@ -38,8 +38,11 @@
  :imt.settings/update-pagination-fullinc
  (sandbox)
  (fn [{db :db} [_ loc]]
-   (let [total (get-in db [:response :iTotalRecords])]
-     {:db       (assoc-in db [:settings :pagination :start] (- total (mod total 10)))
+   (let [total (get-in db [:response :iTotalRecords])
+         limit (get-in db [:settings :pagination :limit])
+         remaining (mod total limit)
+         start (- total (if (zero? remaining) limit remaining))]
+     {:db (assoc-in db [:settings :pagination :start] start)
       :dispatch [:imt.pagination/check-for-results loc]})))
 
 (reg-event-fx
