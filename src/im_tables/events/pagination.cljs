@@ -40,14 +40,17 @@
  (fn [{db :db} [_ loc]]
    (let [total (get-in db [:response :iTotalRecords])
          limit (get-in db [:settings :pagination :limit])
-         remaining (mod total limit)
-         start (- total (if (zero? remaining) limit remaining))]
-     {:db (assoc-in db [:settings :pagination :start] start)
+         remaining (mod total limit)]
+     {:db (assoc-in db [:settings :pagination :start]
+                    (- total (if (zero? remaining) limit remaining)))
       :dispatch [:imt.pagination/check-for-results loc]})))
 
 (reg-event-fx
  :imt.settings/update-pagination-limit
  (sandbox)
  (fn [{db :db} [_ loc limit]]
-   {:db       (assoc-in db [:settings :pagination :limit] limit)
-    :dispatch [:imt.pagination/check-for-results loc]}))
+   (let [start (get-in db [:settings :pagination :start])]
+     {:db (-> db
+              (assoc-in [:settings :pagination :limit] limit)
+              (assoc-in [:settings :pagination :start] (- start (mod start limit))))
+      :dispatch [:imt.pagination/check-for-results loc]})))
