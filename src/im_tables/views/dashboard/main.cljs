@@ -8,7 +8,6 @@
             [im-tables.views.dashboard.manager.columns.main :as saver]
             [im-tables.views.dashboard.manager.codegen.main :as codegen]
             [im-tables.views.dashboard.exporttable :as exporttable]
-            [im-tables.views.dashboard.source :as source]
             [re-frame.core :refer [dispatch subscribe]]))
 
 (defn main [loc]
@@ -27,7 +26,6 @@
              [:i.fa.fa-columns] " Add Columns"]]
            [:div.btn-group [filter-manager/main loc]]
            [:div.btn-group [rel-manager/main loc]]
-           [:div.btn-group [source/main loc]]
            [undo/main loc]]
           [:div.btn-toolbar
            [:div.btn-group [save/main loc]]

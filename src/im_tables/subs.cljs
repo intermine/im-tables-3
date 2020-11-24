@@ -333,8 +333,3 @@
  :pick-items/class
  (fn [db [_ loc]]
    (get-in db (glue loc [:pick-items :class]))))
-
-(reg-sub
- :source/part
- (fn [db [_ prefix path]]
-   (get-in db (glue prefix [:cache :data-sources path]))))

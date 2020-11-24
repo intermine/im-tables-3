@@ -19,7 +19,7 @@
             [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
             [reagent.core :as r]
-            [im-tables.utils :refer [response->error constraints->logic clean-derived-query]]
+            [im-tables.utils :refer [response->error constraints->logic clean-derived-query rows->maps]]
             [im-tables.views.dashboard.save :refer [generate-dialog]]))
 
 (joshkh.undo/undo-config!
@@ -820,46 +820,41 @@
             (assoc :select (mapv #(str dataset-path "." (name %)) attribs)))))
     (catch :default _)))
 
-(reg-event-fx
- :source/fetch-parts
- (sandbox)
- (fn [{db :db} [_ loc]]
-   (let [model (assoc (get-in db [:service :model])
-                      :type-constraints (get-in db [:query :where]))]
+;; These events are currently not in use, but could be adapted to similar
+;; usecases (like being able to add arbitrary references/collections as
+;; additional columns, to a query), hence why they're left as comments.
+(comment
+  (reg-event-fx
+   :source/fetch-parts
+   (sandbox)
+   (fn [{db :db} [_ loc]]
+     (let [model (assoc (get-in db [:service :model])
+                        :type-constraints (get-in db [:query :where]))]
+       {:db db
+        :dispatch-n (keep (fn [[path {:keys [query]}]]
+                            (when-let [dataset-query (part-query->dataset-query model path query)]
+                              [:source/fetch-part-dataset loc path dataset-query]))
+                          (get-in db [:query-parts]))})))
+
+  (reg-event-fx
+   :source/fetch-part-dataset
+   (sandbox)
+   (fn [{db :db} [_ loc path query]]
      {:db db
-      :dispatch-n (keep (fn [[path {:keys [query]}]]
-                          (when-let [dataset-query (part-query->dataset-query model path query)]
-                            [:source/fetch-part-dataset loc path dataset-query]))
-                        (get-in db [:query-parts]))})))
+      :im-tables/im-operation {:on-success [:source/fetch-part-dataset-success loc path]
+                               :on-failure [:source/fetch-part-dataset-failure loc path]
+                               :op (partial fetch/rows
+                                            (get db :service)
+                                            query)}}))
 
-(reg-event-fx
- :source/fetch-part-dataset
- (sandbox)
- (fn [{db :db} [_ loc path query]]
-   {:db db
-    :im-tables/im-operation {:on-success [:source/fetch-part-dataset-success loc path]
-                             :on-failure [:source/fetch-part-dataset-failure loc path]
-                             :op (partial fetch/rows
-                                          (get db :service)
-                                          query)}}))
+  (reg-event-db
+   :source/fetch-part-dataset-success
+   (sandbox)
+   (fn [db [_ loc path res]]
+     (assoc-in db [:cache :data-sources path] (not-empty (rows->maps res)))))
 
-(defn rows->maps
-  "Takes an `imcljs.fetch/rows` response and transforms it into a vector of
-  maps, with the last portion of the path as keyword keys ('Gene.symbol' -> :symbol)."
-  [res]
-  (let [views (map (comp keyword #(re-find #"[^\.]+$" %)) (:views res))]
-    (mapv (fn [result]
-            (zipmap views result))
-          (:results res))))
-
-(reg-event-db
- :source/fetch-part-dataset-success
- (sandbox)
- (fn [db [_ loc path res]]
-   (assoc-in db [:cache :data-sources path] (not-empty (rows->maps res)))))
-
-(reg-event-db
- :source/fetch-part-dataset-failure
- (sandbox)
- (fn [db [_ loc path _res]]
-   (assoc-in db [:cache :data-sources path] false)))
+  (reg-event-db
+   :source/fetch-part-dataset-failure
+   (sandbox)
+   (fn [db [_ loc path _res]]
+     (assoc-in db [:cache :data-sources path] false))))
