@@ -91,13 +91,26 @@
                                     rows))
                             (:rows data)))))])]))))
 
+(defn select-cell [loc id class]
+  (let [is-picked? @(subscribe [:pick-items/is-picked? loc id])]
+    [:input {:type "checkbox"
+             :on-change (if is-picked?
+                          #(dispatch [:pick-items/drop loc id class])
+                          #(dispatch [:pick-items/pick loc id class]))
+             :checked is-picked?}]))
+
 (defn cell [loc]
   (let [pop-el   (reagent/atom nil)
-        settings (subscribe [:settings/settings loc])]
-    (fn [loc {:keys [value id view rows] :as data}]
+        settings (subscribe [:settings/settings loc])
+        picked (subscribe [:pick-items/picked loc])
+        picked-class (subscribe [:pick-items/class loc])]
+    (fn [loc {:keys [value id view rows class] :as data}]
       (let [{:keys [on-click url vocab]} (get-in @settings [:links])]
         [:td
-         ;(or value [no-value])
+         (when (and @picked (if-some [picked-class @picked-class]
+                              (= picked-class class)
+                              true))
+           [select-cell loc id class])
          (if rows
            ; rows means outer-join, so show outer-join table
            [outer-join-table loc data view]

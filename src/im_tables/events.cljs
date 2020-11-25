@@ -19,7 +19,8 @@
             [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
             [reagent.core :as r]
-            [im-tables.utils :refer [response->error constraints->logic]]))
+            [im-tables.utils :refer [response->error constraints->logic clean-derived-query rows->maps]]
+            [im-tables.views.dashboard.save :refer [generate-dialog]]))
 
 (joshkh.undo/undo-config!
   ; This function is used to only store certain parts
@@ -91,7 +92,7 @@
    {:db db
     :im-tables/im-operation {:on-success [:imt.io/save-list-success]
                              :on-failure [:imt.io/save-list-failure]
-                             :op (partial save/im-list-from-query (get db :service) name (dissoc query :sortOrder :joins) options)}}))
+                             :op (partial save/im-list-from-query (get db :service) name (clean-derived-query query) options)}}))
 
 (reg-event-db
  :modal/open
@@ -128,11 +129,11 @@
 
 (defn consts->letter
   "Takes a sequence of constraints and returns the first unused letter.
-  Expects all constraints to have a `:code` key so make sure the query has been
-  run through `imcljs.query/sterilize-query`."
+  Expects all applicable constraints to have a `:code` key so make sure the
+  query has been run through `imcljs.query/sterilize-query`."
   [consts]
   (->> consts
-       (map :code)
+       (keep :code)
        (first-letter)))
 
 (defn logic-append
@@ -146,11 +147,13 @@
   "Append a new constraint to a query map. Computes the next letter to be assoced
   as `:code` on the constraint, and appends it to the `:constraintLogic` string."
   [query constraint]
-  (let [letter (consts->letter (:where query))
-        constraint+code (assoc constraint :code letter)]
-    (-> query
-        (update :where (fnil conj []) constraint+code)
-        (update :constraintLogic logic-append letter))))
+  (if (contains? constraint :type) ; Type constraints don't have a code.
+    (update query :where (fnil conj []) constraint)
+    (let [letter (consts->letter (:where query))
+          constraint+code (assoc constraint :code letter)]
+      (-> query
+          (update :where (fnil conj []) constraint+code)
+          (update :constraintLogic logic-append letter)))))
 
 (reg-event-db
  :main/set-temp-query
@@ -160,18 +163,13 @@
 
 (reg-event-fx
  :filters/update-constraint
- [(sandbox) (undoable)]
- (fn [{db :db} [_ loc new-constraint]]
-   {:db (update-in db [:temp-query :where]
-                   (fn [constraints]
-                     (mapv (fn [constraint]
-                             (if (= (:code new-constraint) (:code constraint))
-                               new-constraint
-                               constraint)) constraints)))}))
-     ;:undo {:message [:div
-     ;                 (str "Added " (count columns-to-add) " new column" (when (> (count columns-to-add) 1) "s"))
-     ;                 (into [:div] (map (fn [s] [:span.label.label-default s]) columns-to-add))]
-     ;       :location loc}
+ (sandbox)
+ (fn [{db :db} [_ loc index new-constraint]]
+   (let [constraints (get-in db [:temp-query :where])
+         const-logic (constraints->logic constraints)]
+     {:db (-> db
+              (assoc-in [:temp-query :where index] new-constraint)
+              (assoc-in [:temp-query :constraintLogic] const-logic))})))
 
 (reg-event-fx
  :filters/add-constraint
@@ -205,7 +203,8 @@
                                             (set (:where (:temp-query db)))))
          changed-logic (not= (get-in db [:temp-query :constraintLogic])
                              (get-in db [:query :constraintLogic]))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:temp-query :where]))]
       ; This event is usually fired when the filter dropdown closed which means it's fired
       ; a lot even when not necessary. To prevent multiple blank undos from piling up, we only
       ; attach the :undo side effect when something was actually added or removed from the query
@@ -291,7 +290,8 @@
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc]]
    (let [columns-to-add (map (partial clojure.string/join ".") (get-in db [:cache :tree-view :selection]))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      {:db (-> db
               (update-in [:query :select] #(apply conj % columns-to-add))
               (assoc-in [:cache :tree-view :selection] #{}))
@@ -324,7 +324,8 @@
          post-joins (set (get-in db [:cache :rel-manager :joins]))
          added (not-empty (set/difference post-joins pre-joins))
          removed (not-empty (set/difference pre-joins post-joins))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      {:db (assoc db :query (get-in db [:cache :rel-manager]))
       :dispatch [:im-tables.main/run-query loc]
       :undo {:location loc
@@ -423,24 +424,25 @@
  :main/store-possible-values
  (sandbox)
  (fn [db [_ loc view res]]
-   (let [items (->> res :results (map :item) (remove nil?) sort)]
-     (assoc-in db [:cache :possible-values view] items))))
+   (assoc-in db [:cache :possible-values view]
+             (if (map? res)
+               (->> res :results (map :item) (remove nil?) sort)
+               res)))) ; false when too many results and empty list when no possible values.
 
 (reg-event-fx
  :main/fetch-possible-values
  (sandbox)
- (fn [{db :db} [_ loc view]]
-   (let [model (get-in db [:service :model])
-         summary-path (im-path/adjust-path-to-last-class model view)
-         [class path] (split summary-path ".")]
-     {:db db
-      :im-tables/im-operation {:on-success [:main/store-possible-values loc view]
-                               :op (partial fetch/unique-values
-                                            (get db :service)
-                                            {:from class
-                                             :select [path]}
-                                            summary-path
-                                            1000)}})))
+ (fn [{db :db} [_ loc view temp-query?]]
+   (let [query (get db (if temp-query? :temp-query :query))
+         model (assoc (get-in db [:service :model]) :type-constraints (:where query))]
+     (cond-> {:db db}
+       (not (im-path/class? model view))
+       (assoc :im-tables/im-operation {:on-success [:main/store-possible-values loc view]
+                                       :op (partial fetch/unique-values
+                                                    (get db :service)
+                                                    (assoc query :select [view])
+                                                    view
+                                                    1000)})))))
 
 (reg-event-db
  :main/save-column-summary
@@ -465,7 +467,8 @@
  :main/apply-summary-filter
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc view]]
-   (let [model (get-in db [:service :model])]
+   (let [model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      (if-let [current-selection (keys (get-in db [:cache :column-summary view :selections]))]
        {:db (update db :query constraint-append {:path view
                                                  :op "ONE OF"
@@ -485,7 +488,8 @@
  :main/apply-numerical-filter
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc view {:keys [from to]}]]
-   (let [model (get-in db [:service :model])]
+   (let [model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      (let [existing-constraints (get-in db [:query :where])
            existing-from? (not-empty (filter (comp (partial = [view ">="]) (juxt :path :op)) existing-constraints))
            existing-to? (not-empty (filter (comp (partial = [view "<="]) (juxt :path :op)) existing-constraints))]
@@ -529,7 +533,8 @@
  [(sandbox) (undoable)]
  (fn [{db :db} [_ loc view]]
    (let [path-is-join? (some? (some #{view} (get-in db [:query :joins])))
-         model (get-in db [:service :model])]
+         model (assoc (get-in db [:service :model])
+                      :type-constraints (get-in db [:query :where]))]
      {:db (cond-> db
             (not path-is-join?) (update-in [:query :select] (partial remove (fn [v] (= v view))))
             path-is-join? (update-in [:query :select] (partial remove (fn [v] (starts-with? v view))))
@@ -667,14 +672,15 @@
     :im-tables/im-operation {:on-success [:main/save-decon-count loc path]
                              :op (partial fetch/row-count
                                           (get db :service)
-                                          (dissoc (get details :query) :joins))}}))
+                                          (clean-derived-query (get details :query)))}}))
 
 (reg-event-fx
  :main/deconstruct
  (sandbox)
  (fn [{db :db} [_ loc & {:keys [force?]}]]
    (let [deconstructed-query (->> (query/deconstruct-by-class
-                                   (get-in db [:service :model])
+                                   (assoc (get-in db [:service :model])
+                                          :type-constraints (get-in db [:query :where]))
                                    (get-in db [:query]))
                                   vals
                                   (apply merge))]
@@ -689,8 +695,14 @@
  :main/set-codegen-option
  (sandbox)
  (fn [{db :db} [_ loc option value run?]]
-   (cond-> {:db (assoc-in db [:settings :codegen option] value)}
-     run? (assoc :dispatch [:main/generate-code loc]))))
+   (let [gen-xml? (= [option value] [:lang "xml"])]
+     (cond-> {:db (assoc-in db [:settings :codegen option] value)}
+       (and run? (not gen-xml?)) (assoc :dispatch [:main/generate-code loc])
+       gen-xml? (update-in [:db :codegen] assoc
+                           :code (query/->xml (assoc (get-in db [:service :model])
+                                                     :type-constraints (get-in db [:query :where]))
+                                              (get-in db [:query]))
+                           :lang "xml")))))
 
 (reg-event-fx
  :main/generate-code
@@ -717,6 +729,12 @@
    (update db :codegen assoc :code response :lang lang)))
 
 (reg-event-db
+ :main/expand-compact
+ (sandbox)
+ (fn [db [_ loc]]
+   (assoc-in db [:settings :compact] false)))
+
+(reg-event-db
  :filter-manager/change-constraint
  (sandbox)
  (fn [db [_ loc value]]
@@ -740,3 +758,102 @@
                       (dissoc :response))}
        (= error-type :network)
        (assoc :im-tables/log-error ["Network error" {:response res}])))))
+
+(reg-event-db
+ :pick-items/start
+ (sandbox)
+ (fn [db [_ loc]]
+   (assoc-in db [:pick-items :picked] #{})))
+
+(reg-event-db
+ :pick-items/stop
+ (sandbox)
+ (fn [db [_ loc]]
+   (dissoc db :pick-items)))
+
+(defn pick-items->dialog-details [{:keys [picked class]}]
+  {:query {:from class
+           :select [(str class ".id")]
+           :where [{:path (str class ".id") :op "ONE OF" :values (vec picked)}]}
+   :type class
+   :count (count picked)
+   :picking? true})
+
+(reg-event-fx
+ :pick-items/pick
+ (sandbox)
+ (fn [{db :db} [_ loc id class]]
+   (let [db (-> db
+                (update-in [:pick-items :picked] (fnil conj #{}) id)
+                (assoc-in [:pick-items :class] class))]
+     {:db db
+      :dispatch [:modal/open loc (->> (get db :pick-items)
+                                      (pick-items->dialog-details)
+                                      (generate-dialog loc))]})))
+
+(reg-event-fx
+ :pick-items/drop
+ (sandbox)
+ (fn [{db :db} [_ loc id _class]]
+   (let [picked' ((fnil disj #{}) (get-in db [:pick-items :picked]) id)
+         db (-> db
+                (assoc-in [:pick-items :picked] picked')
+                (cond->
+                 (empty? picked') (assoc-in [:pick-items :class] nil)))]
+     {:db db
+      :dispatch (if (empty? picked')
+                  [:modal/close loc]
+                  [:modal/open loc (->> (get db :pick-items)
+                                        (pick-items->dialog-details)
+                                        (generate-dialog loc))])})))
+
+(defn part-query->dataset-query [model path part-query]
+  ;; If the class has no datasets, it could throw here.
+  (try
+    (let [dataset-path (str path ".dataSets")
+          attribs (some-> (im-path/attributes model dataset-path)
+                          (filter [:description :url :name :id]))]
+      (when (seq attribs)
+        (-> part-query
+            (clean-derived-query)
+            (assoc :select (mapv #(str dataset-path "." (name %)) attribs)))))
+    (catch :default _)))
+
+;; These events are currently not in use, but could be adapted to similar
+;; usecases (like being able to add arbitrary references/collections as
+;; additional columns, to a query), hence why they're left as comments.
+(comment
+  (reg-event-fx
+   :source/fetch-parts
+   (sandbox)
+   (fn [{db :db} [_ loc]]
+     (let [model (assoc (get-in db [:service :model])
+                        :type-constraints (get-in db [:query :where]))]
+       {:db db
+        :dispatch-n (keep (fn [[path {:keys [query]}]]
+                            (when-let [dataset-query (part-query->dataset-query model path query)]
+                              [:source/fetch-part-dataset loc path dataset-query]))
+                          (get-in db [:query-parts]))})))
+
+  (reg-event-fx
+   :source/fetch-part-dataset
+   (sandbox)
+   (fn [{db :db} [_ loc path query]]
+     {:db db
+      :im-tables/im-operation {:on-success [:source/fetch-part-dataset-success loc path]
+                               :on-failure [:source/fetch-part-dataset-failure loc path]
+                               :op (partial fetch/rows
+                                            (get db :service)
+                                            query)}}))
+
+  (reg-event-db
+   :source/fetch-part-dataset-success
+   (sandbox)
+   (fn [db [_ loc path res]]
+     (assoc-in db [:cache :data-sources path] (not-empty (rows->maps res)))))
+
+  (reg-event-db
+   :source/fetch-part-dataset-failure
+   (sandbox)
+   (fn [db [_ loc path _res]]
+     (assoc-in db [:cache :data-sources path] false))))

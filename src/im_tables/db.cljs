@@ -68,7 +68,7 @@
               :cdn "http://cdn.intermine.org"
               :pagination {:start 0
                            :limit 20}
-              :codegen {:lang "js"
+              :codegen {:lang "py"
                         :comments? true
                         :html? true
                         :highlight? true}
@@ -81,7 +81,12 @@
                       :url (fn [vocab] (str "#/reportpage/"
                                             (:mine vocab) "/"
                                             (:class vocab) "/"
-                                            (:objectId vocab)))}}
+                                            (:objectId vocab)))}
+
+              ;; Whether the dashboard buttons should be hidden on
+              ;; initialisation and need to be expanded with a button.
+              :compact false}
+
    :cache {:summaries {}
            :summary {}
            :selection {}

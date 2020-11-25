@@ -28,16 +28,16 @@
   :cljfmt {:indents {wait-for [[:inner 0]]
                      after-load [[:inner 0]]}}
 
-  :aliases {"dev" ["do" "clean"
+  :aliases {"dev" ["do" "clean,"
                    ["pdo"
                     ["trampoline" "less" "auto"]
                     ["with-profile" "+repl" "run"]]]
-            "build" ["do" "clean"
+            "build" ["do" "clean,"
                      ["less" "once"]
                      ["cljsbuild" "once" "min"]]
             "deploy" ["with-profile" "+uberjar" "deploy" "clojars"]
             "format" ["cljfmt" "fix"]
-            "kaocha" ["do" "clean"
+            "kaocha" ["do" "clean,"
                       ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]]}
 
   :repositories {"clojars" {:sign-releases false}}
@@ -60,7 +60,7 @@
   :less {:source-paths ["less"]
          :target-path "resources/public/css"}
 
-  :main im-tables.core
+  :main nil
 
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.0"]
                                   [day8.re-frame/re-frame-10x "0.6.2"]

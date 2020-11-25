@@ -8,37 +8,35 @@
             [im-tables.views.dashboard.manager.columns.main :as saver]
             [im-tables.views.dashboard.manager.codegen.main :as codegen]
             [im-tables.views.dashboard.exporttable :as exporttable]
-            [re-frame.core :refer [dispatch]]
-            [oops.core :refer [ocall]]))
+            [re-frame.core :refer [dispatch subscribe]]))
 
-(defn main []
-  (fn [loc response pagination]
-    [:div.container-fluid
-     [:div.row
-      [column-manager/main loc]]
-     [:div.row.im-table-toolbar
-      [:div.col-sm-12
-       [:div.btn-toolbar.pull-left.dashboard-buttons
-        [:div.btn-group
-         [:button.btn.btn-default
-          {:on-click (fn []
-                       ; Clear the previous state of the column manager when (re)opening
-                       (dispatch [:tree-view/clear-state loc])
-                       (dispatch [:modal/open loc (saver/make-modal loc)]))}
-          [:i.fa.fa-columns] " Add Columns"]]
-        [:div.btn-group [filter-manager/main loc]]
-        [:div.btn-group [rel-manager/main loc]]
-        [:div.btn-group [save/main loc]]
-        [:div.btn-group [exporttable/exporttable loc]]
-        [:div.btn-group [codegen/main loc]]
-        [undo/main loc]]
-       [:div.row.pagination-bar.pull-left
-        [:div.pull-left
-         [pager/main loc
-          (merge pagination
-                 {:total (get response :iTotalRecords)})]]
-        [:label.pull-left
-         {:style {:padding-left "10px"}}
+(defn main [loc]
+  (let [compact? (subscribe [:settings/compact loc])]
+    (fn [loc response pagination]
+      [:div.dashboard
+       (when-not @compact?
+         [:div.dashboard-buttons
+          [:div.btn-toolbar
+           [:div.btn-group
+            [:button.btn.btn-default
+             {:on-click (fn []
+                          ; Clear the previous state of the column manager when (re)opening
+                          (dispatch [:tree-view/clear-state loc])
+                          (dispatch [:modal/open loc (saver/make-modal loc)]))}
+             [:i.fa.fa-columns] " Add Columns"]]
+           [:div.btn-group [filter-manager/main loc]]
+           [:div.btn-group [rel-manager/main loc]]
+           [undo/main loc]]
+          [:div.btn-toolbar
+           [:div.btn-group [save/main loc]]
+           [:div.btn-group [codegen/main loc]]
+           [:div.btn-group [exporttable/exporttable loc]]]])
+       (when @compact?
+         [:button.btn.btn-default.dashboard-expand
+          {:on-click #(dispatch [:main/expand-compact loc])}
+          [:i.fa.fa-chevron-up] " Options"])
+       [:div.pagination-bar
+        [:label.pagination-label
          (when (:iTotalRecords response)
            (str "Showing "
                 (inc (:start pagination)) " to "
@@ -48,4 +46,7 @@
                 " of "
                 (.toLocaleString (:iTotalRecords response))
 
-                " rows"))]]]]]))
+                " rows"))]
+        [pager/main loc
+         (merge pagination
+                {:total (get response :iTotalRecords)})]]])))

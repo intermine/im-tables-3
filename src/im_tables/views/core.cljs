@@ -10,9 +10,11 @@
             [im-tables.views.table.error :as error]))
 
 (defn custom-modal []
-  (fn [loc {:keys [header body footer extra-class]}]
+  (fn [loc {:keys [header body footer extra-class no-fade]}]
     [:div.im-modal
-     {:on-mouse-down #(dispatch [:modal/close loc])}
+     (if no-fade
+       {:class :no-fade}
+       {:on-mouse-down #(dispatch [:modal/close loc])})
      [:div.im-modal-content
       {:class extra-class
        :on-mouse-down (fn [e]
@@ -86,7 +88,8 @@
                  (into [:tr]
                        (->> @collapsed-views
                             (map-indexed (fn [idx h]
-                                           (let [display-name (when (and @model h) (impath/display-name @model h))
+                                           (let [[attrib-name parent-name] (when (and @model h)
+                                                                             (rseq (impath/display-name @model h)))
                                                  active-filters (not-empty (filter (partial constraint-has-path? h) (:where @query)))]
                                              ; This is a simple HTML representation of
                                              ; im-tables.views.table.head.controls/toolbar
@@ -100,8 +103,8 @@
                                                 {:class (when active-filters "active-filter")}]
                                                [:i.fa.fa-bar-chart.dropdown-toggle {:data-toggle "dropdown"}]]
                                               [:div
-                                               [:div (last (drop-last display-name))]
-                                               [:div (last display-name)]]])))))]
+                                               [:div parent-name]
+                                               [:div attrib-name]]])))))]
                 (into [:tbody] (map (fn [row]
                                       (into [:tr] (map (fn [cell]
                                                          [:td

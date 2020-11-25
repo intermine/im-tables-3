@@ -1,18 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-/// CHANGES MADE HERE WILL NOT SHOW UP IN BLUEGENES WITHOUT FURTHER ACTION   ///
-/// Make changes here, test them, etc. when you are happy - follow the       ///
-/// workflow below to get things into bluegenes.                             ///
-////////////////////////////////////////////////////////////////////////////////
-/// There is an issue to fix this:                                           ///
-/// https://github.com/intermine/im-tables-3/issues/68                       ///
-////////////////////////////////////////////////////////////////////////////////
-/// Workflow:                                                                ///
-/// 1. go to resources/public/css.                                           ///
-/// 2. Copy and paste the built css from site.css to the less/im-tables.less ///
-/// file in bluegenes.                                                       ///
-////////////////////////////////////////////////////////////////////////////////
-
-
 @import "overrides";
 @import "tooltip";
 @import "modal";
@@ -60,8 +45,45 @@
         white-space: pre;
     }
 
-    .dashboard-buttons {
-        margin-right: 30px;
+    .dashboard {
+        padding: @spacer/2 @spacer/2 0 @spacer/2;
+
+        .dashboard-buttons {
+            display: flex;
+            justify-content: space-between;
+
+            margin-bottom: @spacer;
+        }
+
+        .dashboard-expand {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+
+            border-top: none;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-shrink: 0;
+            align-items: flex-end;
+            flex-wrap: wrap;
+
+            margin-bottom: @spacer/2;
+
+            .pagination-buttons {
+                display: flex;
+                align-items: flex-end;
+
+                & > div.btn-group {
+                    margin-left: @spacer/2;
+                }
+            }
+        }
     }
 
     .codegen-checkbox-container {
@@ -73,12 +95,6 @@
         padding: 0;
         .table {
             margin: 0;
-        }
-    }
-
-    .pagination-bar {
-        label {
-            line-height: 2.4em;
         }
     }
 
@@ -197,12 +213,6 @@
 
     .summary-table {
         font-size: 0.9em;
-    }
-
-    .im-table-toolbar {
-        .col-xs-6 {
-            padding-left: 0;
-        }
     }
 
     .table-bordered > tbody > tr > td,
@@ -520,6 +530,26 @@
             tbody tr td:last-of-type {
                 padding-right: 1.2*@spacer;
             }
+        }
+
+        hr {
+            margin: @spacer/2 0 @spacer/2 0;
+        }
+
+        a.disabled {
+            &, &:link, &:visited, &:focus, &:hover, &:active {
+                color: #666;
+            }
+        }
+
+        a.section-heading {
+            margin-top: @spacer;
+            border-bottom: 1px solid #c4c4c4;
+        }
+
+        &.source-dropdown {
+            max-height: 80vh;
+            overflow: auto;
         }
     }
 

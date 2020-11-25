@@ -20,9 +20,17 @@
             animation-timing-function: ease-out;
             animation-fill-mode: backwards;
 
-
+    &.no-fade {
+        position: absolute;
+        top: auto;
+        bottom: 0;
+        transform: translateY(100%);
+        background-color: transparent;
+        pointer-events: none;
+    }
 
     .im-modal-content {
+        pointer-events: auto;
         flex: 0 0 auto;
         animation: slidein 150ms;
         margin-left: 20px;

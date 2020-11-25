@@ -2,7 +2,8 @@
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :as re-frame :refer [reg-sub subscribe]]
             [clojure.string :as string]
-            [imcljs.internal.utils :refer [scrub-url]]))
+            [imcljs.internal.utils :refer [scrub-url]]
+            [imcljs.query :as im-query]))
 
 (defn glue [path remainder-vec]
   (reduce conj (or path []) remainder-vec))
@@ -16,6 +17,13 @@
  :main/query
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:query]))))
+
+(reg-sub
+ :main/query-constraints
+ (fn [[_ prefix]]
+   (subscribe [:main/query prefix]))
+ (fn [query [_ _prefix]]
+   (:where query)))
 
 (reg-sub
  :main/temp-query
@@ -68,6 +76,16 @@
    (get-in db (glue prefix [:settings]))))
 
 (reg-sub
+ :settings/cdn
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:settings :cdn]))))
+
+(reg-sub
+ :settings/compact
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:settings :compact]))))
+
+(reg-sub
  :summaries/column-summaries
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:cache :column-summary]))))
@@ -93,14 +111,21 @@
    (get-in db (glue prefix [:cache :possible-values view]))))
 
 (reg-sub
- :assets/model
- (fn [db [_ prefix]]
-   (get-in db (glue prefix [:service :model]))))
-
-(reg-sub
  :assets/service
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:service]))))
+
+;; We add `:type-constraints` to the model right here in case it is used to
+;; traverse a subclass. In some places the constraints of `:temp-query` will be
+;; used instead, in which case they assoc `:type-constraints` themselves.
+(reg-sub
+ :assets/model
+ (fn [[_ prefix]]
+   [(subscribe [:assets/service prefix])
+    (subscribe [:main/query-constraints prefix])])
+ (fn [[service constraints] [_ _prefix]]
+   (assoc (:model service)
+          :type-constraints constraints)))
 
 (reg-sub
  :tree-view/selection
@@ -195,8 +220,8 @@
                     (and html? comments?) (conj "<!-- The Element we will target -->")
                     html? (conj "<div id=\"some-elem\"></div>\n")
                     (and html? comments?) (conj "<!-- The imtables source -->")
-                    html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/2.0.0-beta/imtables.js\" charset=\"UTF8\"></script>"))
-                    html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/2.0.0-beta/main.sandboxed.css\" rel=\"stylesheet\">\n"))
+                    html? (conj (str "<script src=\"" cdn "/js/intermine/im-tables/latest/imtables.js\" charset=\"UTF8\"></script>"))
+                    html? (conj (str "<link href=\"" cdn "/js/intermine/im-tables/latest/main.sandboxed.css\" rel=\"stylesheet\">\n"))
                     html? (conj "<script>")
 
                     (and (not html?) comments?) (conj "/* Install from npm: npm install imtables\n * This snippet assumes the presence on the page of an element like:\n * <div id=\"some-elem\"></div>\n */")
@@ -234,6 +259,7 @@
   (cond
     (= "js" lang) (when (and query service) (generate-javascript options))
     (= "java" lang) (cond-> code (not comments?) remove-java-comments)
+    (= "xml" lang) code
     (or
      (= "rb" lang)
      (= "py" lang)
@@ -252,11 +278,14 @@
 
 (reg-sub
  :codegen/formatted-code
- (fn [db [_ loc]]
-   (let [{:keys [html? comments? lang]} (get-in db (glue loc [:settings :codegen]))
-         code (get-in db (glue loc [:codegen :code]))
-         cdn (get-in db (glue loc [:settings :cdn]))
-         {:keys [query service]} (get-in db (glue loc nil))]
+ (fn [[_ loc]]
+   [(subscribe [:settings/cdn loc])
+    (subscribe [:codegen/code loc])
+    (subscribe [:codegen/options loc])
+    (subscribe [:main/query loc])
+    (subscribe [:assets/service loc])])
+ (fn [[cdn code options query service] [_ _loc]]
+   (let [{:keys [html? comments? lang]} options]
      (when code
        (format-code {:lang lang
                      :code code
@@ -287,3 +316,20 @@
    (subscribe [:main/temp-query loc]))
  (fn [query [_ loc]]
    (:constraintLogic query)))
+
+(reg-sub
+ :pick-items/picked
+ (fn [db [_ loc]]
+   (get-in db (glue loc [:pick-items :picked]))))
+
+(reg-sub
+ :pick-items/is-picked?
+ (fn [[_ loc]]
+   (subscribe [:pick-items/picked loc]))
+ (fn [picked [_ _loc id]]
+   (contains? picked id)))
+
+(reg-sub
+ :pick-items/class
+ (fn [db [_ loc]]
+   (get-in db (glue loc [:pick-items :class]))))

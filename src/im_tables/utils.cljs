@@ -33,34 +33,11 @@
             (ocall :on trigger callback))
     event))
 
-(defn path->displaynames
-  "Takes a path as the `view` argument and returns the corresponding vector of
-  display names. Will prioritise the displayName of the referencedType class
-  (instead of the displayName in the references/collections/attributes map).
-  This makes a difference with eg. `Gene.dataSets.name`, where
-  `classes.Gene.collections.dataSets.displayName` is `Data Sets` while
-  `classes.DataSet.displayName` is `Data Set`."
-  [model view]
-  (let [[head & tail] (path/split-path view)]
-    (loop [names []
-           paths tail
-           class (get-in model [:classes head])]
-      (let [new-names (conj names (:displayName class))]
-        (if (seq paths)
-          (recur new-names
-                 (next paths)
-                 (let [subclasses (apply merge
-                                         ((juxt :references :collections :attributes) class))
-                       subclass   (subclasses (first paths))]
-                   (if-let [reference (:referencedType subclass)]
-                     (get-in model [:classes (keyword reference)])
-                     subclass)))
-          new-names)))))
-
 (defn display-name
   "Takes a view path and returns a human-readable name string."
   [model view]
-  (->> (path->displaynames model view)
+  (->> (path/walk model view)
+       (map :displayName)
        (take-last 2) ;; Last two names of the path are most descriptive.
        (string/join " ")
        plural))
@@ -81,9 +58,9 @@
 (defn constraints->logic
   "Generates the default 'A and B and ...' constraint logic string from a
   sequence of constraints. Note that `:code` needs to be present on all
-  constraint maps."
+  applicable constraint maps, which `imcljs.query/sterilize-query` ensures."
   [constraints]
-  (->> (map :code constraints)
+  (->> (keep :code constraints)
        (string/join " and ")))
 
 (defn clj->json
@@ -92,3 +69,22 @@
   (some-> x
           (clj->js)
           (json/serialize)))
+
+(defn clean-derived-query
+  "New queries are sometimes derived from an existing query, to fulfill an
+  auxilliary purpose. The InterMine backend will in some cases return 'Service
+  failed' if a query specifies sorting for a column that isn't part of the
+  view, or joins that isn't relevant to the results. In most cases, these
+  properties won't have an effect on the result and can safely be removed."
+  [query]
+  (dissoc query
+          :joins :sortOrder :orderBy))
+
+(defn rows->maps
+  "Takes an `imcljs.fetch/rows` response and transforms it into a vector of
+  maps, with the last portion of the path as keyword keys ('Gene.symbol' -> :symbol)."
+  [res]
+  (let [views (map (comp keyword #(re-find #"[^\.]+$" %)) (:views res))]
+    (mapv (fn [result]
+            (zipmap views result))
+          (:results res))))
