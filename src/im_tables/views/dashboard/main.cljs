@@ -41,8 +41,8 @@
            (str "Showing "
                 (inc (:start pagination)) " to "
                 (min
-                  (+ (:start pagination) (:limit pagination))
-                  (:iTotalRecords response))
+                 (+ (:start pagination) (:limit pagination))
+                 (:iTotalRecords response))
                 " of "
                 (.toLocaleString (:iTotalRecords response))
 

@@ -50,12 +50,12 @@
   "Returns a set of paths corresponding to all parent paths of `views`, in effect, expanding them."
   [views]
   (into #{}
-       (mapcat (fn [path]
-                 (->> (split path #"\.")
-                      (iterate drop-last)
-                      (take-while seq)
-                      (next))))
-       views))
+        (mapcat (fn [path]
+                  (->> (split path #"\.")
+                       (iterate drop-last)
+                       (take-while seq)
+                       (next))))
+        views))
 
 (defn tree-view [loc model query]
   (let [expanded-paths* (reagent/atom (->> query query/sterilize-query :select pre-expanded-paths))]

@@ -280,9 +280,9 @@
     (cond-> constraint
       (contains? new-const :op)
       (as-> const
-        (cond-> const
-          (and (= old-op "ISA") (not= new-op "ISA")) ; Changed away from type constraint.
-          (set/rename-keys {:type :value})) ; Type constraints are :single op.
+            (cond-> const
+              (and (= old-op "ISA") (not= new-op "ISA")) ; Changed away from type constraint.
+              (set/rename-keys {:type :value})) ; Type constraints are :single op.
         (case [(op-type old-op) (op-type new-op)]
           [:single :multi] (-> const
                                (set/rename-keys {:value :values})
@@ -299,11 +299,11 @@
           (-> (dissoc :op) (set/rename-keys {:value :type}))))
       (contains? new-const :value)
       (as-> const
-        (if (contains? const :type)
-          (assoc const :type new-value)
-          (case (op-type (:op const))
-            :single (assoc const :value new-value)
-            :multi (assoc const :values new-value)))))))
+            (if (contains? const :type)
+              (assoc const :type new-value)
+              (case (op-type (:op const))
+                :single (assoc const :value new-value)
+                :multi (assoc const :values new-value)))))))
 
 (defn blank-constraint [loc view]
   (let [possible-values (subscribe [:selection/possible-values loc view])

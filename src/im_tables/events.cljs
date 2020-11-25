@@ -704,7 +704,6 @@
                                               (get-in db [:query]))
                            :lang "xml")))))
 
-
 (reg-event-fx
  :main/generate-code
  (sandbox)
@@ -800,7 +799,7 @@
          db (-> db
                 (assoc-in [:pick-items :picked] picked')
                 (cond->
-                  (empty? picked') (assoc-in [:pick-items :class] nil)))]
+                 (empty? picked') (assoc-in [:pick-items :class] nil)))]
      {:db db
       :dispatch (if (empty? picked')
                   [:modal/close loc]
