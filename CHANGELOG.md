@@ -1,3 +1,33 @@
+## 0.11.0 (2020-11-25)
+
+[#106](https://github.com/intermine/im-tables-3/pull/106)
+- Default to Python for codegen instead of JS
+- Handle subclasses specified with type constraints
+    - Fix empty column headers for paths unique to subclass
+    - Show and allow editing of type constraints in filter manager
+    - Fix column summary crashing for subclass attribute
+- Filter suggestions are now fetched with active constraints (meaning all should give results)
+- Make count-deconstruction more robust (not failing due to irrelevant sortOrder)
+- Improvements to *Add columns* modal
+    - Show attributes/references/collections of type constrained class
+    - Pre-expand tree to active views
+- UI fixes
+    - Fix constraint selector disappearing at edges of modal
+    - Use text input instead of selector with no options, when there are too many possible values
+- Add XML to *Generate code* modal
+- Fix typing enter in column summary filter causing page reload
+- Fix suggestions not fetched when first opening filter manager
+- Support picking items to save to list
+- Fix JS code in *Generate code* modal containing frivolous query keys for templates
+- Improve styling of dashboard and clean up messy markup
+- `:compact` setting to hide dashboard buttons until expanded
+- Rename CSS to `im-tables.css` so dependants can pick it up (removes the need for manually copying CSS)
+- Pagination fixes
+    - Fix rows per page not showing a custom limit passed through settings
+    - Fix jump to last page sending you to nonexistent page with no results, when total results is a multiple of page limit
+    - Fix buggy behaviour when page limit is set to number not multiple of 10
+    - Fix changing page limit (rows per page) sometimes leading to *decimal* pages
+
 ## 0.10.1 (2020-06-25)
 
 - Fix interleaved booting causing performance issues and race conditions in specific scenarios [#92](https://github.com/intermine/im-tables-3/pull/92)

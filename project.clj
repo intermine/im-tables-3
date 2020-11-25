@@ -1,4 +1,4 @@
-(defproject org.intermine/im-tables "0.10.1"
+(defproject org.intermine/im-tables "0.11.0"
   :licence "LGPL-2.1-only"
   :description "ClojureScript library to display and manipulate InterMine query results on a webpage"
   :url "http://www.intermine.org"
@@ -13,7 +13,7 @@
                  [joshkh/ctrlz "0.3.0"]
                  [binaryage/oops "0.7.0"]
                  [inflections "0.13.2"]
-                 [org.intermine/imcljs "1.1.0"]
+                 [org.intermine/imcljs "1.3.0"]
                  [day8.re-frame/test "0.1.5"]
                  [cljsjs/react-day-picker "7.3.0-1"]
                  [cljsjs/react-select "2.4.4-0"]
