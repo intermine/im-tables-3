@@ -60,7 +60,7 @@
   :less {:source-paths ["less"]
          :target-path "resources/public/css"}
 
-  :main nil
+  :main im-tables.core
 
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.0"]
                                   [day8.re-frame/re-frame-10x "0.6.2"]
