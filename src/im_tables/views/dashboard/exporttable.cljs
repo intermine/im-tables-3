@@ -13,42 +13,45 @@
     with the new possible format appended to the end. "
   [good-formats model-parts suitable-for format]
   (let [model-bits (set (keys model-parts))]
-    (distinct
-     (reduce
-      (fn [suitable-bit]
-        (if (contains? model-bits (name suitable-bit))
-          (conj good-formats format)
-          good-formats)) suitable-for))))
+    (distinct (reduce (fn [suitable-bit]
+                        (if (contains? model-bits (name suitable-bit))
+                          (conj good-formats format)
+                          good-formats))
+                      suitable-for))))
 
 (defn modal-body
   "creates the dropdown to allow users to select their preferred format"
   [loc]
-  (fn []
-    (let [settings (subscribe [:settings/settings loc])
-          model-parts (subscribe [:main/query-parts loc])
-          export-formats (get-in @settings [:data-out :accepted-formats])
-          valid-export-formats
-          (reduce (fn [good-formats [format suitable-for]]
-                    (if (= suitable-for :all)
-                      (conj good-formats format)
-                      (check-if-good good-formats @model-parts suitable-for format))) [] export-formats)]
-      (reduce
-       (fn [select format]
-         (conj select [:option (name format)]))
-       [:select.form-control
-        {:on-change
-         #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}] valid-export-formats))))
+  (let [settings @(subscribe [:settings/settings loc])
+        model-parts @(subscribe [:main/query-parts loc])
+        export-formats (get-in settings [:data-out :accepted-formats])
+        valid-export-formats (reduce (fn [good-formats [format suitable-for]]
+                                       (if (= suitable-for :all)
+                                         (conj good-formats format)
+                                         (check-if-good good-formats model-parts suitable-for format)))
+                                     [] export-formats)]
+    (reduce (fn [select format]
+              (conj select [:option (name format)]))
+            [:select.form-control
+             {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
+            valid-export-formats)))
+
+(defn modal-footer
+  "Clicking the anchor element will cause the file to be downloaded directly
+  from the server due to it responding with content-disposition: attachment."
+  [loc]
+  (let [href @(subscribe [:export/download-href loc])]
+    [:a.btn.btn-raised.btn-primary
+     {:href href}
+     "Download now!"]))
 
 (defn export-menu
   "UI element. Presents the modal to allow user to select an export format."
   [loc]
   {:header [:h4 "Export this table as..." [:a.close {:on-click #(dispatch [:modal/close loc])} "x"]]
    :body [:div.modal-body
-          [:form [:label "Select a format" [modal-body loc]]]
-          [:a {:id "hiddendownloadlink" :download "download"}]]
-   :footer [:button.btn.btn-raised.btn-primary
-            {:on-click (fn [] (dispatch [:exporttable/download loc]))}
-            "Download now!"]})
+          [:form [:label "Select a format" [modal-body loc]]]]
+   :footer [modal-footer loc]})
 
 (defn exporttable [loc]
   [:button.btn.btn-default

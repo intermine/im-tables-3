@@ -143,15 +143,15 @@
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
                              (string/join "/" [nil mine "report" class objectId]))}}})
 
-(def pagination-bug
+(def humanmine-config-2
   {:service {:root "https://www.humanmine.org/humanmine"}
    :query {:from "Gene"
-           :select ["Gene.overlappingFeatures.primaryIdentifier",
-                    "Gene.overlappingFeatures.length",
-                    "Gene.overlappingFeatures.organism.name"]
-           :where [{:path "Gene.id"
-                    :op "="
-                    :value "1016209"}]}
+           :select ["Gene.symbol"
+                    "Gene.primaryIdentifier"
+                    "Gene.organism.name"]
+           :where [{:path "Gene.symbol"
+                    :op "LIKE"
+                    :value "*g"}]}
    :settings {:pagination {:limit 10}
               :links {:vocab {:mine "humanmine"}
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
@@ -168,7 +168,7 @@
 (def number-of-tables 1)
 (defn reboot-tables-fn []
   (dotimes [n number-of-tables]
-    (re-frame/dispatch-sync [:im-tables/load [:test :location n] subclass-config])))
+    (re-frame/dispatch-sync [:im-tables/load [:test :location n] humanmine-config-2])))
 
 (defn main-panel []
   (let [show? (r/atom true)]
