@@ -14,3 +14,15 @@
  (sandbox)
  (fn [db [_ loc format]]
    (assoc-in db [:settings :data-out :selected-format] (keyword format))))
+
+(reg-event-db
+ :exporttable/toggle-export-data-package
+ (sandbox)
+ (fn [db [_ loc]]
+   (update-in db [:settings :data-out :export-data-package] not)))
+
+(reg-event-db
+ :exporttable/set-compression
+ (sandbox)
+ (fn [db [_ loc compression-type]]
+   (assoc-in db [:settings :data-out :compression] compression-type)))
