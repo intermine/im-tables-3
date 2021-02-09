@@ -2,7 +2,7 @@ version: 2.1
 executors:
   intermine_exec:
     machine:
-    - image: ubuntu-2004:202010-01
+      image: ubuntu-2004:202010-01
 jobs:
   setup_intermine:
     executor: intermine_exec
