@@ -348,8 +348,8 @@
           "?format=" (name selected-format)
           "&filename=" "results"
           "&query=" (js/encodeURIComponent
-                      (im-query/->xml model (cond-> query
-                                              fasta? (assoc :select ["id"]))))
+                     (im-query/->xml model (cond-> query
+                                             fasta? (assoc :select ["id"]))))
           (if export-data-package
             "&exportDataPackage=true&compress=zip"
             (when compression
