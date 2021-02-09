@@ -107,6 +107,32 @@
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
                              (string/join "/" [nil mine "report" class objectId]))}}})
 
+(def outer-join-config
+  {:service {:root "https://www.flymine.org/flymine"}
+   :query {:from "Gene"
+           :select ["Gene.secondaryIdentifier",
+                    "Gene.symbol",
+                    "Gene.primaryIdentifier",
+                    "Gene.organism.name",
+                    "Gene.interactions.participant2.alleles.primaryIdentifier",
+                    "Gene.interactions.participant2.alleles.symbol",
+                    "Gene.interactions.participant2.alleles.alleleClass",
+                    "Gene.interactions.participant2.alleles.organism.name"]
+           :where [{:path "Gene"
+                    :op "LOOKUP"
+                    :value "eve"}
+                   {:path "Gene.interactions.participant2"
+                    :type "Gene"}
+                   {:path "Gene.interactions.participant2.alleles.symbol"
+                    :op "CONTAINS"
+                    :value "ab"}]
+           :joins ["interactions"]}
+   :settings {:pagination {:limit 10}
+              :compact true
+              :links {:vocab {:mine "flymine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
+
 (def pickitems-config
   {:service {:root "https://www.flymine.org/flymine"}
    :query {:from "Gene"
@@ -168,7 +194,7 @@
 (def number-of-tables 1)
 (defn reboot-tables-fn []
   (dotimes [n number-of-tables]
-    (re-frame/dispatch-sync [:im-tables/load [:test :location n] subclass-config])))
+    (re-frame/dispatch-sync [:im-tables/load [:test :location n] outer-join-config])))
 
 (defn main-panel []
   (let [show? (r/atom true)]
