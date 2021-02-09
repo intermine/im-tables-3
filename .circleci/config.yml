@@ -1,0 +1,42 @@
+version: 2.1
+executors:
+  intermine_exec:
+    machine:
+    - image: ubuntu-2004:202010-01
+jobs:
+  setup_intermine:
+    executor: intermine_exec
+    steps:
+    - run:
+        name: Start a browser process for running kaocha tests
+        command: google-chrome-stable --no-first-run
+        background: true
+    - run: pyenv versions
+    - run: pyenv global 3.6.5
+    - run: pip3 install intermine-boot
+    - run: intermine_boot start local --build-im --im-branch bluegenes
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-deps-{{ .Branch }}-{{ checksum "package.json" }}
+        - v1-deps-{{ .Branch }}-{{ checksum "project.clj" }}
+        - v1-deps-{{ .Branch }}
+        - v1-deps
+    - run: lein deps
+    - run: lein cljfmt check
+    - run: npm ci
+    - save_cache:
+        key: v1-deps-{{ .Branch }}-{{ checksum "package.json" }}
+        paths:
+        - ~/.npm
+        - ~/.cache
+    - run: lein kaocha
+    - run: lein uberjar
+    - save_cache:
+        key: v1-deps-{{ .Branch }}-{{ checksum "project.clj" }}
+        paths:
+        - ~/.m2
+workflows:
+  build_and_test:
+    jobs:
+      - setup_intermine
