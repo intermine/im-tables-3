@@ -1,0 +1,37 @@
+version: 2.1
+executors:
+  imtables_exec:
+    docker:
+    - image: 'circleci/clojure:openjdk-8-lein-2.9.1-node-browsers'
+jobs:
+  setup_imtables:
+    executor: imtables_exec
+    steps:
+    - run:
+        name: Start a browser process for running kaocha tests
+        command: google-chrome-stable --no-first-run
+        background: true
+    - checkout
+    - restore_cache:
+        keys:
+        - v1-deps-{{ .Branch }}-{{ checksum "package.json" }}
+        - v1-deps-{{ .Branch }}-{{ checksum "project.clj" }}
+        - v1-deps-{{ .Branch }}
+        - v1-deps
+    - run: lein cljfmt check
+    - run: npm ci
+    - save_cache:
+        key: v1-deps-{{ .Branch }}-{{ checksum "package.json" }}
+        paths:
+        - ~/.npm
+        - ~/.cache
+    - run: lein kaocha
+    - run: lein uberjar
+    - save_cache:
+        key: v1-deps-{{ .Branch }}-{{ checksum "project.clj" }}
+        paths:
+        - ~/.m2
+workflows:
+  build_and_test:
+    jobs:
+      - setup_imtables
