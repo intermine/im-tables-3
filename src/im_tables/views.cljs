@@ -169,15 +169,15 @@
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
                              (string/join "/" [nil mine "report" class objectId]))}}})
 
-(def pagination-bug
+(def humanmine-config-2
   {:service {:root "https://www.humanmine.org/humanmine"}
    :query {:from "Gene"
-           :select ["Gene.overlappingFeatures.primaryIdentifier",
-                    "Gene.overlappingFeatures.length",
-                    "Gene.overlappingFeatures.organism.name"]
-           :where [{:path "Gene.id"
-                    :op "="
-                    :value "1016209"}]}
+           :select ["Gene.symbol"
+                    "Gene.primaryIdentifier"
+                    "Gene.organism.name"]
+           :where [{:path "Gene.symbol"
+                    :op "LIKE"
+                    :value "*g"}]}
    :settings {:pagination {:limit 10}
               :links {:vocab {:mine "humanmine"}
                       :url (fn [{:keys [mine class objectId] :as _vocab}]

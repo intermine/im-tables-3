@@ -9,16 +9,19 @@
 
 (use-fixtures :each utils/fixtures)
 
-(def im-config {:service {:root "http://localhost:9999/biotestmine"}
+(def im-config {:service {:root "https://www.flymine.org/flymine"}
                 :query {:from "Gene"
                         :select ["symbol"
                                  "secondaryIdentifier"
                                  "dataSets.description"
                                  "primaryIdentifier"
                                  "organism.name"
-                                 "dataSets.name"]}
+                                 "dataSets.name"]
+                        :where [{:path "Gene.symbol"
+                                 :op "CONTAINS"
+                                 :value "abc"}]}
                 :settings {:pagination {:limit 10}
-                           :links {:vocab {:mine "beta-humanmine"}
+                           :links {:vocab {:mine "flymine"}
                                    :url (fn [{:keys [mine class objectId] :as _vocab}]
                                           (string/join "/" [nil mine "report" class objectId]))}}})
 
@@ -47,7 +50,7 @@
         (testing "response can be sorted by column"
           (let [response @(rf/subscribe [:main/query-response loc])
                 result (get-in response [:results 0])]
-            (is (= "1396.pre-tRNA-Met-1"
+            (is (= "100132289"
                    (->> result
                         (filter #(= (:column %) "Gene.primaryIdentifier"))
                         first
