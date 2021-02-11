@@ -1,20 +1,16 @@
 version: 2.1
 executors:
-  intermine_exec:
-    machine:
-      image: ubuntu-2004:202010-01
+  imtables_exec:
+    docker:
+    - image: 'circleci/clojure:openjdk-8-lein-2.9.1-node-browsers'
 jobs:
-  setup_intermine:
-    executor: intermine_exec
+  setup_imtables:
+    executor: imtables_exec
     steps:
     - run:
         name: Start a browser process for running kaocha tests
         command: google-chrome-stable --no-first-run
         background: true
-    - run: pyenv versions
-    - run: pyenv global 3.8.5
-    - run: pip3 install intermine-boot
-    - run: intermine_boot start local --build-im --im-branch bluegenes
     - checkout
     - restore_cache:
         keys:
@@ -22,7 +18,6 @@ jobs:
         - v1-deps-{{ .Branch }}-{{ checksum "project.clj" }}
         - v1-deps-{{ .Branch }}
         - v1-deps
-    - run: lein deps
     - run: lein cljfmt check
     - run: npm ci
     - save_cache:
@@ -39,4 +34,4 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - setup_intermine
+      - setup_imtables
