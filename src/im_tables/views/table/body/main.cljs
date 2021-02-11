@@ -62,6 +62,35 @@
                                 props)
                          remaining])})))
 
+(defn outer-join-table-cell [loc]
+  (let [pop-el (reagent/atom nil)
+        settings (subscribe [:settings/settings loc])]
+    (fn [loc {:keys [id value] :as data}]
+      (let [{:keys [on-click url vocab]} (get-in @settings [:links])
+            item-details @(subscribe [:summary/item-details loc id])
+            link (url (merge data (:value item-details) vocab))]
+        [:td {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
+         [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
+                    :data-content (when (seq item-details)
+                                    (->html (summary-table item-details)))}
+          [:a
+           (merge
+            (when (and on-click value)
+              {:on-click (fn []
+                           ; Call the provided on-click
+                           (on-click link)
+                           ; Side effect!!
+                           ; Destroy the popover in case the table is embedded in an SPA
+                           ; otherwise it will stick after page routes
+                           (-> @pop-el js/$
+                               (ocall :find "[data-trigger='hover']")
+                               (ocall :popover "destroy")))})
+            ;; URL is incomplete until summary has been fetched and
+            ;; `:value` key added, so avoid pointing to wrong URL.
+            (when (contains? item-details :value)
+              {:href link}))
+           (or value [no-value])]]]))))
+
 (defn outer-join-table [loc]
   (let [model (subscribe [:assets/model loc])
         open? (reagent/atom false)]
@@ -76,20 +105,19 @@
           [:i.fa.fa-chevron-up.fa-fw.ani (when @open? {:class "upside-down"})]]
          (when @open?
            [:div
-            (-> [:table.table.table-bordered.sub-table]
-                (conj [:thead (into [:tr] (map (fn [th] [:th (last (impath/display-name @model th))]) (:view data)))])
-                (conj
-                 (into [:tbody]
-                       (map (fn [rows]
-                              (into [:tr]
-                                    (map (fn [{:keys [id value] :as c}]
-                                           [:td
-                                            [:a [poppable
-                                                 {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc c]))
-                                                  :data-content (->html (summary-table @(subscribe [:summary/item-details loc id])))}
-                                                 [:span (or value [no-value])]]]]))
-                                    rows))
-                            (:rows data)))))])]))))
+            [:table.table.table-bordered.sub-table
+             [:thead
+              (into [:tr]
+                    (map (fn [th]
+                           [:th (last (impath/display-name @model th))])
+                         (:view data)))]
+             (into [:tbody]
+                   (map (fn [rows]
+                          (into [:tr]
+                                (map (fn [data]
+                                       [outer-join-table-cell loc data])
+                                     rows)))
+                        (:rows data)))]])]))))
 
 (defn select-cell [loc id class]
   (let [is-picked? @(subscribe [:pick-items/is-picked? loc id])]
@@ -120,21 +148,20 @@
              [:span {:ref (fn [p] (when p (reset! pop-el p)))} ; Store a reference so we can manually kill popups
 
               [poppable {:on-mouse-enter (fn [] (dispatch [:main/summarize-item loc data]))
-                         :data-content (when (not-empty item-details)
+                         :data-content (when (seq item-details)
                                          (->html (summary-table item-details)))}
 
                [:a (merge
                     {:on-click (fn []
                                  (when (and on-click value)
-                                   (do
-                                     ; Call the provided on-click
-                                     (on-click link)
-                                     ; Side effect!!
-                                     ; Destroy the popover in case the table is embedded in an SPA
-                                     ; otherwise it will stick after page routes
-                                     (-> @pop-el js/$
-                                         (ocall :find "[data-trigger='hover']")
-                                         (ocall :popover "destroy")))))}
+                                   ; Call the provided on-click
+                                   (on-click link)
+                                   ; Side effect!!
+                                   ; Destroy the popover in case the table is embedded in an SPA
+                                   ; otherwise it will stick after page routes
+                                   (-> @pop-el js/$
+                                       (ocall :find "[data-trigger='hover']")
+                                       (ocall :popover "destroy"))))}
                     ;; URL is incomplete until summary has been fetched and
                     ;; `:value` key added, so avoid pointing to wrong URL.
                     (when (contains? item-details :value)
