@@ -1,3 +1,10 @@
+## 0.12.0 (2021-02-11)
+
+- Make cells in outer join subtables clickable
+- Add input for description when saving list
+- Support exporting with compression and Frictionless
+    - Changes how exports are done from blobs and JS to anchor element with href GET that returns `content-disposition: attachment` (same as used by original im-tables)
+
 ## 0.11.0 (2020-11-25)
 
 [#106](https://github.com/intermine/im-tables-3/pull/106)
