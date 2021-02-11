@@ -13,18 +13,28 @@
 (defn save-dialog []
   (let [dom-node (reagent/atom nil)]
     (fn [state-atom details on-submit]
-      [:div.container-fluid
-       {:ref (fn [e] (when e (reset! dom-node e)))}
-       [:div.form
-        [:div.form-group
-         [:label "Name"]
-         [:input.form-control.input-lg
-          {:value (get @state-atom :name)
-           :on-change (fn [e] (swap! state-atom assoc :name (oget e :target :value)))
-           :on-key-up (fn [k] (when (= 13 (oget k :keyCode))
-                                (do
-                                  (on-submit)
-                                  (-> @dom-node js/$ (ocall :closest ".modal") (ocall :modal "hide")))))}]]]])))
+      (let [submit-fn (fn [k] (when (= 13 (oget k :keyCode))
+                                (on-submit)
+                                (-> @dom-node js/$ (ocall :closest ".modal") (ocall :modal "hide"))))
+            change-fn (fn [kw e] (swap! state-atom assoc kw (oget e :target :value)))]
+        [:div.container-fluid
+         {:ref (fn [e] (when e (reset! dom-node e)))}
+         [:div.form.save-body
+          [:div.form-group
+           [:label "Name"]
+           [:input.form-control.input-lg
+            {:value (get @state-atom :name)
+             :on-change (partial change-fn :name)
+             :on-key-up submit-fn}]
+           [:div.optional-attributes
+            [:hr]
+            [:span "Optional attributes"]]
+           [:label "Description"]
+           [:input.form-control
+            {:value (get @state-atom :description)
+             :on-change (partial change-fn :description)
+             :on-key-up submit-fn
+             :placeholder "Enter a description"}]]]]))))
 
 (defn save-footer []
   (fn [loc state {:keys [picking?] :as details} on-submit]
@@ -40,7 +50,8 @@
       "Save"]]))
 
 (defn generate-dialog [loc {:keys [type count query picking?] :as details}]
-  (let [state (reagent/atom {:name (str (name type) " List (" (.toString (js/Date.)) ")")})
+  (let [state (reagent/atom {:name (str (name type) " List (" (.toString (js/Date.)) ")")
+                             :description ""})
         on-submit (fn []
                     (dispatch [:imt.io/save-list loc (:name @state) (:query details) @state])
                     (dispatch [:modal/close loc])

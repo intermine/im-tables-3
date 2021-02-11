@@ -15,7 +15,7 @@
             [imcljs.query :as query]
             [imcljs.internal.utils :refer [scrub-url]]
             [oops.core :refer [oapply ocall oget]]
-            [clojure.string :as string :refer [split join starts-with? trim]]
+            [clojure.string :as string :refer [split join starts-with? trim blank?]]
             [clojure.set :as set]
             [cljs.core.async :refer [close! <! chan]]
             [reagent.core :as r]
@@ -89,10 +89,12 @@
  :imt.io/save-list
  (sandbox)
  (fn [{db :db} [_ loc name query options]]
-   {:db db
-    :im-tables/im-operation {:on-success [:imt.io/save-list-success]
-                             :on-failure [:imt.io/save-list-failure]
-                             :op (partial save/im-list-from-query (get db :service) name (clean-derived-query query) options)}}))
+   (let [clean-options (cond-> options
+                         (some-> options :description blank?) (dissoc :description))]
+     {:db db
+      :im-tables/im-operation {:on-success [:imt.io/save-list-success]
+                               :on-failure [:imt.io/save-list-failure]
+                               :op (partial save/im-list-from-query (get db :service) name (clean-derived-query query) clean-options)}})))
 
 (reg-event-db
  :modal/open
