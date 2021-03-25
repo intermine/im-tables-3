@@ -91,12 +91,12 @@
       (name @!scale-type)]]))
 
 (defn force-close
-  "Force a dropdown to close "
+  "Force a dropdown to close."
   [component]
   (-> (js/$ (dom/dom-node component))
-      (ocall! "closest" ".dropdown-menu")
-      (ocall! "parent")
-      (ocall! "removeClass" "open")))
+      (ocall! "closest" ".dropdown")
+      (ocall! "children" ".dropdown-toggle")
+      (ocall! "dropdown" "toggle")))
 
 (defn has-text?
   "Return true if a label contains a string"
@@ -384,8 +384,7 @@
             dropdown (reagent/current-component)]
         [:form.form.filter-view {:on-submit (fn [e]
                                               (ocall e "preventDefault")
-                                              (force-close dropdown)
-                                              (dispatch [:filters/save-changes loc]))}
+                                              (force-close dropdown))}
          [:div.alert.alert-success
           (if (seq active-filters)
             (into [:div [:h4 "Active filters:"]] active-filters)
@@ -572,7 +571,10 @@
         query (subscribe [:main/query loc view])
         blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})
         !filter-dropdown (atom nil)
-        !dropdown-menu (atom nil)]
+        !dropdown-menu (atom nil)
+        last-clicked-id (atom nil)
+        listen-last-click (fn [evt]
+                            (reset! last-clicked-id (oget evt :target :id)))]
     (fn [loc view right?]
       (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
         [:span.dropdown
@@ -580,17 +582,25 @@
                 (on-event
                  "hide.bs.dropdown"
                  (fn []
-                    ;; Reset the blank constraint atom when the dropdown is closed
-                   (reset! blank-constraint-atom {:path view :op "=" :value nil})
-                    ;; *Try* to save the changes every time the dropdown is
-                    ;; closed, even by just clicking off it.  This means a user
-                    ;; can remove a handful of filters without having to click
-                    ;; Apply. The event will do a diff to make sure something
-                    ;; has actually changed before rerunning the query
-                   (dispatch [:filters/save-changes loc])))
+                   ;; The Select component is portal'ed to the document body so
+                   ;; it won't get affected by the overflow property of the
+                   ;; filter menu. To avoid closing the dropdown when clicking
+                   ;; the Select component, we check the last clicked element.
+                   (if (string/starts-with? @last-clicked-id "react-select")
+                     false
+                     (do (.removeEventListener js/document "mousedown" listen-last-click)
+                         ;; Reset the blank constraint atom when the dropdown is closed
+                         (reset! blank-constraint-atom {:path view :op "=" :value nil})
+                         ;; *Try* to save the changes every time the dropdown is
+                         ;; closed, even by just clicking off it.  This means a user
+                         ;; can remove a handful of filters without having to click
+                         ;; Apply. The event will do a diff to make sure something
+                         ;; has actually changed before rerunning the query
+                         (dispatch [:filters/save-changes loc])))))
                 (on-event
                  "show.bs.dropdown"
                  (fn []
+                   (.addEventListener js/document "mousedown" listen-last-click)
                    (when (nil? @possible-values)
                      (dispatch [:main/fetch-possible-values loc view false]))
                    (when-let [dropdown @!dropdown-menu]
