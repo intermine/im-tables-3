@@ -121,31 +121,31 @@
                          (when-not (ocall container :contains (oget evt :target))
                            (reset! *open? false))))]
     (reagent/create-class
-      {:component-did-mount
-       (fn [_]
-         (.addEventListener js/document "mousedown" handle-click))
-       :component-will-unmount
-       (fn [_]
-         (.removeEventListener js/document "mousedown" handle-click)
-         (remove-watch *open? :on-close))
-       :reagent-render
-       (fn [{:keys [button toggle-ref on-close right?]
-             :or {on-close #()}} & children]
-         (add-watch *open? :on-close #(when (= [%3 %4] [true false]) (on-close)))
-         [:span.dropdown
-          {:class (when @*open? :open)
-           :aria-expanded @*open?
-           :ref #(reset! !container %)}
-          [button {:on-click (fn [_evt]
-                               (reset! *open? true)
-                               (when-let [toggle @toggle-ref]
-                                 (when-let [dropdown @!dropdown]
-                                   (place-below! dropdown toggle
-                                                 :right? right?))))}]
-          (into [:div.dropdown-menu
-                 {:ref #(reset! !dropdown %)}]
-                (when @*open?
-                  children))])})))
+     {:component-did-mount
+      (fn [_]
+        (.addEventListener js/document "mousedown" handle-click))
+      :component-will-unmount
+      (fn [_]
+        (.removeEventListener js/document "mousedown" handle-click)
+        (remove-watch *open? :on-close))
+      :reagent-render
+      (fn [{:keys [button toggle-ref on-close right?]
+            :or {on-close #()}} & children]
+        (add-watch *open? :on-close #(when (= [%3 %4] [true false]) (on-close)))
+        [:span.dropdown
+         {:class (when @*open? :open)
+          :aria-expanded @*open?
+          :ref #(reset! !container %)}
+         [button {:on-click (fn [_evt]
+                              (reset! *open? true)
+                              (when-let [toggle @toggle-ref]
+                                (when-let [dropdown @!dropdown]
+                                  (place-below! dropdown toggle
+                                                :right? right?))))}]
+         (into [:div.dropdown-menu
+                {:ref #(reset! !dropdown %)}]
+               (when @*open?
+                 children))])})))
 
 #_:clj-kondo/ignore
 (comment
