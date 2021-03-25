@@ -380,10 +380,9 @@
 (defn filter-view [loc view blank-constraint-atom]
   (let [query (subscribe [:main/temp-query loc view])]
     (fn [loc view]
-      (let [active-filters (map-indexed (fn [i c]
-                                          [constraint loc view c i])
-                                        (filter (partial constraint-has-path? view)
-                                                (:where @query)))
+      (let [active-filters (for [[i const] (map-indexed vector (:where @query))
+                                 :when (constraint-has-path? view const)]
+                             [constraint loc view const i])
             dropdown (reagent/current-component)]
         [:form.form.filter-view {:on-submit (fn [e]
                                               (ocall e "preventDefault")
