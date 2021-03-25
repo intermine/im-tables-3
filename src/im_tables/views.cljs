@@ -183,6 +183,29 @@
                       :url (fn [{:keys [mine class objectId] :as _vocab}]
                              (string/join "/" [nil mine "report" class objectId]))}}})
 
+;; One of the columns contain True/False values.
+(def true-false-config
+  {:service {:root "https://www.flymine.org/flymine"}
+   :query {:from "Gene"
+           :select ["Gene.name",
+                    "Gene.mRNAExpressionResults.stageRange",
+                    "Gene.mRNAExpressionResults.expressed",
+                    "Gene.mRNAExpressionResults.mRNAExpressionTerms.name",
+                    "Gene.mRNAExpressionResults.dataSet.dataSource.name"]
+           :where [{:path "Gene.organism.name",
+                    :op "=",
+                    :value "Drosophila melanogaster"}
+                   {:path "Gene.mRNAExpressionResults.dataSet.name",
+                    :op "=",
+                    :value "BDGP in situ data set"}
+                   {:path "Gene",
+                    :op "LOOKUP",
+                    :value "runt"}]}
+   :settings {:pagination {:limit 10}
+              :links {:vocab {:mine "flymine"}
+                      :url (fn [{:keys [mine class objectId] :as _vocab}]
+                             (string/join "/" [nil mine "report" class objectId]))}}})
+
 ; This function is used for testing purposes.
 ; When using im-tables in real life, you could call the view like so:
 ; [im-tables.views.core/main {:location ... :service ... :query ...}]
@@ -194,7 +217,7 @@
 (def number-of-tables 1)
 (defn reboot-tables-fn []
   (dotimes [n number-of-tables]
-    (re-frame/dispatch-sync [:im-tables/load [:test :location n] outer-join-config])))
+    (re-frame/dispatch-sync [:im-tables/load [:test :location n] true-false-config])))
 
 (defn main-panel []
   (let [show? (r/atom true)]

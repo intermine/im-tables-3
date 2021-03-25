@@ -106,11 +106,14 @@
                                                [:div parent-name]
                                                [:div attrib-name]]])))))]
                 (into [:tbody] (map (fn [row]
-                                      (into [:tr] (map (fn [cell]
-                                                         [:td
-                                                          (if-let [value (:value cell)]
-                                                            [:a value]
-                                                            [:a.no-value "NO VALUE"])]) row))) preview-rows))]]]]
+                                      (into [:tr]
+                                            (map (fn [{:keys [value]}]
+                                                   [:td
+                                                    (if (some? value)
+                                                      [:a (str value)]
+                                                      [:a.no-value "NO VALUE"])])
+                                                 row)))
+                                    preview-rows))]]]]
              ; Otherwise show the interactive React components
             [:div
              [dashboard/main location @response @pagination]

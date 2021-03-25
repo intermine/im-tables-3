@@ -76,7 +76,7 @@
                                     (->html (summary-table item-details)))}
           [:a
            (merge
-            (when (and on-click value)
+            (when (and on-click (some? value))
               {:on-click (fn []
                            ; Call the provided on-click
                            (on-click link)
@@ -90,7 +90,9 @@
             ;; `:value` key added, so avoid pointing to wrong URL.
             (when (contains? item-details :value)
               {:href link}))
-           (or value [no-value])]]]))))
+           (if (some? value)
+             (str value)
+             [no-value])]]]))))
 
 (defn outer-join-table [loc]
   (let [model (subscribe [:assets/model loc])
@@ -157,7 +159,7 @@
 
                [:a (merge
                     {:on-click (fn []
-                                 (when (and on-click value)
+                                 (when (and on-click (some? value))
                                    ; Call the provided on-click
                                    (on-click link)
                                    ; Side effect!!
@@ -170,7 +172,9 @@
                     ;; `:value` key added, so avoid pointing to wrong URL.
                     (when (contains? item-details :value)
                       {:href link}))
-                (or value [no-value])]]]))]))))
+                (if (some? value)
+                  (str value)
+                  [no-value])]]]))]))))
 
 (defn table-row [loc row]
   (into [:tr]
