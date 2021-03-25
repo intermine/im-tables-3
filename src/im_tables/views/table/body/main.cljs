@@ -6,7 +6,8 @@
             [oops.core :refer [ocall oget oset!]]
             [imcljs.path :as impath]
             [reagent.dom.server :as dom-server]
-            [im-tables.components.bootstrap :as bs]))
+            [im-tables.components.bootstrap :as bs]
+            [im-tables.views.table.head.controls :as controls]))
 
 (defn dot-split
   "Convert a view such as Gene.organism.name into [:organism :name]
@@ -109,7 +110,10 @@
              [:thead
               (into [:tr]
                     (map (fn [th]
-                           [:th (last (impath/display-name @model th))])
+                           [:th
+                            [:span.header
+                             (last (impath/display-name @model th))]
+                            [controls/toolbar loc th true]])
                          (:view data)))]
              (into [:tbody]
                    (map (fn [rows]

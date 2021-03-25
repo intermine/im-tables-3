@@ -1,10 +1,12 @@
 (ns im-tables.utils
-  (:require [oops.core :refer [ocall]]
+  (:require [oops.core :refer [ocall oget]]
             [inflections.core :refer [plural]]
             [imcljs.path :as path]
             [clojure.string :as string]
             [goog.json :as json]
-            [goog.i18n.NumberFormat.Format])
+            [goog.i18n.NumberFormat.Format]
+            [goog.style :as gstyle]
+            [goog.dom :as gdom])
   (:import [goog.i18n NumberFormat]
            [goog.i18n.NumberFormat Format]))
 
@@ -88,3 +90,30 @@
     (mapv (fn [result]
             (zipmap views result))
           (:results res))))
+
+;; The 360 magic number used below is the minimum width for the column summary.
+;; Instead of updating the position of the dropdown when it's done loading, I
+;; went the simple route of guessing the position to be good enough. This means
+;; - when dropdown is on right half of screen, the loader is not correctly
+;;   aligned, but when it transitions to showing the data, it will be
+;;   - it will however not be if the width of the dropdown is greater
+;; - once the data is loaded, any subsequent dropdown opened will be aligned
+(defn place-below!
+  "Call with DOM elements to set the position styling of `below` such that it
+  is directly below the edge of `above`.
+  `right?` - position `below` using its top right corner (instead of top left).
+  `loading?` - when `right?` is true, we need to know the width of `below` to
+               position it correctly. This arg tells us that the width might
+               change when it's done loading, so we just guess instead."
+  [below above & {:keys [right? loading?]}]
+  (let [[above-w offset-y] ((juxt #(oget % :width) #(oget % :height))
+                            (gstyle/getSize above))
+        offset-x (if right?
+                   (* -1 (- (if loading?
+                              360
+                              (oget (gstyle/getSize below) :width))
+                            above-w))
+                   0)
+        pos (-> (gstyle/getRelativePosition above (gdom/getAncestorByClass above "im-table"))
+                (ocall :translate offset-x offset-y))]
+    (gstyle/setPosition below pos)))

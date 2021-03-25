@@ -179,6 +179,38 @@
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:query :joins]))))
 
+(reg-sub
+ :query/joined-path?
+ (fn [[_ loc]]
+   (subscribe [:query/joins loc]))
+ (fn [joins [_ _prefix path]]
+   (contains? (set joins) path)))
+
+;; Map from outer joined paths in the query to views descendent of that path.
+;; e.g. {"Gene.interactions" ["Gene.interactions.participant2.alleles.primaryIdentifier"
+;;                            "Gene.interactions.participant2.alleles.symbol"
+;;                            "Gene.interactions.participant2.alleles.alleleClass"
+;;                            "Gene.interactions.participant2.alleles.organism.name"]}
+(reg-sub
+ :query-response/joins->views
+ (fn [[_ loc]]
+   [(subscribe [:query/joins loc])
+    (subscribe [:query-response/views loc])])
+ (fn [[joins views]]
+   (reduce (fn [m view]
+             (if-let [matched-join (some #(when (string/starts-with? view (str % ".")) %) joins)]
+               (update m matched-join (fnil conj []) view)
+               m))
+           {}
+           views)))
+
+(reg-sub
+ :query-response/joined-views
+ (fn [[_ loc]]
+   (subscribe [:query-response/joins->views loc]))
+ (fn [joins->views [_ _prefix path]]
+   (get joins->views path)))
+
 ; The following two subscriptions do two things to support outer joins, resulting in:
 ;     Gene.secondaryIdentifier Gene.publications.year Gene.symbol Gene.publications.title
 ; ... with outer joins [Gene.publications]

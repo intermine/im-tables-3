@@ -2,7 +2,8 @@
   (:require [reagent.core :as reagent]
             [reagent.dom :as dom]
             [reagent.dom.server :as server]
-            [oops.core :refer [ocall oapply oget oset!]]))
+            [oops.core :refer [ocall oapply oget oset!]]
+            [im-tables.utils :refer [place-below!]]))
 
 (defn popover
   "Reagent wrapper for bootstrap's popover component. It accepts
@@ -110,3 +111,64 @@
        body
        [:div.modal-footer
         footer]]]]))
+
+(defn dropdown []
+  (let [*open? (reagent/atom false)
+        !container (atom nil)
+        !dropdown (atom nil)
+        handle-click (fn [evt]
+                       (when-let [container @!container]
+                         (when-not (ocall container :contains (oget evt :target))
+                           (reset! *open? false))))]
+    (reagent/create-class
+      {:component-did-mount
+       (fn [_]
+         (.addEventListener js/document "mousedown" handle-click))
+       :component-will-unmount
+       (fn [_]
+         (.removeEventListener js/document "mousedown" handle-click)
+         (remove-watch *open? :on-close))
+       :reagent-render
+       (fn [{:keys [button toggle-ref on-close right?]
+             :or {on-close #()}} & children]
+         (add-watch *open? :on-close #(when (= [%3 %4] [true false]) (on-close)))
+         [:span.dropdown
+          {:class (when @*open? :open)
+           :aria-expanded @*open?
+           :ref #(reset! !container %)}
+          [button {:on-click (fn [_evt]
+                               (reset! *open? true)
+                               (when-let [toggle @toggle-ref]
+                                 (when-let [dropdown @!dropdown]
+                                   (place-below! dropdown toggle
+                                                 :right? right?))))}]
+          (into [:div.dropdown-menu
+                 {:ref #(reset! !dropdown %)}]
+                (when @*open?
+                  children))])})))
+
+#_:clj-kondo/ignore
+(comment
+  "Example of the dropdown component being used in a complex nested layout.
+  This is what it was originally made for, but it turns out just reusing the
+  toolbar component nested in the outer join table worked better."
+  [dropdown
+   {:button (fn [{:keys [on-click]}]
+              [:i.fa.fa-bar-chart.dropdown-toggle
+               {:title (str "Summarise " view " columns")
+                :on-click on-click
+                :ref #(reset! !toggle %)}])
+    :toggle-ref !toggle
+    :right? right?}
+   (into [:ul]
+         (for [subview @joined-views]
+           [dropdown
+            {:button (fn [{:keys [on-click]}]
+                       [:li {:on-click (fn [evt]
+                                         (reset! summarize-view subview)
+                                         (dispatch [:main/summarize-column loc @summarize-view])
+                                         (on-click evt))}
+                        subview])
+             :on-close #(dispatch [:select/clear-selection loc @summarize-view])
+             :right? right?}
+            [column-summary loc @summarize-view]]))])

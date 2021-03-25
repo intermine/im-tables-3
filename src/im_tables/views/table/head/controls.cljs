@@ -8,11 +8,9 @@
             [clojure.string :as string]
             [clojure.set :as set]
             [oops.core :refer [oget ocall ocall! oget+ oset!]]
-            [im-tables.utils :refer [on-event pretty-number display-name]]
+            [im-tables.utils :refer [on-event pretty-number display-name place-below!]]
             [cljs-time.coerce :as time-coerce]
-            [cljs-time.format :as time-format]
-            [goog.style :as gstyle]
-            [goog.dom :as gdom]))
+            [cljs-time.format :as time-format]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
@@ -507,84 +505,57 @@
     [:i.fa.fa-cog.fa-spin.fa-4x.fa-fw]]])
 
 (defn column-summary [loc view local-state !dropdown]
-  (let [response (subscribe [:selection/response loc view])
-        selections (subscribe [:selection/selections loc view])
-        text-filter (subscribe [:selection/text-filter loc view])
-        !scale-type (reagent/atom :linear)]
+  (let [!scale-type (reagent/atom :linear)]
     (fn [loc view local-state !dropdown]
-      (cond
-        (nil? @response)
-        [column-summary-thinking]
+      (let [response @(subscribe [:selection/response loc view])
+            selections @(subscribe [:selection/selections loc view])
+            text-filter @(subscribe [:selection/text-filter loc view])]
+        (cond
+          (nil? response)
+          [column-summary-thinking]
 
-        (false? @response)
-        [too-many-values]
+          (false? response)
+          [too-many-values]
 
-        (contains? (first (:results @response)) :min)
-        [numerical-column-summary loc view @response local-state]
+          (contains? (first (:results response)) :min)
+          [numerical-column-summary loc view response local-state]
 
-        :else
-        [:form.form.column-summary {:on-submit (fn [e] (ocall e "preventDefault"))}
-         [column-summary-title loc view @response]
-         [:div.main-view
-          [histogram/main (:results @response) @!scale-type]
-          [filter-input loc view @text-filter !scale-type]
-          [:table.table.table-striped.table-condensed.table-scrollable
-           [:thead [:tr [:th
-                         (if (empty? @selections)
-                           [:span {:title "Select all"
-                                   :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
-                           [:span {:title "Deselect all"
-                                   :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])] [:th.data-item "Item"] [:th "Count"]]]
-           (into [:tbody]
-                 (->> (filter (partial has-text? @text-filter) (:results @response))
-                      (map (fn [{:keys [count item]}]
-                             [:tr.hoverable
-                              {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
-                              [:td
-                               [:input
-                                {:on-change (fn [])
-                                 :checked (contains? @selections item)
-                                 :type "checkbox"}]]
-                              [:td.data-item (if item item [no-value])]
-                              [:td
-                               [:div count]]]))))]]
-         [:div.btn-toolbar.column-summary-toolbar
-          [:button.btn.btn-primary
-           {:type "button"
-            :on-click (fn []
-                        (dispatch [:main/apply-summary-filter loc view])
-                        (when-let [el @!dropdown]
-                          (-> (js/$ el)
-                              (ocall! "dropdown" "toggle"))))}
-           [:i.fa.fa-filter]
-           (str " Filter")]]]))))
-
-;; The 360 magic number used below is the minimum width for the column summary.
-;; Instead of updating the position of the dropdown when it's done loading, I
-;; went the simple route of guessing the position to be good enough. This means
-;; - when dropdown is on right half of screen, the loader is not correctly
-;;   aligned, but when it transitions to showing the data, it will be
-;;   - it will however not be if the width of the dropdown is greater
-;; - once the data is loaded, any subsequent dropdown opened will be aligned
-(defn place-below!
-  "Call with DOM elements to set the position styling of `below` such that it
-  is directly below the edge of `above`.
-  `right?` - position `below` using its top right corner (instead of top left).
-  `loading?` - when `right?` is true, we need to know the width of `below` to
-               position it correctly. This arg tells us that the width might
-               change when it's done loading, so we just guess instead."
-  [below above & {:keys [right? loading?]}]
-  (let [[above-w offset-y] ((juxt #(oget % :width) #(oget % :height))
-                            (gstyle/getSize above))
-        offset-x (if right?
-                   (* -1 (- (if loading?
-                              360
-                              (oget (gstyle/getSize below) :width))
-                            above-w))
-                   0)
-        pos (-> (gstyle/getRelativePosition above (gdom/getAncestorByClass above "im-table"))
-                (ocall :translate offset-x offset-y))]
-    (gstyle/setPosition below pos)))
+          :else
+          [:form.form.column-summary {:on-submit (fn [e] (ocall e "preventDefault"))}
+           [column-summary-title loc view response]
+           [:div.main-view
+            [histogram/main (:results response) @!scale-type]
+            [filter-input loc view text-filter !scale-type]
+            [:table.table.table-striped.table-condensed.table-scrollable
+             [:thead [:tr [:th
+                           (if (empty? selections)
+                             [:span {:title "Select all"
+                                     :on-click (fn [] (dispatch [:select/select-all loc view]))} [:i.fa.fa-check-square-o]]
+                             [:span {:title "Deselect all"
+                                     :on-click (fn [] (dispatch [:select/clear-selection loc view]))} [:i.fa.fa-square-o]])] [:th.data-item "Item"] [:th "Count"]]]
+             (into [:tbody]
+                   (->> (filter (partial has-text? text-filter) (:results response))
+                        (map (fn [{:keys [count item]}]
+                               [:tr.hoverable
+                                {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
+                                [:td
+                                 [:input
+                                  {:on-change (fn [])
+                                   :checked (contains? selections item)
+                                   :type "checkbox"}]]
+                                [:td.data-item (if item item [no-value])]
+                                [:td
+                                 [:div count]]]))))]]
+           [:div.btn-toolbar.column-summary-toolbar
+            [:button.btn.btn-primary
+             {:type "button"
+              :on-click (fn []
+                          (dispatch [:main/apply-summary-filter loc view])
+                          (when-let [el @!dropdown]
+                            (-> (js/$ el)
+                                (ocall! "dropdown" "toggle"))))}
+             [:i.fa.fa-filter]
+             (str " Filter")]]])))))
 
 ;; Bootstrap and ReactJS don't always mix well. Components that make up
 ;; dropdown menus are only mounted (reactjs) once and then their visibility is
@@ -596,13 +567,13 @@
 ;; had been applied.  To fix this we've create the blank constraint local atom
 ;; all the way up here at the dropdown level so that we can reset it manually,
 ;; and then we pass the atom down to the blank constraint component. Lame.
-(defn filter-dropdown-menu [loc view idx col-count]
+(defn filter-dropdown-menu [loc view]
   (let [possible-values (subscribe [:selection/possible-values loc view])
         query (subscribe [:main/query loc view])
         blank-constraint-atom (reagent/atom {:path view :op "=" :value nil})
         !filter-dropdown (atom nil)
         !dropdown-menu (atom nil)]
-    (fn [loc view idx col-count right?]
+    (fn [loc view right?]
       (let [active-filters? (not-empty (filter (partial constraint-has-path? view) (:where @query)))]
         [:span.dropdown
          {:ref (comp
@@ -637,41 +608,41 @@
           {:ref (fn [el] (reset! !dropdown-menu el))}
           [filter-view loc view blank-constraint-atom]]]))))
 
-(defn summary-dropdown-menu [loc view idx col-count]
+(defn summary-dropdown-menu [loc view]
   (let [local-state (reagent/atom {})
         !summary-dropdown (atom nil)
-        !dropdown-menu (atom nil)
-        response (subscribe [:selection/response loc view])]
-    (fn [loc view idx col-count right?]
-      [:span.dropdown
-       ;; Bind an event to clear the selected items when the dropdown
-       ;; closes. Why don't we just avoid state all together and pick up the
-       ;; checkbox values when the user clicks "Filter"? Because we still
-       ;; want to know what's selected (for instance, highlighting the
-       ;; histogram).
-       {:ref (comp
-              (on-event
-               "hide.bs.dropdown"
-               (fn []
-                 (reset! local-state {})
-                 (dispatch [:select/clear-selection loc view])))
-              (on-event
-               "show.bs.dropdown"
-               (fn []
-                 (when (nil? @response)
-                   (dispatch [:main/summarize-column loc view]))
-                 (when-let [dropdown @!dropdown-menu]
-                   (when-let [toggle @!summary-dropdown]
-                     (place-below! dropdown toggle
-                                   :right? right?
-                                   :loading? (nil? @response)))))))}
-       [:i.fa.fa-bar-chart.dropdown-toggle
-        {:title (str "Summarise " view " column")
-         :data-toggle "dropdown"
-         :ref (fn [el] (reset! !summary-dropdown el))}]
-       [:div.dropdown-menu
-        {:ref (fn [el] (reset! !dropdown-menu el))}
-        [column-summary loc view local-state !summary-dropdown]]])))
+        !dropdown-menu (atom nil)]
+    (fn [loc view right?]
+      (let [response @(subscribe [:selection/response loc view])]
+        [:span.dropdown
+         ;; Bind an event to clear the selected items when the dropdown
+         ;; closes. Why don't we just avoid state all together and pick up the
+         ;; checkbox values when the user clicks "Filter"? Because we still
+         ;; want to know what's selected (for instance, highlighting the
+         ;; histogram).
+         {:ref (comp
+                (on-event
+                 "hide.bs.dropdown"
+                 (fn []
+                   (reset! local-state {})
+                   (dispatch [:select/clear-selection loc view])))
+                (on-event
+                 "show.bs.dropdown"
+                 (fn []
+                   (when (nil? response)
+                     (dispatch [:main/summarize-column loc view]))
+                   (when-let [dropdown @!dropdown-menu]
+                     (when-let [toggle @!summary-dropdown]
+                       (place-below! dropdown toggle
+                                     :right? right?
+                                     :loading? (nil? response)))))))}
+         [:i.fa.fa-bar-chart.dropdown-toggle
+          {:title (str "Summarise " view " column")
+           :data-toggle "dropdown"
+           :ref (fn [el] (reset! !summary-dropdown el))}]
+         [:div.dropdown-menu
+          {:ref (fn [el] (reset! !dropdown-menu el))}
+          [column-summary loc view local-state !summary-dropdown]]]))))
 
 (defn obj->clj [obj]
   (reduce (fn [total next-key]
@@ -682,22 +653,25 @@
         screen-width (oget js/window :innerWidth)]
     (> left (/ screen-width 2))))
 
-(defn toolbar []
+(defn toolbar [loc view]
   (let [right? (reagent/atom false)]
-    (fn [loc view idx col-count]
-      (let [sort-direction  (subscribe [:ui/column-sort-direction loc view])]
+    (fn [loc view outer-join?]
+      (let [sort-direction @(subscribe [:ui/column-sort-direction loc view])
+            joined-path? @(subscribe [:query/joined-path? loc view])]
         [:div.summary-toolbar
          {:ref (fn [e]
                  (when e (reset! right? (align-right? e))))}
-         [:i.fa.fa-sort.sort-icon
-          {:class (case @sort-direction
-                    "ASC"  "active-asc-sort"
-                    "DESC" "active-desc-sort"
-                    nil)
-           :on-click (fn [] (dispatch [:main/sort-by loc view]))
-           :title (str "Sort " view " column")}]
+         (when-not (or outer-join? joined-path?)
+           [:i.fa.fa-sort.sort-icon
+            {:class (case sort-direction
+                      "ASC"  "active-asc-sort"
+                      "DESC" "active-desc-sort"
+                      nil)
+             :on-click (fn [] (dispatch [:main/sort-by loc view]))
+             :title (str "Sort " view " column")}])
          [:i.fa.fa-times.remove-icon
           {:on-click (fn [] (dispatch [:main/remove-view loc view]))
            :title (str "Remove " view " column")}]
-         [filter-dropdown-menu loc view idx col-count @right?]
-         [summary-dropdown-menu loc view idx col-count @right?]]))))
+         [filter-dropdown-menu loc view @right?]
+         (when-not joined-path?
+           [summary-dropdown-menu loc view @right?])]))))

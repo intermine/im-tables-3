@@ -42,7 +42,7 @@
                            (ocall e "dataTransfer.setData" "text" (str "dragging column" view))
                            (dispatch [:style/dragging-item loc view]))
           :on-drag-end (fn [] (dispatch ^:flush-dom [:style/dragging-finished loc]))}
-         [controls/toolbar loc view idx col-count]
+         [controls/toolbar loc view]
          [:div
           [:div parent-name]
           [:div attrib-name]]]))))
