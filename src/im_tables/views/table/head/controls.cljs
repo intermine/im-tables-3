@@ -10,7 +10,8 @@
             [oops.core :refer [oget ocall ocall! oget+ oset!]]
             [im-tables.utils :refer [on-event pretty-number display-name place-below!]]
             [cljs-time.coerce :as time-coerce]
-            [cljs-time.format :as time-format]))
+            [cljs-time.format :as time-format]
+            [goog.string :as gstring]))
 
 (def css-transition-group
   (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
@@ -102,8 +103,8 @@
   "Return true if a label contains a string"
   [needle haystack]
   (if needle
-    (if-let [text-to-search (:item haystack)]
-      (re-find (re-pattern (str "(?i)" needle)) (:item haystack))
+    (if-some [text-to-search (:item haystack)]
+      (re-find (re-pattern (str "(?i)" (gstring/regExpEscape needle))) (str text-to-search))
       false)
     true))
 
@@ -186,7 +187,7 @@
     :onChange (fn [value]
                 (on-blur (oget value :value)))
     :value (when (not-empty value) {:value value :label value})
-    :options (map (fn [v] {:value v :label v}) (remove nil? possible-values))}])
+    :options (map (fn [v] {:value (str v) :label (str v)}) (remove nil? possible-values))}])
 
 (defn select-multiple-constraint-input
   "Wraps `cljsjs/react-select` for use as constraint input for selecting
@@ -208,7 +209,7 @@
     :onChange (fn [values]
                 (on-blur (not-empty (map :value (js->clj values :keywordize-keys true)))))
     :value (map (fn [v] {:value v :label v}) value)
-    :options (map (fn [v] {:value v :label v}) (remove nil? possible-values))}])
+    :options (map (fn [v] {:value (str v) :label (str v)}) (remove nil? possible-values))}])
 
 (defn text-constraint-input
   "Freeform textbox for String / Lookup constraints."
@@ -542,7 +543,10 @@
                                   {:on-change (fn [])
                                    :checked (contains? selections item)
                                    :type "checkbox"}]]
-                                [:td.data-item (if item item [no-value])]
+                                [:td.data-item
+                                 (if (some? item)
+                                   (str item)
+                                   [no-value])]
                                 [:td
                                  [:div count]]]))))]]
            [:div.btn-toolbar.column-summary-toolbar
