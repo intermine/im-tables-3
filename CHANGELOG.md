@@ -1,3 +1,12 @@
+## 0.13.0 (2021-03-26)
+
+- Fix bug allowing a filter to duplicate itself and replace one for other column
+- Add column controls (remove, filters, summary) to outer join subtables
+- Remove controls that shouldn't apply to outer joined paths
+- Fix column filter menu closing when selecting option in dropdown
+- Fix displaying and filtering of boolean value
+- Fix crash when inputting invalid regexp character into column summary search input
+
 ## 0.12.0 (2021-02-11)
 
 - Make cells in outer join subtables clickable
