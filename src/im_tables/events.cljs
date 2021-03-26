@@ -264,7 +264,10 @@
  (sandbox)
  (fn [db [_ loc view]]
    (assoc-in db [:cache :column-summary view :selections]
-             (into {} (map (fn [{item :item}] [item true]) (get-in db [:cache :column-summary view :response :results]))))))
+             (into {}
+                   (map (fn [{item :item}]
+                          [(str item) true])
+                        (get-in db [:cache :column-summary view :response :results]))))))
 
 (reg-event-db
  :select/set-text-filter

@@ -16,6 +16,7 @@
 (def css-transition-group
   (reagent/adapt-react-class js/ReactTransitionGroup.CSSTransitionGroup))
 
+;; nil type specified in :applies-to is for classes (i.e., not attributes).
 (def operators [{:op "LOOKUP"
                  :label "Lookup"
                  :applies-to #{nil}}
@@ -57,11 +58,11 @@
                  :applies-to #{"java.lang.String"}}
                 {:op "ONE OF"
                  :label "One of"
-                 :applies-to #{"java.lang.String"}
+                 :applies-to #{"java.lang.String" "java.lang.Boolean"}
                  :multiple-values? true}
                 {:op "NONE OF"
                  :label "None of"
-                 :applies-to #{"java.lang.String"}
+                 :applies-to #{"java.lang.String" "java.lang.Boolean"}
                  :multiple-values? true}
                 {:op "IS NULL"
                  :label "Null"
@@ -537,11 +538,11 @@
                    (->> (filter (partial has-text? text-filter) (:results response))
                         (map (fn [{:keys [count item]}]
                                [:tr.hoverable
-                                {:on-click (fn [e] (dispatch [:select/toggle-selection loc view item]))}
+                                {:on-click (fn [e] (dispatch [:select/toggle-selection loc view (str item)]))}
                                 [:td
                                  [:input
                                   {:on-change (fn [])
-                                   :checked (contains? selections item)
+                                   :checked (contains? selections (str item))
                                    :type "checkbox"}]]
                                 [:td.data-item
                                  (if (some? item)
