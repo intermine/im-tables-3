@@ -6,35 +6,22 @@
             [imcljs.path :as path :refer [walk class]]
             [im-tables.components.bootstrap :refer [modal]]))
 
-(defn check-if-good
-  "checks if certain formats are suitable for export given the data in the table
-    Right now this is explicitly for FASTA, which requires a gene or protein.
-    Returns either the list of acceptable formats as it was, or the same list
-    with the new possible format appended to the end. "
-  [good-formats model-parts suitable-for format]
-  (let [model-bits (set (keys model-parts))]
-    (distinct (reduce (fn [suitable-bit]
-                        (if (contains? model-bits (name suitable-bit))
-                          (conj good-formats format)
-                          good-formats))
-                      suitable-for))))
-
 (defn format-dropdown
   "creates the dropdown to allow users to select their preferred format"
   [loc]
   (let [settings @(subscribe [:settings/settings loc])
-        model-parts @(subscribe [:main/query-parts loc])
-        export-formats (get-in settings [:data-out :accepted-formats])
-        valid-export-formats (reduce (fn [good-formats [format suitable-for]]
-                                       (if (= suitable-for :all)
-                                         (conj good-formats format)
-                                         (check-if-good good-formats model-parts suitable-for format)))
-                                     [] export-formats)]
-    (reduce (fn [select format]
-              (conj select [:option (name format)]))
-            [:select.form-control
-             {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
-            valid-export-formats)))
+        query-parts @(subscribe [:main/query-parts loc])
+        {:keys [accepted-formats order-formats]} (get-in settings [:data-out])
+        valid-export-formats (->> (map (juxt identity accepted-formats) order-formats)
+                                  (keep (fn [[format suitable-for]]
+                                          (when (or (= suitable-for :all)
+                                                    ;; If not :all, it's a vector of classes which the query needs to have.
+                                                    (some #(contains? query-parts (name %)) suitable-for))
+                                            format))))]
+    (into [:select.form-control
+           {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
+          (for [format valid-export-formats]
+            [:option (name format)]))))
 
 (defn toggle-or-switch [target]
   (fn [prev-value]
