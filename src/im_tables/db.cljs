@@ -75,7 +75,10 @@
               :data-out {:selected-format :tsv
                          :accepted-formats {:tsv :all
                                             :csv :all
-                                            :fasta [:Gene :Protein]}
+                                            :fasta [:Gene :Protein]
+                                            :rdf :all
+                                            :ntriples :all}
+                         :order-formats [:tsv :csv :fasta :rdf :ntriples]
                          :export-data-package false
                          :compression nil}
               :links {:vocab {:mine "flymine"}
