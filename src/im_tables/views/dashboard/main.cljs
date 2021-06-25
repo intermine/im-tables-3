@@ -10,6 +10,18 @@
             [im-tables.views.dashboard.exporttable :as exporttable]
             [re-frame.core :refer [dispatch subscribe]]))
 
+(defn row-indicator [response pagination]
+  (let [{total :iTotalRecords} response
+        {:keys [start limit]} pagination]
+    (when (pos? total)
+      (str "Showing "
+           (inc start)
+           " to "
+           (min (+ start limit) total)
+           " of "
+           total
+           " rows"))))
+
 (defn main [loc]
   (let [compact? (subscribe [:settings/compact loc])]
     (fn [loc response pagination]
@@ -38,15 +50,7 @@
        [:div.pagination-bar
         [:label.pagination-label
          (when (:iTotalRecords response)
-           (str "Showing "
-                (inc (:start pagination)) " to "
-                (min
-                 (+ (:start pagination) (:limit pagination))
-                 (:iTotalRecords response))
-                " of "
-                (.toLocaleString (:iTotalRecords response))
-
-                " rows"))]
+           [row-indicator response pagination])]
         [pager/main loc
          (merge pagination
                 {:total (get response :iTotalRecords)})]]])))
