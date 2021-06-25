@@ -32,17 +32,18 @@
   "Depending on the response, other states may be displayed instead of children.
   Note that `res` might not hold the latest response if it failed, as in this
   case the `on-failure` event would fire instead."
-  [loc {:keys [results success wasSuccessful] :as res} & children]
+  [loc {:keys [results success wasSuccessful iTotalRecords] :as res} & children]
   (let [error @(subscribe [:main/error loc])
-        successful? (or success wasSuccessful)]
+        no-results? (and (or success wasSuccessful) (zero? iTotalRecords))]
     (cond
       error         [error/failure loc error]
       (seq results) (into [:<>] children)
-      successful?   [error/no-results loc]
+      no-results?   [error/no-results loc]
       ;; Usually means a query is in progress (ie. loading case).
       (nil? res)    nil
-      ;; The else case shouldn't occur, but we leave it just in case!
-      :else         [error/failure loc (response->error res)])))
+      ;; AFAIK, you can only end up here when changing from a page with no
+      ;; results, to one with results - we'll handle this just like above.
+      :else         nil)))
 
 (defn main [loc
             {:keys [results views] :as res}
