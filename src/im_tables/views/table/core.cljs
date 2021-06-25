@@ -39,11 +39,12 @@
       error         [error/failure loc error]
       (seq results) (into [:<>] children)
       no-results?   [error/no-results loc]
-      ;; Usually means a query is in progress (ie. loading case).
+      ;; Usually means the initial query is in progress (ie. loading case).
       (nil? res)    nil
       ;; AFAIK, you can only end up here when changing from a page with no
-      ;; results, to one with results - we'll handle this just like above.
-      :else         nil)))
+      ;; results, to one with results - we'll show children which should only
+      ;; consist of the table headers but no rows.
+      :else         (into [:<>] children))))
 
 (defn main [loc
             {:keys [results views] :as res}
