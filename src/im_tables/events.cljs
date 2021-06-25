@@ -618,12 +618,18 @@
        (map-indexed (fn [idx item] [(+ idx offset) item]))
        (into {})))
 
-(reg-event-db
+(reg-event-fx
  :main/replace-query-response
  (sandbox)
- (fn [db [_ loc {:keys [start]} response]]
-   (assoc db :response (update response :results index-map start))))
+ (fn [{db :db} [_ loc {:keys [start]} response]]
+   (merge
+    {:db (assoc db :response (update response :results index-map start))}
+    (when (and (pos? (:iTotalRecords response))
+               (>= start (:iTotalRecords response)))
+      ;; Change to last page if current page no longer has results.
+      {:dispatch [:imt.settings/update-pagination-fullinc loc]}))))
 
+;; Only dispatched on pagination change.
 (reg-event-db
  :main/merge-query-response
  (sandbox)
