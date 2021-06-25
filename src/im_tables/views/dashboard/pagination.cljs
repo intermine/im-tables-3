@@ -24,11 +24,11 @@
                 (conj [:option {:value total} (str "All (" total ")")]))))]
      [:div.btn-group
       [:button.btn.btn-default
-       {:disabled (< start 1)
+       {:disabled (or (zero? total) (< start 1))
         :on-click (fn [] (dispatch [:imt.settings/update-pagination-fulldec loc]))}
        [:span.glyphicon.glyphicon-step-backward]]
       [:button.btn.btn-default
-       {:disabled (< start 1)
+       {:disabled (or (zero? total) (< start 1))
         :on-click (fn [] (dispatch [:imt.settings/update-pagination-dec loc]))}
        [:span.glyphicon.glyphicon-triangle-left]]]
      [:div.btn-group
