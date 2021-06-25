@@ -35,8 +35,7 @@
             "build" ["do" "clean,"
                      ["less" "once"]
                      ["cljsbuild" "once" "min"]]
-            "deploy" ["do" "build,"
-                      ["deploy" "clojars"]]
+            "deploy" ["with-profile" "+build" "deploy" "clojars"]
             "format" ["cljfmt" "fix"]
             "kaocha" ["do" "clean,"
                       ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]]}
@@ -69,6 +68,7 @@
                                   [figwheel-sidecar "0.5.19"]
                                   [cider/piggieback "0.4.2"]]
                    :plugins [[lein-figwheel "0.5.19"]]}
+             :build {:prep-tasks ["build"]}
              :repl {:source-paths ["dev"]}
              :kaocha {:dependencies [[lambdaisland/kaocha "1.0-612"]
                                      [lambdaisland/kaocha-cljs "0.0-71"]]}}
