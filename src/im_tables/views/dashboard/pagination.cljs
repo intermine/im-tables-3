@@ -14,7 +14,7 @@
       (let [all-amounts (sort (some->> limit (conj amounts)))
             highest (last all-amounts)]
         (into [:select.form-control.input-sm
-               {:value     (or limit "")
+               {:value     (min limit total)
                 :on-change (fn [e]
                              (dispatch [:imt.settings/update-pagination-limit loc (js/parseInt (oget e :target :value))]))}]
               (cond-> (mapv (fn [a]
