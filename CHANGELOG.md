@@ -1,3 +1,11 @@
+## 0.14.0 (2021-06-25)
+
+- Support exporting to rdf or ntriples
+- Hide 'showing x rows' text when no results
+- Fix edge case causing incorrect rows per page dropdown
+- Change to last page if current page no longer has results after change to query
+- Always disable prev page buttons when no results
+
 ## 0.13.0 (2021-03-26)
 
 - Fix bug allowing a filter to duplicate itself and replace one for other column
