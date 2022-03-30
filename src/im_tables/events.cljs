@@ -672,18 +672,21 @@
 (reg-event-db
  :main/save-decon-count
  (sandbox)
- (fn [db [_ loc path count]]
-   (assoc-in db [:query-parts-counts path] (js/parseInt count 10))))
+ (fn [db [_ loc path res]]
+   (assoc-in db [:query-parts-counts path] (:uniqueValues res))))
 
 (reg-event-fx
  :main/count-deconstruction
  (sandbox)
- (fn [{db :db} [_ loc path details]]
+ (fn [{db :db} [_ loc path query]]
    {:db db
     :im-tables/im-operation {:on-success [:main/save-decon-count loc path]
-                             :op (partial fetch/row-count
+                             :op (partial fetch/rows
                                           (get db :service)
-                                          (clean-derived-query (get details :query)))}}))
+                                          (update query :select
+                                                  conj (str path ".id"))
+                                          {:summaryPath (str path ".id")
+                                           :format "jsonrows"})}}))
 
 (reg-event-fx
  :main/deconstruct
@@ -699,7 +702,7 @@
        force? (assoc :dispatch-n
                      (into []
                            (map (fn [[part details]]
-                                  [:main/count-deconstruction loc part details])
+                                  [:main/count-deconstruction loc part (get-in db [:query])])
                                 deconstructed-query)))))))
 
 (reg-event-fx

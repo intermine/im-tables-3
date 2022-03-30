@@ -102,27 +102,27 @@
          [:a [:strong (serialize-path model path)] (str " (" count ")")]]))))
 
 (defn main [loc]
-  (let [model       (subscribe [:assets/model loc])
-        query-parts (subscribe [:main/query-parts loc])
-        counts      (subscribe [:main/query-parts-counts loc])]
-    (fn [loc]
-      [:div.dropdown
-       {:ref (on-event
-              "show.bs.dropdown"
-              #(when (nil? @counts)
-                  ;; This will only run for the initial query. For any
-                  ;; subsequent queries, we'll `:main/count-deconstruction`
-                  ;; alongside the query.
-                 (doseq [event (map (fn [[part details]]
-                                      [:main/count-deconstruction loc part details])
-                                    @query-parts)]
-                   (dispatch event))))}
-       [:button.btn.btn-default.dropdown-toggle
-        {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
-       (-> [:ul.dropdown-menu]
-           (into (map-indexed (fn [idx [path details]]
-                                [save-menu loc @model path details])
-                              @query-parts))
-           (conj [:hr]
-                 [:li {:on-click #(dispatch [:pick-items/start loc])}
-                  [:a "Pick items from the table"]]))])))
+  (let [model       @(subscribe [:assets/model loc])
+        query       @(subscribe [:main/query loc])
+        query-parts @(subscribe [:main/query-parts loc])
+        counts      @(subscribe [:main/query-parts-counts loc])]
+    [:div.dropdown
+     {:ref (on-event
+            "show.bs.dropdown"
+            #(when (nil? counts)
+                ;; This will only run for the initial query. For any
+                ;; subsequent queries, we'll `:main/count-deconstruction`
+                ;; alongside the query.
+               (doseq [event (map (fn [[part _details]]
+                                    [:main/count-deconstruction loc part query])
+                                  query-parts)]
+                 (dispatch event))))}
+     [:button.btn.btn-default.dropdown-toggle
+      {:data-toggle "dropdown"} [:span [:i.fa.fa-cloud-upload] " Save List"]]
+     (-> [:ul.dropdown-menu]
+         (into (map-indexed (fn [idx [path details]]
+                              [save-menu loc model path details])
+                            query-parts))
+         (conj [:hr]
+               [:li {:on-click #(dispatch [:pick-items/start loc])}
+                [:a "Pick items from the table"]]))]))
