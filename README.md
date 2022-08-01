@@ -128,7 +128,7 @@ When a table first loads it only renders the first page of the query results as 
 
 ### Initial setup
 
-If you want to run the unit tests, you'll need Node.js and npm. Once these have been installed, run the following.
+To compile the css and run the unit tests, you'll need Node.js and npm. Once these have been installed, run the following.
 
 ```
 npm install
@@ -149,17 +149,17 @@ lein kaocha      # run unit tests
 
 ### Compile css:
 
-Compile css file once.
+We use [less](http://lesscss.org/) to write our styles.
+
+You can compile the Less sources to CSS with the command below:
 
 ```
-lein less once
+lein less
 ```
 
-Automatically recompile css file on change.
+It will run in watch mode, recompiling the CSS after every change until you exit it with *Ctrl+C*. The browser page will automatically reload the updated CSS.
 
-```
-lein less auto
-```
+When using the other lein commands to build or deploy, the less sources will automatically be compiled for production mode.
 
 ### Run application:
 
