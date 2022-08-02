@@ -1,7 +1,7 @@
 (ns im-tables.views.table.body.main
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as reagent]
-            [clojure.string :refer [split join]]
+            [clojure.string :refer [split join trim]]
             [im-tables.views.common :refer [no-value]]
             [oops.core :refer [ocall oget oset!]]
             [imcljs.path :as impath]
@@ -133,6 +133,14 @@
                           #(dispatch [:pick-items/pick loc id class]))
              :checked is-picked?}]))
 
+(defn anchor-if-url [x]
+  (if (string? x)
+    (let [s (trim x)]
+      (if (re-matches #"https?://[^\s]*" s)
+        [:a {:href s :target "_blank"} s]
+        x))
+    (str x)))
+
 (defn cell [loc]
   (let [pop-el   (reagent/atom nil)
         settings (subscribe [:settings/settings loc])
@@ -173,7 +181,7 @@
                     (when (contains? item-details :value)
                       {:href link}))
                 (if (some? value)
-                  (str value)
+                  (anchor-if-url value)
                   [no-value])]]]))]))))
 
 (defn table-row [loc row]
