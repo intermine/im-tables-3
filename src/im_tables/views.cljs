@@ -173,7 +173,7 @@
   {:service {:root "https://www.flymine.org/flymine"}
    :query {:from "DataSet"
            :select ["DataSet.name",
-                    "DataSet.url",]
+                    "DataSet.url"]
            :where [{:path "DataSet.url"
                     :op "IS NOT NULL"}]}
    :settings {:pagination {:limit 10}
