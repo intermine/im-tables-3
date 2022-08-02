@@ -35,7 +35,7 @@
               {"dev" ["do" "clean,"
                       ["pdo"
                        (into ["shell"] watch-less-silent)
-                       ["with-profile" "+repl" "run"]]]
+                       ["repl"]]]
                "build" ["do" "clean,"
                         (into ["shell"] compile-less-prod)
                         ["cljsbuild" "once" "min"]]
@@ -71,6 +71,7 @@
                                   [cider/piggieback "0.4.2"]]
                    :plugins [[lein-figwheel "0.5.19"]]}
              :build {:prep-tasks ["build"]}
+             :uberjar {:prep-tasks ["build"]}
              :repl {:source-paths ["dev"]}
              :kaocha {:dependencies [[lambdaisland/kaocha "1.0-612"]
                                      [lambdaisland/kaocha-cljs "0.0-71"]]}}
