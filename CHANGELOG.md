@@ -1,3 +1,8 @@
+## 0.14.1 (2022-08-03)
+
+- Make column summary shorter in height to avoid buttons ending up off-screen on smaller monitors
+- Make cell an external link if it's a URL
+
 ## 0.14.0 (2021-06-25)
 
 - Support exporting to rdf or ntriples
