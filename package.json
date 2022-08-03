@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
+    "chokidar-cli": "^2.1.0",
+    "less": "1.7.5",
     "ws": "^7.4.6"
   }
 }

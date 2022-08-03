@@ -13,32 +13,37 @@
                  [joshkh/ctrlz "0.3.0"]
                  [binaryage/oops "0.7.0"]
                  [inflections "0.13.2"]
-                 [org.intermine/imcljs "1.3.0"]
+                 [org.intermine/imcljs "1.6.0"]
                  [day8.re-frame/test "0.1.5"]
                  [cljsjs/react-day-picker "7.3.0-1"]
                  [cljsjs/react-select "2.4.4-0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
-            [lein-less "1.7.5"]
             [lein-ancient "0.6.15"]
             [lein-pdo "0.1.1"]
-            [lein-cljfmt "0.6.1"]]
+            [lein-cljfmt "0.6.1"]
+            [lein-shell "0.5.0"]]
 
   :cljfmt {:indents {wait-for [[:inner 0]]
                      after-load [[:inner 0]]}}
 
-  :aliases {"dev" ["do" "clean,"
-                   ["pdo"
-                    ["trampoline" "less" "auto"]
-                    ["with-profile" "+repl" "run"]]]
-            "build" ["do" "clean,"
-                     ["less" "once"]
-                     ["cljsbuild" "once" "min"]]
-            "deploy" ["with-profile" "+build" "deploy" "clojars"]
-            "format" ["cljfmt" "fix"]
-            "kaocha" ["do" "clean,"
-                      ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]]}
+  :aliases ~(let [compile-less ["npx" "lessc" "less/im-tables.less" "resources/public/css/im-tables.css"]
+                  compile-less-prod (conj compile-less "-x")
+                  watch-less ["npx" "chokidar" "less/**/*.less" "-c" (clojure.string/join " " compile-less) "--initial"]
+                  watch-less-silent (conj watch-less "--silent")]
+              {"dev" ["do" "clean,"
+                      ["pdo"
+                       (into ["shell"] watch-less-silent)
+                       ["repl"]]]
+               "build" ["do" "clean,"
+                        (into ["shell"] compile-less-prod)
+                        ["cljsbuild" "once" "min"]]
+               "deploy" ["with-profile" "+build" "deploy" "clojars"]
+               "format" ["cljfmt" "fix"]
+               "kaocha" ["do" "clean,"
+                         ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]]
+               "less" (into ["shell"] watch-less)})
 
   :repositories {"clojars" {:sign-releases false}}
 
@@ -57,9 +62,6 @@
   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]
                  :timeout 120000}
 
-  :less {:source-paths ["less"]
-         :target-path "resources/public/css"}
-
   :main im-tables.core
 
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.0"]
@@ -69,6 +71,7 @@
                                   [cider/piggieback "0.4.2"]]
                    :plugins [[lein-figwheel "0.5.19"]]}
              :build {:prep-tasks ["build"]}
+             :uberjar {:prep-tasks ["build"]}
              :repl {:source-paths ["dev"]}
              :kaocha {:dependencies [[lambdaisland/kaocha "1.0-612"]
                                      [lambdaisland/kaocha-cljs "0.0-71"]]}}
