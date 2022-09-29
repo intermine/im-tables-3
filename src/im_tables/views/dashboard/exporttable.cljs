@@ -8,7 +8,7 @@
 
 (defn format-dropdown
   "creates the dropdown to allow users to select their preferred format"
-  [loc {:keys [accepted-formats order-formats]}]
+  [loc {:keys [format accepted-formats order-formats]}]
   (let [query-parts @(subscribe [:main/query-parts loc])
         valid-export-formats (->> (map (juxt identity accepted-formats) order-formats)
                                   (keep (fn [[format suitable-for]]
@@ -17,7 +17,8 @@
                                                     (some #(contains? query-parts (name %)) suitable-for))
                                             format))))]
     (into [:select.form-control.format-dropdown
-           {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
+           {:value format
+            :on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
           (for [format valid-export-formats]
             [:option (name format)]))))
 
