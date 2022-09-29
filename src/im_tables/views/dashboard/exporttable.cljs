@@ -30,7 +30,9 @@
 (defn preview-panel [loc]
   (let [preview @(subscribe [:exporttable/preview loc])]
     [optional-container "Preview (first 3 rows)"
-     [:pre preview]]))
+     (if (nil? preview)
+       [:pre [:code.nohighlight "Fetching preview... " [:i.fa.fa-fw.fa-spinner.fa-spin]]]
+       [:pre preview])]))
 
 (defn column-headers-panel [loc {:keys [columnheaders]}]
   [optional-container "Column headers"

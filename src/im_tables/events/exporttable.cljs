@@ -32,7 +32,8 @@
  :exporttable/fetch-preview-failure
  (sandbox)
  (fn [db [_ loc res]]
-   (assoc-in db [:cache :export-preview] res)))
+   (assoc-in db [:cache :export-preview] (or (not-empty (:body res))
+                                             "Failed to fetch preview"))))
 
 (reg-event-db
  :exporttable/set-filename
