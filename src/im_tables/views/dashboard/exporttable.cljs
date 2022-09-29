@@ -8,10 +8,8 @@
 
 (defn format-dropdown
   "creates the dropdown to allow users to select their preferred format"
-  [loc]
-  (let [settings @(subscribe [:settings/settings loc])
-        query-parts @(subscribe [:main/query-parts loc])
-        {:keys [accepted-formats order-formats]} (get-in settings [:data-out])
+  [loc {:keys [accepted-formats order-formats]}]
+  (let [query-parts @(subscribe [:main/query-parts loc])
         valid-export-formats (->> (map (juxt identity accepted-formats) order-formats)
                                   (keep (fn [[format suitable-for]]
                                           (when (or (= suitable-for :all)
@@ -29,28 +27,33 @@
          [:span title]]
         children))
 
-(defn column-headers-panel [loc {:keys [column-headers]}]
+(defn preview-panel [loc]
+  (let [preview @(subscribe [:exporttable/preview loc])]
+    [optional-container "Preview (first 3 rows)"
+     [:pre preview]]))
+
+(defn column-headers-panel [loc {:keys [columnheaders]}]
   [optional-container "Column headers"
    [:div.radio
     [:label
      [:input {:type "radio"
               :name "colum-headers-type"
               :on-change #(dispatch [:exporttable/set-column-headers loc nil])
-              :checked (nil? column-headers)}]
+              :checked (nil? columnheaders)}]
      " No column headers"]]
    [:div.radio
     [:label
      [:input {:type "radio"
               :name "colum-headers-type"
-              :on-change #(dispatch [:exporttable/set-column-headers loc :friendly])
-              :checked (= column-headers :friendly)}]
+              :on-change #(dispatch [:exporttable/set-column-headers loc "friendly"])
+              :checked (= columnheaders "friendly")}]
      " Use human readable headers (e.g. " [:em "Gene > Organism . Name"] ")"]]
    [:div.radio
     [:label
      [:input {:type "radio"
               :name "colum-headers-type"
-              :on-change #(dispatch [:exporttable/set-column-headers loc :path])
-              :checked (= column-headers :path)}]
+              :on-change #(dispatch [:exporttable/set-column-headers loc "path"])
+              :checked (= columnheaders "path")}]
      " Use raw path headers (e.g. " [:em "Gene.organism.name"] ")"]]])
 
 (defn data-package-panel [loc {:keys [export-data-package]}]
@@ -79,16 +82,16 @@
      [:input {:type "radio"
               :name "compression-type"
               :disabled export-data-package
-              :on-change #(dispatch [:exporttable/set-compression loc :zip])
-              :checked (= compression :zip)}]
+              :on-change #(dispatch [:exporttable/set-compression loc "zip"])
+              :checked (= compression "zip")}]
      " Use Zip compression (produces a .zip archive)"]]
    [:div.radio
     [:label
      [:input {:type "radio"
               :name "compression-type"
               :disabled export-data-package
-              :on-change #(dispatch [:exporttable/set-compression loc :gzip])
-              :checked (= compression :gzip)}]
+              :on-change #(dispatch [:exporttable/set-compression loc "gzip"])
+              :checked (= compression "gzip")}]
      " Use GZIP compression (produces a .gzip archive)"]]])
 
 (defn modal-body
@@ -104,8 +107,9 @@
           :value (:filename data-out)
           :on-change #(dispatch [:exporttable/set-filename loc (oget % :target :value)])}]
         [:div.input-group-btn
-         [format-dropdown loc]]]]]
+         [format-dropdown loc data-out]]]]]
      [:div.export-options
+      [preview-panel loc]
       [column-headers-panel loc data-out]
       [data-package-panel loc data-out]
       [compression-panel loc data-out]]]))
@@ -129,6 +133,8 @@
 (defn exporttable [loc]
   [:button.btn.btn-default
    {:type "button"
-    :on-click #(dispatch [:modal/open loc (export-menu loc)])}
+    :on-click (fn []
+                (dispatch [:exporttable/fetch-preview loc])
+                (dispatch [:modal/open loc (export-menu loc)]))}
    [:i.fa.fa-download] " Export"])
 
