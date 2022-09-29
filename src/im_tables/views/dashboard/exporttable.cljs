@@ -18,70 +18,64 @@
                                                     ;; If not :all, it's a vector of classes which the query needs to have.
                                                     (some #(contains? query-parts (name %)) suitable-for))
                                             format))))]
-    (into [:select.form-control
+    (into [:select.form-control.format-dropdown
            {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
           (for [format valid-export-formats]
             [:option (name format)]))))
 
-(defn toggle-or-switch [target]
-  (fn [prev-value]
-    (if (= prev-value target)
-      nil
-      target)))
+(defn data-package-panel [loc {:keys [export-data-package]}]
+  [:div.optional-attributes
+   [:hr]
+   [:span "Frictionless Data Package"]
+   [:label
+    [:input {:type "checkbox"
+             :on-change #(dispatch [:exporttable/toggle-export-data-package loc])
+             :checked export-data-package}]
+    " Export Frictionless Data Package (uses ZIP compression)"]])
+
+(defn compression-panel [loc {:keys [export-data-package compression]}]
+  [:div.optional-attributes
+   [:hr]
+   [:span "Compression"]
+   (when export-data-package
+     [:p [:strong "Frictionless Data Package uses ZIP Compression only."]])
+   [:label
+    [:input {:type "radio"
+             :name "compression-type"
+             :disabled export-data-package
+             :on-change #(dispatch [:exporttable/set-compression loc nil])
+             :checked (nil? compression)}]
+    " No compression"]
+   [:label
+    [:input {:type "radio"
+             :name "compression-type"
+             :disabled export-data-package
+             :on-change #(dispatch [:exporttable/set-compression loc :zip])
+             :checked (= compression :zip)}]
+    " Use Zip compression (produces a .zip archive)"]
+   [:label
+    [:input {:type "radio"
+             :name "compression-type"
+             :disabled export-data-package
+             :on-change #(dispatch [:exporttable/set-compression loc :gzip])
+             :checked (= compression :gzip)}]
+    " Use GZIP compression (produces a .gzip archive)"]])
 
 (defn modal-body
   [loc]
-  (let [data-out (subscribe [:settings/data-out loc])
-        expanded* (reagent/atom (cond
-                                  (:export-data-package @data-out) :data-package
-                                  (:compression @data-out) :compression))]
-    (fn [loc]
-      (let [{:keys [export-data-package compression]} @data-out]
-        [:div.modal-body.exporttable-body
-         [:form [:label "Select a format" [format-dropdown loc]]]
-         [:div.export-options
-          [:div.panel.panel-default
-           [:div.panel-heading
-            {:class (when (= @expanded* :data-package) :active)
-             :on-click #(swap! expanded* (toggle-or-switch :data-package))}
-            [:h3.panel-title "Frictionless Data Package"]]
-           (when (= @expanded* :data-package)
-             [:div.panel-body
-              [:label
-               [:input {:type "checkbox"
-                        :on-change #(dispatch [:exporttable/toggle-export-data-package loc])
-                        :checked export-data-package}]
-               " Export Frictionless Data Package (uses ZIP compression)"]])]
-          [:div.panel.panel-default
-           [:div.panel-heading
-            {:class (when (= @expanded* :compression) :active)
-             :on-click #(swap! expanded* (toggle-or-switch :compression))}
-            [:h3.panel-title "Compression"]]
-           (when (= @expanded* :compression)
-             [:div.panel-body
-              (when export-data-package
-                [:p [:strong "Frictionless Data Package uses ZIP Compression only."]])
-              [:label
-               [:input {:type "radio"
-                        :name "compression-type"
-                        :disabled export-data-package
-                        :on-change #(dispatch [:exporttable/set-compression loc nil])
-                        :checked (nil? compression)}]
-               " No compression"]
-              [:label
-               [:input {:type "radio"
-                        :name "compression-type"
-                        :disabled export-data-package
-                        :on-change #(dispatch [:exporttable/set-compression loc :zip])
-                        :checked (= compression :zip)}]
-               " Use Zip compression (produces a .zip archive)"]
-              [:label
-               [:input {:type "radio"
-                        :name "compression-type"
-                        :disabled export-data-package
-                        :on-change #(dispatch [:exporttable/set-compression loc :gzip])
-                        :checked (= compression :gzip)}]
-               " Use GZIP compression (produces a .gzip archive)"]])]]]))))
+  (let [data-out @(subscribe [:settings/data-out loc])]
+    [:div.exporttable-body
+     [:div.form
+      [:div.form-group
+       [:label "File name"]
+       [:div.input-group
+        [:input.form-control
+         {:type "text"}]
+        [:div.input-group-btn
+         [format-dropdown loc]]]]]
+     [:div.export-options
+      [data-package-panel loc data-out]
+      [compression-panel loc data-out]]]))
 
 (defn modal-footer
   "Clicking the anchor element will cause the file to be downloaded directly
