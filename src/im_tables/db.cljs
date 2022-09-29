@@ -72,13 +72,15 @@
                         :comments? true
                         :html? true
                         :highlight? true}
-              :data-out {:selected-format :tsv
+              :data-out {:filename "results"
+                         :selected-format :tsv
                          :accepted-formats {:tsv :all
                                             :csv :all
                                             :fasta [:Gene :Protein]
                                             :rdf :all
                                             :ntriples :all}
                          :order-formats [:tsv :csv :fasta :rdf :ntriples]
+                         :column-headers nil
                          :export-data-package false
                          :compression nil}
               :links {:vocab {:mine "flymine"}

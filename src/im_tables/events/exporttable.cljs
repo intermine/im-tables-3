@@ -9,6 +9,12 @@
 ;; This means we default to tsv for Good Reasons. (This is set in the app-db!)
 
 (reg-event-db
+ :exporttable/set-filename
+ (sandbox)
+ (fn [db [_ loc filename]]
+   (assoc-in db [:settings :data-out :filename] filename)))
+
+(reg-event-db
  :exporttable/set-format
  ;;sets preferred format for the file export
  (sandbox)

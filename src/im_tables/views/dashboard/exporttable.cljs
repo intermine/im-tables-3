@@ -100,7 +100,9 @@
        [:label "File name and type"]
        [:div.input-group
         [:input.form-control
-         {:type "text"}]
+         {:type "text"
+          :value (:filename data-out)
+          :on-change #(dispatch [:exporttable/set-filename loc (oget % :target :value)])}]
         [:div.input-group-btn
          [format-dropdown loc]]]]]
      [:div.export-options
