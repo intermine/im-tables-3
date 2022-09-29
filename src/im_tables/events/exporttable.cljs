@@ -26,3 +26,9 @@
  (sandbox)
  (fn [db [_ loc compression-type]]
    (assoc-in db [:settings :data-out :compression] compression-type)))
+
+(reg-event-db
+ :exporttable/set-column-headers
+ (sandbox)
+ (fn [db [_ loc colum-headers-type]]
+   (assoc-in db [:settings :data-out :column-headers] colum-headers-type)))

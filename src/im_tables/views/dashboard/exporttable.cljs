@@ -23,10 +23,38 @@
           (for [format valid-export-formats]
             [:option (name format)]))))
 
+(defn optional-container [title & children]
+  (into [:div.optional-attributes
+         [:hr]
+         [:span title]]
+        children))
+
+(defn column-headers-panel [loc {:keys [column-headers]}]
+  [optional-container "Column headers"
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "colum-headers-type"
+              :on-change #(dispatch [:exporttable/set-column-headers loc nil])
+              :checked (nil? column-headers)}]
+     " No column headers"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "colum-headers-type"
+              :on-change #(dispatch [:exporttable/set-column-headers loc :friendly])
+              :checked (= column-headers :friendly)}]
+     " Use human readable headers (e.g. " [:em "Gene > Organism . Name"] ")"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "colum-headers-type"
+              :on-change #(dispatch [:exporttable/set-column-headers loc :path])
+              :checked (= column-headers :path)}]
+     " Use raw path headers (e.g. " [:em "Gene.organism.name"] ")"]]])
+
 (defn data-package-panel [loc {:keys [export-data-package]}]
-  [:div.optional-attributes
-   [:hr]
-   [:span "Frictionless Data Package"]
+  [optional-container "Frictionless Data Package"
    [:label
     [:input {:type "checkbox"
              :on-change #(dispatch [:exporttable/toggle-export-data-package loc])
@@ -34,32 +62,34 @@
     " Export Frictionless Data Package (uses ZIP compression)"]])
 
 (defn compression-panel [loc {:keys [export-data-package compression]}]
-  [:div.optional-attributes
-   [:hr]
-   [:span "Compression"]
+  [optional-container "Compression"
    (when export-data-package
-     [:p [:strong "Frictionless Data Package uses ZIP Compression only."]])
-   [:label
-    [:input {:type "radio"
-             :name "compression-type"
-             :disabled export-data-package
-             :on-change #(dispatch [:exporttable/set-compression loc nil])
-             :checked (nil? compression)}]
-    " No compression"]
-   [:label
-    [:input {:type "radio"
-             :name "compression-type"
-             :disabled export-data-package
-             :on-change #(dispatch [:exporttable/set-compression loc :zip])
-             :checked (= compression :zip)}]
-    " Use Zip compression (produces a .zip archive)"]
-   [:label
-    [:input {:type "radio"
-             :name "compression-type"
-             :disabled export-data-package
-             :on-change #(dispatch [:exporttable/set-compression loc :gzip])
-             :checked (= compression :gzip)}]
-    " Use GZIP compression (produces a .gzip archive)"]])
+     [:div.alert.alert-warning {:role "alert"}
+      [:p "Frictionless Data Package uses ZIP Compression only."]])
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "compression-type"
+              :disabled export-data-package
+              :on-change #(dispatch [:exporttable/set-compression loc nil])
+              :checked (nil? compression)}]
+     " No compression"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "compression-type"
+              :disabled export-data-package
+              :on-change #(dispatch [:exporttable/set-compression loc :zip])
+              :checked (= compression :zip)}]
+     " Use Zip compression (produces a .zip archive)"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "compression-type"
+              :disabled export-data-package
+              :on-change #(dispatch [:exporttable/set-compression loc :gzip])
+              :checked (= compression :gzip)}]
+     " Use GZIP compression (produces a .gzip archive)"]]])
 
 (defn modal-body
   [loc]
@@ -67,13 +97,14 @@
     [:div.exporttable-body
      [:div.form
       [:div.form-group
-       [:label "File name"]
+       [:label "File name and type"]
        [:div.input-group
         [:input.form-control
          {:type "text"}]
         [:div.input-group-btn
          [format-dropdown loc]]]]]
      [:div.export-options
+      [column-headers-panel loc data-out]
       [data-package-panel loc data-out]
       [compression-panel loc data-out]]]))
 

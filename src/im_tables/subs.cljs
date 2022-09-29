@@ -373,7 +373,7 @@
     (subscribe [:assets/service loc])
     (subscribe [:main/query loc])
     (subscribe [:assets/model loc])])
- (fn [[{:keys [selected-format export-data-package compression]} {:keys [root token]} query model]
+ (fn [[{:keys [selected-format column-headers export-data-package compression]} {:keys [root token]} query model]
       [_ _loc]]
    (let [fasta? (= selected-format :fasta)]
      (str root "/service/query/results" (when fasta? "/fasta")
@@ -382,6 +382,8 @@
           "&query=" (js/encodeURIComponent
                      (im-query/->xml model (cond-> query
                                              fasta? (assoc :select ["id"]))))
+          (when column-headers
+            (str "&columnheaders=" (name column-headers)))
           (if export-data-package
             "&exportDataPackage=true&compress=zip"
             (when compression
