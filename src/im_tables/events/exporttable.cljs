@@ -17,16 +17,18 @@
                                 [:format :columnheaders])
                    {:start 0
                     :size 3})]
-     {:db (assoc-in db [:cache :export-preview] nil)
-      :im-tables/im-operation-chan {:channel (fetch/fetch-custom-format (:service db) (:query db) options)
-                                    :on-success [:exporttable/fetch-preview-success loc]
-                                    :on-failure [:exporttable/fetch-preview-failure loc]}})))
+     (if (contains? #{"fasta" "gff3" "bed"} (:format options))
+       {:db (assoc-in db [:cache :export-preview] "Previews are not supported for bioinformatics formats")}
+       {:db (assoc-in db [:cache :export-preview] nil)
+        :im-tables/im-operation-chan {:channel (fetch/fetch-custom-format (:service db) (:query db) options)
+                                      :on-success [:exporttable/fetch-preview-success loc]
+                                      :on-failure [:exporttable/fetch-preview-failure loc]}}))))
 
 (reg-event-db
  :exporttable/fetch-preview-success
  (sandbox)
  (fn [db [_ loc res]]
-   (assoc-in db [:cache :export-preview] res)))
+   (assoc-in db [:cache :export-preview] (if (coll? res) (.stringify js/JSON (clj->js res) nil 4) res))))
 
 (reg-event-db
  :exporttable/fetch-preview-failure

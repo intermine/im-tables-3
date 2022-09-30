@@ -6,6 +6,17 @@
             [imcljs.path :as path :refer [walk class]]
             [im-tables.components.bootstrap :refer [modal]]))
 
+(def format->styling
+  {:tsv [:span [:i.fa.fa-file-excel-o] " Tab separated values"]
+   :csv [:span [:i.fa.fa-file-excel-o] " Comma separated values"]
+   :xml [:span [:i.fa.fa-code] " XML"]
+   :json [:span "{ } JSON"]
+   :fasta [:span [:i.fa.fa-exchange] " FASTA sequence"]
+   :gff3 [:span [:i.fa.fa-exchange] " GFF3 features"]
+   :bed [:span [:i.fa.fa-exchange] " BED locations"]
+   :rdf [:span [:i.fa.fa-sitemap] " RDF"]
+   :ntriples [:span [:i.fa.fa-sitemap] " N-Triples"]})
+
 (defn format-dropdown
   "creates the dropdown to allow users to select their preferred format"
   [loc {:keys [format accepted-formats order-formats]}]
@@ -16,11 +27,16 @@
                                                     ;; If not :all, it's a vector of classes which the query needs to have.
                                                     (some #(contains? query-parts (name %)) suitable-for))
                                             format))))]
-    (into [:select.form-control.format-dropdown
-           {:value format
-            :on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
-          (for [format valid-export-formats]
-            [:option (name format)]))))
+    [:div.dropdown
+     [:button.btn.btn-default.btn-toolbar.dropdown-toggle
+      {:data-toggle "dropdown"}
+      format]
+     (into [:ul.dropdown-menu.dropdown-menu-right]
+           (for [format valid-export-formats]
+             [:li
+              [:button.btn.btn-link.btn-block
+               {:on-click #(dispatch [:exporttable/set-format loc (name format)])}
+               (get format->styling format (name format))]]))]))
 
 (defn optional-container [title & children]
   (into [:div.optional-attributes
@@ -50,7 +66,7 @@
               :name "colum-headers-type"
               :on-change #(dispatch [:exporttable/set-column-headers loc "friendly"])
               :checked (= columnheaders "friendly")}]
-     " Use human readable headers (e.g. " [:em "Gene > Organism . Name"] ")"]]
+     " Use human readable headers (e.g. " [:em "Gene > Organism Name"] ")"]]
    [:div.radio
     [:label
      [:input {:type "radio"
@@ -124,7 +140,7 @@
   (let [href @(subscribe [:export/download-href loc])]
     [:a.btn.btn-raised.btn-primary
      {:href href}
-     "Download now!"]))
+     "Download file"]))
 
 (defn export-menu
   "UI element. Presents the modal to allow user to select an export format."

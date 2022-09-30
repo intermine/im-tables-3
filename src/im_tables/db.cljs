@@ -76,10 +76,14 @@
                          :format "tsv"
                          :accepted-formats {:tsv :all
                                             :csv :all
+                                            :xml :all
+                                            :json :all
                                             :fasta [:Gene :Protein]
+                                            :gff3 [:Gene :Protein]
+                                            :bed [:Gene :Protein]
                                             :rdf :all
                                             :ntriples :all}
-                         :order-formats [:tsv :csv :fasta :rdf :ntriples]
+                         :order-formats [:tsv :csv :xml :json :fasta :gff3 :bed :rdf :ntriples]
                          :columnheaders nil
                          :export-data-package false
                          :compression nil}
