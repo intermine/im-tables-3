@@ -154,6 +154,7 @@
    {:type "button"
     :on-click (fn []
                 (dispatch [:exporttable/fetch-preview loc])
+                (dispatch [:exporttable/prepare-options loc])
                 (dispatch [:modal/open loc (export-menu loc)]))}
    [:i.fa.fa-download] " Export"])
 
