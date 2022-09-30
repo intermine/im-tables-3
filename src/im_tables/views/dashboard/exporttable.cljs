@@ -75,6 +75,31 @@
               :checked (= columnheaders "path")}]
      " Use raw path headers (e.g. " [:em "Gene.organism.name"] ")"]]])
 
+(defn rows-panel [loc {:keys [size start]}]
+  (let [{total :iTotalRecords} @(subscribe [:main/query-response loc])]
+    [optional-container "Select rows"
+     [:div
+      [:div.form-group
+       [:label (str "Size: " size) (when (= size total) " (all rows)")]
+       [:input
+        {:type "range"
+         :name "size"
+         :step 1
+         :min 1
+         :max total
+         :value size
+         :on-change #(dispatch [:exporttable/set-rows-size loc (js/parseInt (oget % :target :value))])}]]
+      [:div.form-group
+       [:label (str "Offset: " start)]
+       [:input
+        {:type "range"
+         :name "start"
+         :step 1
+         :min 0
+         :max (dec total)
+         :value start
+         :on-change #(dispatch [:exporttable/set-rows-start loc (js/parseInt (oget % :target :value))])}]]]]))
+
 (defn data-package-panel [loc {:keys [export-data-package]}]
   [optional-container "Frictionless Data Package"
    [:label
@@ -130,6 +155,7 @@
      [:div.export-options
       [preview-panel loc]
       [column-headers-panel loc data-out]
+      [rows-panel loc data-out]
       [data-package-panel loc data-out]
       [compression-panel loc data-out]]]))
 

@@ -85,6 +85,8 @@
                                             :ntriples :all}
                          :order-formats [:tsv :csv :xml :json :fasta :gff3 :bed :rdf :ntriples]
                          :columnheaders nil
+                         :size nil
+                         :start 0
                          :export-data-package false
                          :compression nil}
               :links {:vocab {:mine "flymine"}
