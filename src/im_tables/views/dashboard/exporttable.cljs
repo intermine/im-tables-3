@@ -17,6 +17,9 @@
    :rdf [:span [:i.fa.fa-sitemap] " RDF"]
    :ntriples [:span [:i.fa.fa-sitemap] " N-Triples"]})
 
+(defn bioinf? [format] (contains? #{"fasta" "gff3" "bed"} format))
+(defn tabular? [format] (contains? #{"tsv" "csv"} format))
+
 (defn format-dropdown
   "creates the dropdown to allow users to select their preferred format"
   [loc {:keys [format accepted-formats order-formats]}]
@@ -140,7 +143,7 @@
 
 (defn modal-body
   [loc]
-  (let [data-out @(subscribe [:settings/data-out loc])]
+  (let [{:keys [format] :as data-out} @(subscribe [:settings/data-out loc])]
     [:div.exporttable-body
      [:div.form
       [:div.form-group
@@ -154,8 +157,10 @@
          [format-dropdown loc data-out]]]]]
      [:div.export-options
       [preview-panel loc]
-      [column-headers-panel loc data-out]
-      [rows-panel loc data-out]
+      (when (tabular? format)
+        [column-headers-panel loc data-out])
+      (when-not (bioinf? format)
+        [rows-panel loc data-out])
       [data-package-panel loc data-out]
       [compression-panel loc data-out]]]))
 
