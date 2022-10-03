@@ -40,8 +40,8 @@
  (fn [{db :db} [_ loc]]
    (let [data-out (get-in db [:settings :data-out])
          options (merge
-                   (select-keys data-out [:format :columnheaders :start])
-                   {:size 3})
+                  (select-keys data-out [:format :columnheaders :start])
+                  {:size 3})
          query (cond-> (:query db)
                  (:select data-out) (assoc :select (vec (keep #(when-not (contains? (:remove data-out) %) %)
                                                               (:select data-out)))))]
