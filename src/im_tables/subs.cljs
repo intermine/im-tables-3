@@ -378,7 +378,7 @@
     (subscribe [:assets/service loc])
     (subscribe [:main/query loc])
     (subscribe [:assets/model loc])])
- (fn [[{:keys [filename format columnheaders size start select export-data-package compression]} {:keys [root token]} query model]
+ (fn [[{:keys [filename format columnheaders size start select remove export-data-package compression]} {:keys [root token]} query model]
       [_ _loc]]
    (let [sequence? (contains? #{"fasta" "gff3" "bed"} format)]
      (str root "/service/query/results" (when sequence? (str "/" format))
@@ -387,7 +387,7 @@
           "&query=" (js/encodeURIComponent
                      (im-query/->xml model (cond
                                              sequence? (assoc query :select ["id"])
-                                             select (assoc query :select select)
+                                             select (assoc query :select (vec (keep #(when-not (contains? remove %) %) select)))
                                              :else query)))
           (when size (str "&size=" size))
           (when start (str "&start=" start))

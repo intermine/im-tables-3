@@ -18,6 +18,7 @@
               :start 0
 
               :select (get-in db [:query :select])
+              :remove #{}
 
               :filename
               (str (when-let [mine-ns (not-empty (get-in db [:settings :links :vocab :mine]))]
@@ -42,7 +43,8 @@
                    (select-keys data-out [:format :columnheaders :start])
                    {:size 3})
          query (cond-> (:query db)
-                 (:select data-out) (assoc :select (:select data-out)))]
+                 (:select data-out) (assoc :select (vec (keep #(when-not (contains? (:remove data-out) %) %)
+                                                              (:select data-out)))))]
      (if (contains? #{"fasta" "gff3" "bed"} (:format options))
        {:db (assoc-in db [:cache :export-preview] "Previews are not supported for bioinformatics formats")}
        {:db (assoc-in db [:cache :export-preview] nil)
@@ -96,18 +98,39 @@
  (fn [{db :db} [_ loc offset]]
    {:db (assoc-in db [:settings :data-out :start] offset)}))
 
-(defn toggle-select [select index view]
-  (if (contains? (set select) view)
-    (vec (keep #(when (not= % view) %) select))
-    (vec (concat (take index select)
-                 [view]
-                 (drop index select)))))
+(defn toggle-join [set x]
+  (if (contains? set x)
+    (disj set x)
+    (conj set x)))
 
 (reg-event-fx
  :exporttable/toggle-select-view
  (sandbox)
- (fn [{db :db} [_ loc index view]]
-   {:db (update-in db [:settings :data-out :select] toggle-select index view)
+ (fn [{db :db} [_ loc view]]
+   {:db (update-in db [:settings :data-out :remove] toggle-join view)
+    :dispatch [:exporttable/fetch-preview loc]}))
+
+(defn swap-views-up-down
+  "Swap two views that are beside each other. Assumes that index up is directly
+  before index down."
+  [select up down]
+  (vec (concat (take up select)
+               [(get select down)
+                (get select up)]
+               (drop (inc down) select))))
+
+(reg-event-fx
+ :exporttable/move-view-down
+ (sandbox)
+ (fn [{db :db} [_ loc index]]
+   {:db (update-in db [:settings :data-out :select] swap-views-up-down index (inc index))
+    :dispatch [:exporttable/fetch-preview loc]}))
+
+(reg-event-fx
+ :exporttable/move-view-up
+ (sandbox)
+ (fn [{db :db} [_ loc index]]
+   {:db (update-in db [:settings :data-out :select] swap-views-up-down (dec index) index)
     :dispatch [:exporttable/fetch-preview loc]}))
 
 (reg-event-db

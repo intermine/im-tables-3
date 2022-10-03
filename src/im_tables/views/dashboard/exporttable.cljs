@@ -103,19 +103,26 @@
          :value start
          :on-change #(dispatch [:exporttable/set-rows-start loc (js/parseInt (oget % :target :value))])}]]]]))
 
-(defn columns-panel [loc {:keys [select]}]
+(defn columns-panel [loc {:keys [select remove]}]
   (let [model @(subscribe [:assets/model loc])
-        {views :select} @(subscribe [:main/query loc])
-        selected (set select)]
+        select-count (count select)]
     [optional-container "Select columns"
      (into [:ul.list-group]
-           (for [[i view] (map-indexed vector views)]
+           (for [[i view] (map-indexed vector select)]
              [:li.list-group-item
               [:label
                [:input {:type "checkbox"
-                        :checked (contains? selected view)
-                        :on-change #(dispatch [:exporttable/toggle-select-view loc i view])}]
-               (str " " (path/friendly model view))]]))]))
+                        :checked (not (contains? remove view))
+                        :on-change #(dispatch [:exporttable/toggle-select-view loc view])}]
+               (str " " (path/friendly model view))]
+              [:button.btn.btn-default.btn-xs.pull-right
+               {:disabled (zero? i)
+                :on-click #(dispatch [:exporttable/move-view-up loc i])}
+               [:i.fa.fa-chevron-up]]
+              [:button.btn.btn-default.btn-xs.pull-right
+               {:disabled (= i (dec select-count))
+                :on-click #(dispatch [:exporttable/move-view-down loc i])}
+               [:i.fa.fa-chevron-down]]]))]))
 
 (defn data-package-panel [loc {:keys [export-data-package]}]
   [optional-container "Frictionless Data Package"

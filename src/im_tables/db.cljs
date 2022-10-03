@@ -88,6 +88,7 @@
                          :size nil
                          :start 0
                          :select nil
+                         :remove #{}
                          :export-data-package false
                          :compression nil}
               :links {:vocab {:mine "flymine"}
