@@ -31,7 +31,7 @@
                                                     (some #(contains? query-parts (name %)) suitable-for))
                                             format))))]
     [:div.dropdown
-     [:button.btn.btn-default.btn-toolbar.dropdown-toggle
+     [:button.btn.btn-default.btn-raised.btn-toolbar.dropdown-toggle
       {:data-toggle "dropdown"}
       format]
      (into [:ul.dropdown-menu.dropdown-menu-right]
