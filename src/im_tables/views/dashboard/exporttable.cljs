@@ -103,6 +103,20 @@
          :value start
          :on-change #(dispatch [:exporttable/set-rows-start loc (js/parseInt (oget % :target :value))])}]]]]))
 
+(defn columns-panel [loc {:keys [select]}]
+  (let [model @(subscribe [:assets/model loc])
+        {views :select} @(subscribe [:main/query loc])
+        selected (set select)]
+    [optional-container "Select columns"
+     (into [:ul.list-group]
+           (for [[i view] (map-indexed vector views)]
+             [:li.list-group-item
+              [:label
+               [:input {:type "checkbox"
+                        :checked (contains? selected view)
+                        :on-change #(dispatch [:exporttable/toggle-select-view loc i view])}]
+               (str " " (path/friendly model view))]]))]))
+
 (defn data-package-panel [loc {:keys [export-data-package]}]
   [optional-container "Frictionless Data Package"
    [:label
@@ -161,6 +175,8 @@
         [column-headers-panel loc data-out])
       (when-not (bioinf? format)
         [rows-panel loc data-out])
+      (when-not (bioinf? format)
+        [columns-panel loc data-out])
       [data-package-panel loc data-out]
       [compression-panel loc data-out]]]))
 

@@ -17,6 +17,8 @@
               :size (get-in db [:response :iTotalRecords])
               :start 0
 
+              :select (get-in db [:query :select])
+
               :filename
               (str (when-let [mine-ns (not-empty (get-in db [:settings :links :vocab :mine]))]
                      (str mine-ns "_"))
@@ -38,11 +40,13 @@
    (let [data-out (get-in db [:settings :data-out])
          options (merge
                    (select-keys data-out [:format :columnheaders :start])
-                   {:size 3})]
+                   {:size 3})
+         query (cond-> (:query db)
+                 (:select data-out) (assoc :select (:select data-out)))]
      (if (contains? #{"fasta" "gff3" "bed"} (:format options))
        {:db (assoc-in db [:cache :export-preview] "Previews are not supported for bioinformatics formats")}
        {:db (assoc-in db [:cache :export-preview] nil)
-        :im-tables/im-operation-chan {:channel (fetch/fetch-custom-format (:service db) (:query db) options)
+        :im-tables/im-operation-chan {:channel (fetch/fetch-custom-format (:service db) query options)
                                       :on-success [:exporttable/fetch-preview-success loc]
                                       :on-failure [:exporttable/fetch-preview-failure loc]}}))))
 
@@ -91,6 +95,20 @@
  (sandbox)
  (fn [{db :db} [_ loc offset]]
    {:db (assoc-in db [:settings :data-out :start] offset)}))
+
+(defn toggle-select [select index view]
+  (if (contains? (set select) view)
+    (vec (keep #(when (not= % view) %) select))
+    (vec (concat (take index select)
+                 [view]
+                 (drop index select)))))
+
+(reg-event-fx
+ :exporttable/toggle-select-view
+ (sandbox)
+ (fn [{db :db} [_ loc index view]]
+   {:db (update-in db [:settings :data-out :select] toggle-select index view)
+    :dispatch [:exporttable/fetch-preview loc]}))
 
 (reg-event-db
  :exporttable/toggle-export-data-package
