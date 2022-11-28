@@ -133,6 +133,11 @@
    (get-in db (glue prefix [:cache :tree-view :selection]))))
 
 (reg-sub
+ :exporttable/preview
+ (fn [db [_ prefix]]
+   (get-in db (glue prefix [:cache :export-preview]))))
+
+(reg-sub
  :modal
  (fn [db [_ prefix]]
    (get-in db (glue prefix [:cache :modal]))))
@@ -373,17 +378,23 @@
     (subscribe [:assets/service loc])
     (subscribe [:main/query loc])
     (subscribe [:assets/model loc])])
- (fn [[{:keys [selected-format export-data-package compression]} {:keys [root token]} query model]
+ (fn [[{:keys [filename format columnheaders size start select remove export-data-package compression]} {:keys [root token]} query model]
       [_ _loc]]
-   (let [fasta? (= selected-format :fasta)]
-     (str root "/service/query/results" (when fasta? "/fasta")
-          "?format=" (name selected-format)
-          "&filename=" "results"
+   (let [sequence? (contains? #{"fasta" "gff3" "bed"} format)]
+     (str root "/service/query/results" (when sequence? (str "/" format))
+          "?format=" format
+          "&filename=" (or filename "results")
           "&query=" (js/encodeURIComponent
-                     (im-query/->xml model (cond-> query
-                                             fasta? (assoc :select ["id"]))))
+                     (im-query/->xml model (cond
+                                             sequence? (assoc query :select ["id"])
+                                             select (assoc query :select (vec (keep #(when-not (contains? remove %) %) select)))
+                                             :else query)))
+          (when size (str "&size=" size))
+          (when start (str "&start=" start))
+          (when columnheaders
+            (str "&columnheaders=" columnheaders))
           (if export-data-package
             "&exportDataPackage=true&compress=zip"
             (when compression
-              (str "&compress=" (name compression))))
+              (str "&compress=" compression)))
           "&token=" token))))

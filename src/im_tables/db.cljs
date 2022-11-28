@@ -72,13 +72,23 @@
                         :comments? true
                         :html? true
                         :highlight? true}
-              :data-out {:selected-format :tsv
+              :data-out {:filename "results"
+                         :format "tsv"
                          :accepted-formats {:tsv :all
                                             :csv :all
+                                            :xml :all
+                                            :json :all
                                             :fasta [:Gene :Protein]
+                                            :gff3 [:Gene :Protein]
+                                            :bed [:Gene :Protein]
                                             :rdf :all
                                             :ntriples :all}
-                         :order-formats [:tsv :csv :fasta :rdf :ntriples]
+                         :order-formats [:tsv :csv :xml :json :fasta :gff3 :bed :rdf :ntriples]
+                         :columnheaders nil
+                         :size nil
+                         :start 0
+                         :select nil
+                         :remove #{}
                          :export-data-package false
                          :compression nil}
               :links {:vocab {:mine "flymine"}
@@ -96,4 +106,5 @@
            :summary {}
            :selection {}
            :filters {}
-           :tree-view {:selection #{}}}})
+           :tree-view {:selection #{}}
+           :export-preview nil}})

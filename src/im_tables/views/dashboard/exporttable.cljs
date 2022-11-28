@@ -6,82 +6,186 @@
             [imcljs.path :as path :refer [walk class]]
             [im-tables.components.bootstrap :refer [modal]]))
 
+(def format->styling
+  {:tsv [:span [:i.fa.fa-file-excel-o] " Tab separated values"]
+   :csv [:span [:i.fa.fa-file-excel-o] " Comma separated values"]
+   :xml [:span [:i.fa.fa-code] " XML"]
+   :json [:span "{ } JSON"]
+   :fasta [:span [:i.fa.fa-exchange] " FASTA sequence"]
+   :gff3 [:span [:i.fa.fa-exchange] " GFF3 features"]
+   :bed [:span [:i.fa.fa-exchange] " BED locations"]
+   :rdf [:span [:i.fa.fa-sitemap] " RDF"]
+   :ntriples [:span [:i.fa.fa-sitemap] " N-Triples"]})
+
+(defn bioinf? [format] (contains? #{"fasta" "gff3" "bed"} format))
+(defn tabular? [format] (contains? #{"tsv" "csv"} format))
+
 (defn format-dropdown
   "creates the dropdown to allow users to select their preferred format"
-  [loc]
-  (let [settings @(subscribe [:settings/settings loc])
-        query-parts @(subscribe [:main/query-parts loc])
-        {:keys [accepted-formats order-formats]} (get-in settings [:data-out])
+  [loc {:keys [format accepted-formats order-formats]}]
+  (let [query-parts @(subscribe [:main/query-parts loc])
         valid-export-formats (->> (map (juxt identity accepted-formats) order-formats)
                                   (keep (fn [[format suitable-for]]
                                           (when (or (= suitable-for :all)
                                                     ;; If not :all, it's a vector of classes which the query needs to have.
                                                     (some #(contains? query-parts (name %)) suitable-for))
                                             format))))]
-    (into [:select.form-control
-           {:on-change #(dispatch [:exporttable/set-format loc (oget % "target" "value")])}]
-          (for [format valid-export-formats]
-            [:option (name format)]))))
+    [:div.dropdown
+     [:button.btn.btn-default.btn-raised.btn-toolbar.dropdown-toggle
+      {:data-toggle "dropdown"}
+      format]
+     (into [:ul.dropdown-menu.dropdown-menu-right]
+           (for [format valid-export-formats]
+             [:li
+              [:button.btn.btn-link.btn-block
+               {:on-click #(dispatch [:exporttable/set-format loc (name format)])}
+               (get format->styling format (name format))]]))]))
 
-(defn toggle-or-switch [target]
-  (fn [prev-value]
-    (if (= prev-value target)
-      nil
-      target)))
+(defn optional-container [title & children]
+  (into [:div.optional-attributes
+         [:hr]
+         [:span title]]
+        children))
+
+(defn preview-panel [loc]
+  (let [preview @(subscribe [:exporttable/preview loc])]
+    [optional-container "Preview (first 3 rows)"
+     (if (nil? preview)
+       [:pre [:code.nohighlight "Fetching preview... " [:i.fa.fa-fw.fa-spinner.fa-spin]]]
+       [:pre preview])]))
+
+(defn column-headers-panel [loc {:keys [columnheaders]}]
+  [optional-container "Column headers"
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "colum-headers-type"
+              :on-change #(dispatch [:exporttable/set-column-headers loc nil])
+              :checked (nil? columnheaders)}]
+     " No column headers"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "colum-headers-type"
+              :on-change #(dispatch [:exporttable/set-column-headers loc "friendly"])
+              :checked (= columnheaders "friendly")}]
+     " Use human readable headers (e.g. " [:em "Gene > Organism Name"] ")"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "colum-headers-type"
+              :on-change #(dispatch [:exporttable/set-column-headers loc "path"])
+              :checked (= columnheaders "path")}]
+     " Use raw path headers (e.g. " [:em "Gene.organism.name"] ")"]]])
+
+(defn rows-panel [loc {:keys [size start]}]
+  (let [{total :iTotalRecords} @(subscribe [:main/query-response loc])]
+    [optional-container "Select rows"
+     [:div
+      [:div.form-group
+       [:label (str "Size: " size) (when (= size total) " (all rows)")]
+       [:input
+        {:type "range"
+         :name "size"
+         :step 1
+         :min 1
+         :max total
+         :value size
+         :on-change #(dispatch [:exporttable/set-rows-size loc (js/parseInt (oget % :target :value))])}]]
+      [:div.form-group
+       [:label (str "Offset: " start)]
+       [:input
+        {:type "range"
+         :name "start"
+         :step 1
+         :min 0
+         :max (dec total)
+         :value start
+         :on-change #(dispatch [:exporttable/set-rows-start loc (js/parseInt (oget % :target :value))])}]]]]))
+
+(defn columns-panel [loc {:keys [select remove]}]
+  (let [model @(subscribe [:assets/model loc])
+        select-count (count select)]
+    [optional-container "Select columns"
+     (into [:ul.list-group]
+           (for [[i view] (map-indexed vector select)]
+             [:li.list-group-item
+              [:label
+               [:input {:type "checkbox"
+                        :checked (not (contains? remove view))
+                        :on-change #(dispatch [:exporttable/toggle-select-view loc view])}]
+               (str " " (path/friendly model view))]
+              [:button.btn.btn-default.btn-xs.pull-right
+               {:disabled (zero? i)
+                :on-click #(dispatch [:exporttable/move-view-up loc i])}
+               [:i.fa.fa-chevron-up]]
+              [:button.btn.btn-default.btn-xs.pull-right
+               {:disabled (= i (dec select-count))
+                :on-click #(dispatch [:exporttable/move-view-down loc i])}
+               [:i.fa.fa-chevron-down]]]))]))
+
+(defn data-package-panel [loc {:keys [export-data-package]}]
+  [optional-container "Frictionless Data Package"
+   [:label
+    [:input {:type "checkbox"
+             :on-change #(dispatch [:exporttable/toggle-export-data-package loc])
+             :checked export-data-package}]
+    " Export Frictionless Data Package (uses ZIP compression)"]])
+
+(defn compression-panel [loc {:keys [export-data-package compression]}]
+  [optional-container "Compression"
+   (when export-data-package
+     [:div.alert.alert-warning {:role "alert"}
+      [:p "Frictionless Data Package uses ZIP Compression only."]])
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "compression-type"
+              :disabled export-data-package
+              :on-change #(dispatch [:exporttable/set-compression loc nil])
+              :checked (nil? compression)}]
+     " No compression"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "compression-type"
+              :disabled export-data-package
+              :on-change #(dispatch [:exporttable/set-compression loc "zip"])
+              :checked (= compression "zip")}]
+     " Use Zip compression (produces a .zip archive)"]]
+   [:div.radio
+    [:label
+     [:input {:type "radio"
+              :name "compression-type"
+              :disabled export-data-package
+              :on-change #(dispatch [:exporttable/set-compression loc "gzip"])
+              :checked (= compression "gzip")}]
+     " Use GZIP compression (produces a .gzip archive)"]]])
 
 (defn modal-body
   [loc]
-  (let [data-out (subscribe [:settings/data-out loc])
-        expanded* (reagent/atom (cond
-                                  (:export-data-package @data-out) :data-package
-                                  (:compression @data-out) :compression))]
-    (fn [loc]
-      (let [{:keys [export-data-package compression]} @data-out]
-        [:div.modal-body.exporttable-body
-         [:form [:label "Select a format" [format-dropdown loc]]]
-         [:div.export-options
-          [:div.panel.panel-default
-           [:div.panel-heading
-            {:class (when (= @expanded* :data-package) :active)
-             :on-click #(swap! expanded* (toggle-or-switch :data-package))}
-            [:h3.panel-title "Frictionless Data Package"]]
-           (when (= @expanded* :data-package)
-             [:div.panel-body
-              [:label
-               [:input {:type "checkbox"
-                        :on-change #(dispatch [:exporttable/toggle-export-data-package loc])
-                        :checked export-data-package}]
-               " Export Frictionless Data Package (uses ZIP compression)"]])]
-          [:div.panel.panel-default
-           [:div.panel-heading
-            {:class (when (= @expanded* :compression) :active)
-             :on-click #(swap! expanded* (toggle-or-switch :compression))}
-            [:h3.panel-title "Compression"]]
-           (when (= @expanded* :compression)
-             [:div.panel-body
-              (when export-data-package
-                [:p [:strong "Frictionless Data Package uses ZIP Compression only."]])
-              [:label
-               [:input {:type "radio"
-                        :name "compression-type"
-                        :disabled export-data-package
-                        :on-change #(dispatch [:exporttable/set-compression loc nil])
-                        :checked (nil? compression)}]
-               " No compression"]
-              [:label
-               [:input {:type "radio"
-                        :name "compression-type"
-                        :disabled export-data-package
-                        :on-change #(dispatch [:exporttable/set-compression loc :zip])
-                        :checked (= compression :zip)}]
-               " Use Zip compression (produces a .zip archive)"]
-              [:label
-               [:input {:type "radio"
-                        :name "compression-type"
-                        :disabled export-data-package
-                        :on-change #(dispatch [:exporttable/set-compression loc :gzip])
-                        :checked (= compression :gzip)}]
-               " Use GZIP compression (produces a .gzip archive)"]])]]]))))
+  (let [{:keys [format] :as data-out} @(subscribe [:settings/data-out loc])]
+    [:div.exporttable-body
+     [:div.form
+      [:div.form-group
+       [:label "File name and type"]
+       [:div.input-group
+        [:input.form-control
+         {:type "text"
+          :value (:filename data-out)
+          :on-change #(dispatch [:exporttable/set-filename loc (oget % :target :value)])}]
+        [:div.input-group-btn
+         [format-dropdown loc data-out]]]]]
+     [:div.export-options
+      [preview-panel loc]
+      (when (tabular? format)
+        [column-headers-panel loc data-out])
+      (when-not (bioinf? format)
+        [rows-panel loc data-out])
+      (when-not (bioinf? format)
+        [columns-panel loc data-out])
+      [data-package-panel loc data-out]
+      [compression-panel loc data-out]]]))
 
 (defn modal-footer
   "Clicking the anchor element will cause the file to be downloaded directly
@@ -90,7 +194,7 @@
   (let [href @(subscribe [:export/download-href loc])]
     [:a.btn.btn-raised.btn-primary
      {:href href}
-     "Download now!"]))
+     "Download file"]))
 
 (defn export-menu
   "UI element. Presents the modal to allow user to select an export format."
@@ -102,6 +206,9 @@
 (defn exporttable [loc]
   [:button.btn.btn-default
    {:type "button"
-    :on-click #(dispatch [:modal/open loc (export-menu loc)])}
+    :on-click (fn []
+                (dispatch [:exporttable/fetch-preview loc])
+                (dispatch [:exporttable/prepare-options loc])
+                (dispatch [:modal/open loc (export-menu loc)]))}
    [:i.fa.fa-download] " Export"])
 
