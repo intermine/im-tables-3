@@ -1,4 +1,4 @@
-(defproject org.intermine/im-tables "0.14.1"
+(defproject org.intermine/im-tables "0.15.0"
   :licence "LGPL-2.1-only"
   :description "ClojureScript library to display and manipulate InterMine query results on a webpage"
   :url "http://www.intermine.org"
@@ -67,7 +67,7 @@
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.0"]
                                   [day8.re-frame/re-frame-10x "0.6.2"]
                                   [day8.re-frame/tracing "0.5.3"]
-                                  [figwheel-sidecar "0.5.19"]
+                                  [figwheel-sidecar "0.5.20"]
                                   [cider/piggieback "0.4.2"]]
                    :plugins [[lein-figwheel "0.5.19"]]}
              :build {:prep-tasks ["build"]}
