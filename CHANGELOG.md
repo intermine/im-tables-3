@@ -1,3 +1,7 @@
+## 0.15.0 (2022-11-28)
+
+- Expand export modal functionality to support wider range of formats, preview and modifying contents
+
 ## 0.14.1 (2022-08-03)
 
 - Make column summary shorter in height to avoid buttons ending up off-screen on smaller monitors
